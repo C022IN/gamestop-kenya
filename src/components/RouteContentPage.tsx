@@ -56,20 +56,21 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
             {content.intro}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href={content.primaryAction.href}>
-              <Button className="bg-red-600 px-6 font-bold hover:bg-red-700">
+            <Button asChild className="bg-red-600 px-6 font-bold hover:bg-red-700">
+              <Link href={content.primaryAction.href}>
                 {content.primaryAction.label}
-              </Button>
-            </Link>
-            {content.secondaryAction && (
-              <Link href={content.secondaryAction.href}>
-                <Button
-                  variant="outline"
-                  className="border-gray-500 px-6 text-white hover:bg-white/10"
-                >
-                  {content.secondaryAction.label}
-                </Button>
               </Link>
+            </Button>
+            {content.secondaryAction && (
+              <Button
+                asChild
+                variant="outline"
+                className="border-gray-500 bg-transparent px-6 text-white hover:bg-white/10"
+              >
+                <Link href={content.secondaryAction.href}>
+                  {content.secondaryAction.label}
+                </Link>
+              </Button>
             )}
           </div>
         </div>

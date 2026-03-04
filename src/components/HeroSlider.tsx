@@ -167,28 +167,29 @@ export default function HeroSlider() {
                     </div>
                   )}
                   <div className="flex flex-wrap gap-3">
-                    <Link href={slide.buttonLink}>
-                      <Button className="rounded-xl bg-white px-6 py-5 font-bold text-gray-900 hover:bg-gray-100">
+                    <Button asChild className="rounded-xl bg-white px-6 py-5 font-bold text-gray-900 hover:bg-gray-100">
+                      <Link href={slide.buttonLink}>
                         {slide.buttonText}
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                     {slide.secondaryButtonText && (
-                      <Link
-                        href={slide.secondaryButtonLink || '/contact'}
-                        target={slide.secondaryButtonLink?.startsWith('http') ? '_blank' : undefined}
-                        rel={
-                          slide.secondaryButtonLink?.startsWith('http')
-                            ? 'noopener noreferrer'
-                            : undefined
-                        }
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="rounded-xl border-white/40 bg-transparent px-6 py-5 font-semibold text-white hover:bg-white/15"
                       >
-                        <Button
-                          variant="outline"
-                          className="rounded-xl border-white/40 px-6 py-5 font-semibold text-white hover:bg-white/15"
+                        <Link
+                          href={slide.secondaryButtonLink || '/contact'}
+                          target={slide.secondaryButtonLink?.startsWith('http') ? '_blank' : undefined}
+                          rel={
+                            slide.secondaryButtonLink?.startsWith('http')
+                              ? 'noopener noreferrer'
+                              : undefined
+                          }
                         >
                           {slide.secondaryButtonText}
-                        </Button>
-                      </Link>
+                        </Link>
+                      </Button>
                     )}
                   </div>
                 </div>
