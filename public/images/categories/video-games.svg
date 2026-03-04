@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/>
+      <stop offset="100%" style="stop-color:#1a1a3a"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="200" fill="url(#bg)"/>
+  <!-- Game cartridges/discs arranged artfully -->
+  <!-- PS5 disc -->
+  <circle cx="60" cy="100" r="45" fill="#1e3a8a" opacity="0.7"/>
+  <circle cx="60" cy="100" r="38" fill="#1a2a5a"/>
+  <circle cx="60" cy="100" r="10" fill="#334"/>
+  <circle cx="60" cy="100" r="6" fill="#2a2a4a"/>
+  <text x="60" y="155" text-anchor="middle" font-size="8" fill="#4488ff">PS5</text>
+  <!-- Xbox disc -->
+  <circle cx="140" cy="100" r="45" fill="#0d2e0a" opacity="0.7"/>
+  <circle cx="140" cy="100" r="38" fill="#112211"/>
+  <circle cx="140" cy="100" r="10" fill="#1a2a1a"/>
+  <circle cx="140" cy="100" r="6" fill="#1a2a1a"/>
+  <text x="140" y="155" text-anchor="middle" font-size="8" fill="#44ff44">XBOX</text>
+  <!-- Switch cart -->
+  <rect x="180" y="55" width="55" height="75" rx="5" fill="#7a1a1a" opacity="0.8"/>
+  <rect x="183" y="58" width="49" height="60" rx="3" fill="#cc2222"/>
+  <rect x="193" y="53" width="12" height="8" rx="3" fill="#333"/>
+  <text x="207" y="145" text-anchor="middle" font-size="8" fill="#ff4444">SWITCH</text>
+  <!-- PC box -->
+  <rect x="250" y="50" width="55" height="75" rx="4" fill="#1a1a2a" opacity="0.8"/>
+  <rect x="253" y="53" width="49" height="50" rx="2" fill="#222244"/>
+  <text x="277" y="80" text-anchor="middle" font-size="8" fill="#aaaacc">PC</text>
+  <text x="277" y="145" text-anchor="middle" font-size="8" fill="#aaaacc">STEAM</text>
+  <!-- Game 5 disc -->
+  <circle cx="345" cy="100" r="40" fill="#2a0020" opacity="0.7"/>
+  <circle cx="345" cy="100" r="33" fill="#330011"/>
+  <circle cx="345" cy="100" r="8" fill="#440022"/>
+  <text x="345" y="150" text-anchor="middle" font-size="8" fill="#ff4488">MULTI</text>
+
+  <!-- Stars/rating dots -->
+  <circle cx="25" cy="20" r="2" fill="#4488ff" opacity="0.6" filter="url(#glow)"/>
+  <circle cx="50" cy="15" r="1.5" fill="#ff4444" opacity="0.5"/>
+  <circle cx="360" cy="18" r="2" fill="#44ff44" opacity="0.6" filter="url(#glow)"/>
+  <circle cx="385" cy="25" r="1.5" fill="#ffaa44" opacity="0.5"/>
+
+  <!-- Category label -->
+  <rect x="0" y="155" width="400" height="45" fill="#000015" opacity="0.85"/>
+  <text x="200" y="178" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="18" font-weight="900" fill="white" letter-spacing="2">VIDEO GAMES</text>
+  <text x="200" y="193" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6688cc" letter-spacing="2">500+ TITLES</text>
+</svg>

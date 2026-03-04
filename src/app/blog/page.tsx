@@ -3,40 +3,43 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { blogPosts, blogCategories } from '@/data/blog';
-import { BlogPost, BlogCategory } from '@/types/blog';
 import { Button } from '@/components/ui/button';
 import { CompactSocialShare } from '@/components/SocialShare';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Calendar, Clock, Eye, Heart, User } from 'lucide-react';
 
 export default function BlogPage() {
+  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const toggleCurrency = () =>
+    setCurrency(prev => prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' });
 
   const featuredPosts = blogPosts.filter(post => post.featured);
   const filteredPosts = selectedCategory === 'all'
     ? blogPosts
     : blogPosts.filter(post => post.category.slug === selectedCategory);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-gray-900 to-red-900 text-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              GameStop Kenya Blog
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300">
-              Your ultimate source for gaming news, reviews, and insights from Kenya's gaming community
-            </p>
-          </div>
+      <Header currency={currency} onCurrencyToggle={toggleCurrency} />
+
+      {/* Hero */}
+      <section className="bg-gradient-to-br from-gray-900 via-red-950 to-gray-900 text-white py-16">
+        <div className="container mx-auto px-4 text-center max-w-3xl">
+          <span className="bg-red-600/30 text-red-300 text-xs font-bold px-3 py-1.5 rounded-full mb-4 inline-block uppercase tracking-wider">
+            GameStop Kenya Blog
+          </span>
+          <h1 className="text-4xl md:text-6xl font-black mb-4">
+            Gaming News, Reviews & Guides
+          </h1>
+          <p className="text-lg text-gray-300">
+            Your ultimate source for gaming insights, reviews, and community stories from Kenya's #1 gaming destination.
+          </p>
         </div>
       </section>
 
@@ -44,62 +47,42 @@ export default function BlogPage() {
       {featuredPosts.length > 0 && (
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-8">Featured Articles</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <h2 className="text-2xl font-bold mb-6">Featured Articles</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {featuredPosts.map((post, index) => (
-                <article key={post.id} className={`${index === 0 ? 'lg:col-span-2' : ''}`}>
-                  <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                <article key={post.id} className={index === 0 ? 'lg:col-span-2' : ''}>
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="relative">
                       <img
                         src={post.coverImage}
                         alt={post.title}
-                        className="w-full h-64 object-cover"
+                        className={`w-full object-cover ${index === 0 ? 'h-72' : 'h-52'}`}
                       />
-                      <div className={`absolute top-4 left-4 ${post.category.color} text-white px-3 py-1 rounded-full text-sm font-semibold`}>
+                      <div className={`absolute top-4 left-4 ${post.category.color} text-white px-3 py-1 rounded-full text-xs font-bold`}>
                         {post.category.name}
                       </div>
+                      {post.featured && (
+                        <div className="absolute top-4 right-4 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">
+                          FEATURED
+                        </div>
+                      )}
                     </div>
                     <div className="p-6">
-                      <h3 className="text-2xl font-bold mb-3 hover:text-red-600 transition-colors">
-                        <Link href={`/blog/${post.slug}`}>
-                          {post.title}
-                        </Link>
+                      <h3 className={`font-black mb-3 hover:text-red-600 transition-colors ${index === 0 ? 'text-2xl' : 'text-xl'}`}>
+                        <Link href={`/blog/${post.slug}`}>{post.title}</Link>
                       </h3>
-                      <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
-
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-1">
-                            <User className="h-4 w-4" />
-                            <span>{post.author.name}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDate(post.publishedAt)}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{post.readTime} min read</span>
-                          </div>
+                      <p className="text-gray-500 mb-4 line-clamp-2 text-sm">{post.excerpt}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-400">
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{post.author.name}</span>
+                          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{formatDate(post.publishedAt)}</span>
+                          <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{post.readTime} min read</span>
                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <Eye className="h-4 w-4" />
-                            <span>{post.views.toLocaleString()}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Heart className="h-4 w-4" />
-                            <span>{post.likes}</span>
-                          </div>
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" />{post.views.toLocaleString()}</span>
+                          <span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5" />{post.likes}</span>
+                          <CompactSocialShare url={`/blog/${post.slug}`} title={post.title} description={post.excerpt} />
                         </div>
-                        <CompactSocialShare
-                          url={`/blog/${post.slug}`}
-                          title={post.title}
-                          description={post.excerpt}
-                        />
                       </div>
                     </div>
                   </div>
@@ -111,24 +94,26 @@ export default function BlogPage() {
       )}
 
       {/* Category Filter */}
-      <section className="py-8 bg-white">
+      <section className="py-6 bg-white border-y border-gray-100 sticky top-20 z-30">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap gap-3 justify-center">
+          <div className="flex flex-wrap gap-2 justify-center">
             <Button
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
+              size="sm"
               onClick={() => setSelectedCategory('all')}
               className={selectedCategory === 'all' ? 'bg-red-600 hover:bg-red-700' : ''}
             >
               All Articles
             </Button>
-            {blogCategories.map((category) => (
+            {blogCategories.map((cat) => (
               <Button
-                key={category.id}
-                variant={selectedCategory === category.slug ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory(category.slug)}
-                className={selectedCategory === category.slug ? 'bg-red-600 hover:bg-red-700' : ''}
+                key={cat.id}
+                variant={selectedCategory === cat.slug ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory(cat.slug)}
+                className={selectedCategory === cat.slug ? 'bg-red-600 hover:bg-red-700' : ''}
               >
-                {category.name}
+                {cat.name}
               </Button>
             ))}
           </div>
@@ -138,74 +123,42 @@ export default function BlogPage() {
       {/* All Articles */}
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold">
-              {selectedCategory === 'all' ? 'All Articles' :
-                blogCategories.find(cat => cat.slug === selectedCategory)?.name || 'Articles'}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">
+              {selectedCategory === 'all' ? 'All Articles' : blogCategories.find(c => c.slug === selectedCategory)?.name}
             </h2>
-            <span className="text-gray-500">
-              {filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''}
-            </span>
+            <span className="text-gray-400 text-sm">{filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''}</span>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPosts.map((post) => (
-              <article key={post.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <article key={post.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="relative">
-                  <img
-                    src={post.coverImage}
-                    alt={post.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className={`absolute top-3 left-3 ${post.category.color} text-white px-2 py-1 rounded text-xs font-semibold`}>
+                  <img src={post.coverImage} alt={post.title} className="w-full h-48 object-cover" />
+                  <div className={`absolute top-3 left-3 ${post.category.color} text-white px-2 py-1 rounded-full text-xs font-bold`}>
                     {post.category.name}
                   </div>
                   {post.featured && (
-                    <div className="absolute top-3 right-3 bg-yellow-500 text-black px-2 py-1 rounded text-xs font-semibold">
+                    <div className="absolute top-3 right-3 bg-yellow-500 text-black px-2 py-1 rounded-full text-xs font-bold">
                       FEATURED
                     </div>
                   )}
                 </div>
-
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-3 hover:text-red-600 transition-colors">
-                    <Link href={`/blog/${post.slug}`}>
-                      {post.title}
-                    </Link>
+                <div className="p-5">
+                  <h3 className="font-bold text-base mb-2 hover:text-red-600 transition-colors line-clamp-2">
+                    <Link href={`/blog/${post.slug}`}>{post.title}</Link>
                   </h3>
-                  <p className="text-gray-600 mb-4 line-clamp-2">{post.excerpt}</p>
-
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <img
-                        src={post.author.avatar}
-                        alt={post.author.name}
-                        className="w-6 h-6 rounded-full"
-                      />
+                  <p className="text-gray-500 text-sm mb-4 line-clamp-2">{post.excerpt}</p>
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <img src={post.author.avatar} alt={post.author.name} className="w-6 h-6 rounded-full" />
                       <span>{post.author.name}</span>
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{post.readTime}m</span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{post.readTime} min</span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.views.toLocaleString()}</span>
+                      <span className="flex items-center gap-1"><Heart className="h-3 w-3" />{post.likes}</span>
+                      <CompactSocialShare url={`/blog/${post.slug}`} title={post.title} description={post.excerpt} />
                     </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <Eye className="h-4 w-4" />
-                        <span>{post.views.toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Heart className="h-4 w-4" />
-                        <span>{post.likes}</span>
-                      </div>
-                    </div>
-                    <CompactSocialShare
-                      url={`/blog/${post.slug}`}
-                      title={post.title}
-                      description={post.excerpt}
-                    />
                   </div>
                 </div>
               </article>
@@ -214,25 +167,19 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* Newsletter Signup */}
-      <section className="bg-gray-900 text-white py-16">
+      {/* Newsletter */}
+      <section className="bg-gray-900 text-white py-14">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Stay Updated with Gaming News</h2>
-          <p className="text-xl text-gray-300 mb-8">
-            Get the latest gaming news, reviews, and exclusive content delivered to your inbox
-          </p>
-          <div className="max-w-md mx-auto flex space-x-3">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-2 rounded-lg text-black"
-            />
-            <Button className="bg-red-600 hover:bg-red-700 px-6">
-              Subscribe
-            </Button>
+          <h2 className="text-3xl font-bold mb-2">Stay Updated with Gaming News</h2>
+          <p className="text-gray-400 mb-8 max-w-md mx-auto">Get the latest gaming news, reviews, and exclusive deals delivered to your inbox.</p>
+          <div className="max-w-md mx-auto flex gap-3">
+            <input type="email" placeholder="Enter your email" className="flex-1 px-4 py-3 rounded-xl text-gray-900 text-sm focus:outline-none" />
+            <Button className="bg-red-600 hover:bg-red-700 rounded-xl font-bold px-6">Subscribe</Button>
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

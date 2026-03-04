@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#050000"/>
+      <stop offset="40%" style="stop-color:#1a0000"/>
+      <stop offset="100%" style="stop-color:#2a0a00"/>
+    </linearGradient>
+    <radialGradient id="fireglow" cx="50%" cy="60%" r="50%">
+      <stop offset="0%" style="stop-color:#ff4400;stop-opacity:0.5"/>
+      <stop offset="100%" style="stop-color:#050000;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="fireglow2">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect width="300" height="400" fill="url(#fireglow)"/>
+
+  <!-- Dragon fire background pattern -->
+  <g opacity="0.12" fill="#ff6600">
+    <!-- Scale-like pattern -->
+    <ellipse cx="30" cy="80" rx="30" ry="20"/>
+    <ellipse cx="90" cy="60" rx="30" ry="20"/>
+    <ellipse cx="150" cy="75" rx="30" ry="20"/>
+    <ellipse cx="210" cy="60" rx="30" ry="20"/>
+    <ellipse cx="270" cy="80" rx="30" ry="20"/>
+    <ellipse cx="60" cy="110" rx="30" ry="20"/>
+    <ellipse cx="120" cy="95" rx="30" ry="20"/>
+    <ellipse cx="180" cy="100" rx="30" ry="20"/>
+    <ellipse cx="240" cy="110" rx="30" ry="20"/>
+  </g>
+
+  <!-- Dragon silhouette (top) -->
+  <g fill="#1a0000" opacity="0.85">
+    <!-- Dragon body -->
+    <path d="M-10,80 Q30,40 80,55 Q120,65 150,50 Q180,35 230,50 Q265,60 310,45 L310,30 Q265,45 230,35 Q180,20 150,35 Q120,50 80,40 Q30,25 -10,65 Z"/>
+    <!-- Dragon head -->
+    <ellipse cx="80" cy="50" rx="30" ry="18"/>
+    <polygon points="50,55 30,40 45,70" fill="#1a0000"/>
+    <!-- Dragon horns -->
+    <polygon points="75,32 68,5 82,32" fill="#2a0000"/>
+    <polygon points="90,30 95,5 100,30" fill="#2a0000"/>
+    <!-- Dragon eye -->
+    <circle cx="72" cy="48" r="5" fill="#ff4400" filter="url(#glow)"/>
+    <circle cx="72" cy="48" r="2" fill="#ffaa00"/>
+    <!-- Dragon wings -->
+    <path d="M110,55 Q130,20 170,30 Q150,55 140,70 Z" fill="#2a0000" opacity="0.8"/>
+    <path d="M190,50 Q220,15 250,25 Q230,50 220,65 Z" fill="#2a0000" opacity="0.8"/>
+  </g>
+
+  <!-- Dragon logo (MK dragon) -->
+  <g transform="translate(150,195)" filter="url(#glow)">
+    <!-- Stylized dragon outline -->
+    <path d="M0,-55 Q20,-45 30,-25 Q45,-10 40,10 Q35,30 15,40 Q0,50 -15,40 Q-35,30 -40,10 Q-45,-10 -30,-25 Q-20,-45 0,-55 Z" fill="none" stroke="#cc2200" stroke-width="2.5" opacity="0.8"/>
+    <!-- Inner dragon lines -->
+    <path d="M0,-40 Q15,-30 22,-12 Q28,5 18,20 Q8,32 0,35" stroke="#ff4400" stroke-width="1.5" fill="none" opacity="0.7"/>
+    <path d="M0,-40 Q-15,-30 -22,-12 Q-28,5 -18,20" stroke="#ff4400" stroke-width="1.5" fill="none" opacity="0.7"/>
+    <!-- Dragon eye (center) -->
+    <ellipse cx="0" cy="-5" rx="18" ry="20" fill="#cc0000" opacity="0.3"/>
+    <ellipse cx="0" cy="-5" rx="10" ry="12" fill="#ff2200" opacity="0.4"/>
+    <circle cx="0" cy="-5" r="5" fill="#ff8800" opacity="0.9" filter="url(#glow)"/>
+    <circle cx="0" cy="-5" r="2" fill="#ffcc00"/>
+    <!-- Wings of dragon mark -->
+    <path d="M-40,10 Q-55,-5 -60,-20 Q-45,-15 -35,-5" fill="#aa1100" opacity="0.6"/>
+    <path d="M40,10 Q55,-5 60,-20 Q45,-15 35,-5" fill="#aa1100" opacity="0.6"/>
+  </g>
+
+  <!-- Blood/fire drips -->
+  <g fill="#cc0000" opacity="0.6">
+    <path d="M40,100 Q42,115 40,125 Q38,115 40,100Z"/>
+    <path d="M80,95 Q83,112 80,124 Q77,112 80,95Z"/>
+    <path d="M220,98 Q222,114 220,126 Q218,114 220,98Z"/>
+    <path d="M260,102 Q262,118 260,130 Q258,118 260,102Z"/>
+    <path d="M135,92 Q137,108 135,120 Q133,108 135,92Z"/>
+    <path d="M165,94 Q167,110 165,122 Q163,110 165,94Z"/>
+  </g>
+
+  <!-- Flame effects at bottom -->
+  <g filter="url(#fireglow2)" opacity="0.8">
+    <path d="M0,380 Q10,340 20,360 Q30,320 45,350 Q55,310 70,345 Q80,310 95,340 Q108,305 120,335 Q130,300 150,330 Q170,300 180,335 Q192,305 205,340 Q218,310 230,345 Q245,310 255,350 Q270,320 280,360 Q290,340 300,380 Z" fill="#ff4400"/>
+    <path d="M0,390 Q15,355 30,375 Q45,335 60,360 Q75,325 90,355 Q105,320 120,350 Q135,315 150,345 Q165,315 180,350 Q195,320 210,355 Q225,325 240,360 Q255,335 270,375 Q285,355 300,390 Z" fill="#ff8800"/>
+    <path d="M0,400 Q20,365 40,385 Q60,345 80,370 Q100,330 120,360 Q140,325 150,355 Q160,325 180,360 Q200,330 220,370 Q240,345 260,385 Q280,365 300,400 Z" fill="#ffcc00"/>
+  </g>
+
+  <!-- Title section -->
+  <rect x="0" y="10" width="300" height="82" fill="#050000" opacity="0.9"/>
+  <text x="150" y="38" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" fill="#cc0000" letter-spacing="3" filter="url(#glow)">MORTAL</text>
+  <text x="150" y="68" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="22" font-weight="900" fill="white" letter-spacing="3">KOMBAT</text>
+  <text x="260" y="68" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="22" font-weight="900" fill="#cc0000" filter="url(#glow)">1</text>
+  <line x1="20" y1="73" x2="280" y2="73" stroke="#cc0000" stroke-width="1.5" opacity="0.7"/>
+  <text x="150" y="84" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#cc4400" letter-spacing="2">FIGHT</text>
+
+  <!-- Bottom bar -->
+  <rect x="0" y="360" width="300" height="40" fill="#050000" opacity="0.97"/>
+  <!-- PS5 badge -->
+  <rect x="10" y="367" width="52" height="26" rx="4" fill="#003791"/>
+  <text x="36" y="384" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">PS5</text>
+  <!-- Rating -->
+  <text x="180" y="383" text-anchor="middle" font-family="Arial" font-size="9" fill="#ffdd00">★★★★★</text>
+  <text x="245" y="383" text-anchor="middle" font-family="Arial" font-size="9" fill="#aaa">4.5</text>
+
+  <!-- Border -->
+  <rect x="0" y="0" width="300" height="400" fill="none" stroke="#cc0000" stroke-width="2" opacity="0.5" filter="url(#glow)"/>
+</svg>

@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0c10"/>
+      <stop offset="50%" style="stop-color:#111520"/>
+      <stop offset="100%" style="stop-color:#0a0c10"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a2035"/>
+      <stop offset="50%" style="stop-color:#1b2838"/>
+      <stop offset="100%" style="stop-color:#131a27"/>
+    </linearGradient>
+    <linearGradient id="steamblue" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#66aaff"/>
+      <stop offset="100%" style="stop-color:#1188dd"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000005" flood-opacity="0.8"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="400" fill="url(#bg)"/>
+
+  <!-- Steam-like background steam/cloud circles -->
+  <g opacity="0.04" fill="#88aacc">
+    <circle cx="30" cy="50" r="35"/>
+    <circle cx="270" cy="40" r="30"/>
+    <circle cx="150" cy="30" r="25"/>
+    <circle cx="80" cy="340" r="40"/>
+    <circle cx="220" cy="350" r="35"/>
+  </g>
+
+  <!-- Steam wallet card body -->
+  <rect x="20" y="100" width="260" height="170" rx="15" fill="url(#card)" filter="url(#shadow)"/>
+  <!-- Card top gradient band -->
+  <rect x="20" y="100" width="260" height="55" rx="15" fill="#1d2d45" opacity="0.7"/>
+  <!-- Bottom dark -->
+  <rect x="20" y="235" width="260" height="35" rx="0" fill="#0d1525"/>
+  <rect x="20" y="253" width="260" height="17" rx="15" fill="#0d1525"/>
+
+  <!-- Steam logo (wheel/gear shape) -->
+  <g transform="translate(75, 160)" filter="url(#softglow)">
+    <!-- Steam logo approximate -->
+    <circle cx="0" cy="0" r="28" fill="url(#steamblue)" opacity="0.2"/>
+    <circle cx="0" cy="0" r="22" fill="none" stroke="url(#steamblue)" stroke-width="3"/>
+    <!-- Gear teeth -->
+    <rect x="-4" y="-28" width="8" height="10" rx="2" fill="#66aaff"/>
+    <rect x="-4" y="18" width="8" height="10" rx="2" fill="#66aaff"/>
+    <rect x="-28" y="-4" width="10" height="8" rx="2" fill="#66aaff"/>
+    <rect x="18" y="-4" width="10" height="8" rx="2" fill="#66aaff"/>
+    <rect transform="rotate(45)" x="-4" y="-28" width="8" height="10" rx="2" fill="#66aaff"/>
+    <rect transform="rotate(45)" x="-4" y="18" width="8" height="10" rx="2" fill="#66aaff"/>
+    <rect transform="rotate(45)" x="-28" y="-4" width="10" height="8" rx="2" fill="#66aaff"/>
+    <rect transform="rotate(45)" x="18" y="-4" width="10" height="8" rx="2" fill="#66aaff"/>
+    <!-- Inner circle -->
+    <circle cx="0" cy="0" r="13" fill="#1b2838"/>
+    <circle cx="0" cy="0" r="8" fill="#66aaff" opacity="0.5"/>
+    <circle cx="0" cy="0" r="4" fill="#88ccff" opacity="0.8"/>
+  </g>
+
+  <!-- STEAM text on card -->
+  <text x="135" y="143" font-family="Arial Black, sans-serif" font-size="22" font-weight="900" fill="url(#steamblue)" letter-spacing="4" filter="url(#softglow)">STEAM</text>
+  <text x="135" y="163" font-family="Arial, sans-serif" font-size="10" fill="#5588bb" letter-spacing="2">WALLET CODE</text>
+
+  <!-- Card amount -->
+  <text x="150" y="200" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="26" font-weight="900" fill="white" filter="url(#glow)">KSh 3,000</text>
+  <text x="150" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#4488aa" letter-spacing="2">STEAM STORE CREDIT</text>
+
+  <!-- Scratch area -->
+  <rect x="20" y="234" width="260" height="36" rx="0" fill="#0d1525"/>
+  <text x="150" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#334455" letter-spacing="3">WALLET CODE</text>
+  <rect x="40" y="252" width="220" height="12" rx="3" fill="#182030"/>
+  <text x="150" y="262" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-family="monospace" fill="#334455">XXXXX-XXXXX-XXXXX</text>
+
+  <!-- Value text below card -->
+  <text x="150" y="302" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="url(#steamblue)" filter="url(#glow)">WALLET CODE</text>
+  <text x="150" y="322" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#3366aa">Add funds to your Steam account</text>
+
+  <!-- Platform tags -->
+  <g transform="translate(150, 345)">
+    <rect x="-80" y="0" width="50" height="18" rx="4" fill="#1b2838" stroke="#334455" stroke-width="1"/>
+    <text x="-55" y="13" text-anchor="middle" font-family="Arial" font-size="9" fill="#66aaff">Windows</text>
+    <rect x="-25" y="0" width="45" height="18" rx="4" fill="#1b2838" stroke="#334455" stroke-width="1"/>
+    <text x="2" y="13" text-anchor="middle" font-family="Arial" font-size="9" fill="#66aaff">macOS</text>
+    <rect x="25" y="0" width="40" height="18" rx="4" fill="#1b2838" stroke="#334455" stroke-width="1"/>
+    <text x="45" y="13" text-anchor="middle" font-family="Arial" font-size="9" fill="#66aaff">Linux</text>
+  </g>
+
+  <!-- Title area -->
+  <rect x="0" y="10" width="300" height="84" fill="#050810" opacity="0.9"/>
+  <text x="150" y="38" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="26" font-weight="900" fill="url(#steamblue)" letter-spacing="5" filter="url(#softglow)">STEAM</text>
+  <text x="150" y="66" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="18" font-weight="900" fill="white" letter-spacing="2">WALLET CODE</text>
+  <text x="150" y="82" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#446688" letter-spacing="2">DIGITAL GIFT CARD</text>
+
+  <!-- Bottom bar -->
+  <rect x="0" y="360" width="300" height="40" fill="#050810" opacity="0.97"/>
+  <rect x="10" y="367" width="38" height="26" rx="4" fill="#1b2838" stroke="#334455" stroke-width="1"/>
+  <text x="29" y="384" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#66aaff">PC</text>
+  <text x="225" y="383" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#66aaff" filter="url(#softglow)">DIGITAL</text>
+
+  <!-- Border -->
+  <rect x="0" y="0" width="300" height="400" fill="none" stroke="#336699" stroke-width="2" opacity="0.6"/>
+</svg>

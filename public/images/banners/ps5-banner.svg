@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 350" width="400" height="350">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#001133"/>
+      <stop offset="100%" style="stop-color:#002266"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="60%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#0055cc;stop-opacity:0.35"/>
+      <stop offset="100%" style="stop-color:#001133;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="softglow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="350" fill="url(#bg)"/>
+  <rect width="400" height="350" fill="url(#glow)"/>
+
+  <!-- PS5 console centered -->
+  <g transform="translate(230,175)">
+    <!-- Left white wing -->
+    <path d="M-50,55 Q-80,38 -85,-6 Q-88,-38 -65,-62 Q-48,-80 -25,-85 L-25,-38 Q-38,-25 -40,-3 Q-40,20 -30,38 Z" fill="#f0f0f0"/>
+    <!-- Right white wing -->
+    <path d="M50,55 Q80,38 85,-6 Q88,-38 65,-62 Q48,-80 25,-85 L25,-38 Q38,-25 40,-3 Q40,20 30,38 Z" fill="#f0f0f0"/>
+    <!-- Center black core -->
+    <rect x="-25" y="-88" width="50" height="148" rx="4" fill="#111111"/>
+    <!-- Disc drive -->
+    <rect x="-40" y="-12" width="18" height="45" rx="3" fill="#1a1a1a"/>
+    <rect x="-38" y="4" width="14" height="2" fill="#333"/>
+    <!-- USB ports -->
+    <rect x="-22" y="35" width="8" height="5" rx="2" fill="#222"/>
+    <rect x="-10" y="35" width="8" height="5" rx="2" fill="#1a1a1a"/>
+    <!-- PS button -->
+    <circle cx="0" cy="47" r="8" fill="#111" stroke="#0044cc" stroke-width="1.2"/>
+    <circle cx="0" cy="47" r="5" fill="#0044cc" opacity="0.7" filter="url(#softglow)"/>
+    <!-- LED strips blue -->
+    <line x1="-25" y1="-3" x2="-25" y2="32" stroke="#0088ff" stroke-width="1.5" opacity="0.9" filter="url(#softglow)"/>
+    <line x1="25" y1="-3" x2="25" y2="32" stroke="#0088ff" stroke-width="1.5" opacity="0.9" filter="url(#softglow)"/>
+    <!-- Shadow -->
+    <ellipse cx="0" cy="130" rx="70" ry="10" fill="#000020" opacity="0.3"/>
+  </g>
+
+  <!-- Text -->
+  <text x="40" y="80" font-family="Arial Black, sans-serif" font-size="10" fill="#4488ff" letter-spacing="4">NEXT-GEN CONSOLE</text>
+  <text x="35" y="120" font-family="Arial Black, sans-serif" font-size="28" font-weight="900" fill="white">PlayStation</text>
+  <text x="35" y="165" font-family="Arial Black, sans-serif" font-size="52" font-weight="900" fill="#0066ff" filter="url(#softglow)">5</text>
+
+  <!-- Price tag -->
+  <rect x="35" y="188" width="165" height="42" rx="8" fill="#003399" opacity="0.6"/>
+  <text x="42" y="210" font-family="Arial Black, sans-serif" font-size="10" fill="#aabbff">FROM</text>
+  <text x="42" y="224" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" fill="white">KSh 65,000</text>
+
+  <!-- PS Symbols -->
+  <text x="38" y="270" font-size="14" fill="#ff4488" opacity="0.7">○</text>
+  <text x="58" y="270" font-size="12" fill="#4488ff" opacity="0.7">✕</text>
+  <text x="75" y="270" font-size="13" fill="#44cc88" opacity="0.7">▲</text>
+  <text x="93" y="270" font-size="12" fill="#dd44aa" opacity="0.7">■</text>
+
+  <text x="35" y="295" font-family="Arial, sans-serif" font-size="9" fill="#6688bb">4K · Ray Tracing · 120fps · DualSense</text>
+  <text x="35" y="312" font-family="Arial, sans-serif" font-size="9" fill="#6688bb">Ultra-High Speed SSD · PS VR2 Ready</text>
+
+  <!-- Available now badge -->
+  <rect x="35" y="322" width="95" height="18" rx="5" fill="#0044cc"/>
+  <text x="82" y="335" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="9" fill="white">IN STOCK</text>
+
+  <!-- Blue glow bottom -->
+  <line x1="0" y1="346" x2="400" y2="346" stroke="#0044cc" stroke-width="3" opacity="0.4" filter="url(#softglow)"/>
+  <rect x="0" y="0" width="400" height="350" fill="none" stroke="#0033aa" stroke-width="2" opacity="0.3"/>
+</svg>

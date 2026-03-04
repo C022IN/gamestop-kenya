@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/>
+      <stop offset="50%" style="stop-color:#0d1b4a"/>
+      <stop offset="100%" style="stop-color:#1a0010"/>
+    </linearGradient>
+    <linearGradient id="city" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a3a6a;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#0a0a1a;stop-opacity:1"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="40%">
+      <stop offset="0%" style="stop-color:#cc0000;stop-opacity:0.4"/>
+      <stop offset="100%" style="stop-color:#0a0a1a;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="2"/></filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="300" height="400" fill="url(#bg)"/>
+  <rect width="300" height="400" fill="url(#glow)"/>
+
+  <!-- City skyline silhouette -->
+  <rect x="0" y="220" width="300" height="180" fill="url(#city)"/>
+  <!-- Buildings -->
+  <rect x="-5" y="270" width="22" height="130" fill="#0f2040" opacity="0.9"/>
+  <rect x="20" y="250" width="16" height="150" fill="#0d1a35" opacity="0.9"/>
+  <rect x="38" y="260" width="28" height="140" fill="#0f2040"/>
+  <rect x="50" y="230" width="12" height="170" fill="#0d1a35"/>
+  <rect x="65" y="245" width="20" height="155" fill="#0f2040"/>
+  <rect x="88" y="255" width="25" height="145" fill="#0d1a35"/>
+  <rect x="115" y="235" width="18" height="165" fill="#0f2040"/>
+  <rect x="135" y="250" width="30" height="150" fill="#0d1a35"/>
+  <rect x="168" y="240" width="22" height="160" fill="#0f2040"/>
+  <rect x="192" y="260" width="16" height="140" fill="#0d1a35"/>
+  <rect x="210" y="245" width="28" height="155" fill="#0f2040"/>
+  <rect x="240" y="230" width="20" height="170" fill="#0d1a35"/>
+  <rect x="263" y="255" width="25" height="145" fill="#0f2040"/>
+  <rect x="288" y="250" width="20" height="150" fill="#0d1a35"/>
+  <!-- Building windows -->
+  <rect x="25" y="260" width="4" height="3" fill="#4080ff" opacity="0.6"/>
+  <rect x="31" y="260" width="4" height="3" fill="#4080ff" opacity="0.6"/>
+  <rect x="25" y="268" width="4" height="3" fill="#ffd700" opacity="0.5"/>
+  <rect x="42" y="270" width="4" height="3" fill="#4080ff" opacity="0.6"/>
+  <rect x="48" y="265" width="4" height="3" fill="#ffd700" opacity="0.5"/>
+  <rect x="92" y="265" width="4" height="3" fill="#4080ff" opacity="0.6"/>
+  <rect x="98" y="272" width="4" height="3" fill="#4080ff" opacity="0.6"/>
+  <rect x="140" y="258" width="4" height="3" fill="#ffd700" opacity="0.5"/>
+  <rect x="147" y="264" width="4" height="3" fill="#4080ff" opacity="0.6"/>
+  <rect x="175" y="252" width="4" height="3" fill="#4080ff" opacity="0.6"/>
+  <rect x="215" y="255" width="4" height="3" fill="#ffd700" opacity="0.5"/>
+  <rect x="222" y="262" width="4" height="3" fill="#4080ff" opacity="0.6"/>
+  <rect x="248" y="245" width="4" height="3" fill="#4080ff" opacity="0.6"/>
+  <rect x="254" y="252" width="4" height="3" fill="#ffd700" opacity="0.5"/>
+
+  <!-- Spider web top-left -->
+  <g opacity="0.25" stroke="#cc2200" stroke-width="0.8" fill="none">
+    <line x1="0" y1="0" x2="120" y2="120"/>
+    <line x1="40" y1="0" x2="120" y2="80"/>
+    <line x1="80" y1="0" x2="120" y2="40"/>
+    <line x1="120" y1="0" x2="120" y2="0"/>
+    <line x1="0" y1="40" x2="80" y2="120"/>
+    <line x1="0" y1="80" x2="40" y2="120"/>
+    <circle cx="120" cy="0" r="20" fill="none"/>
+    <circle cx="120" cy="0" r="45" fill="none"/>
+    <circle cx="120" cy="0" r="75" fill="none"/>
+    <circle cx="120" cy="0" r="110" fill="none"/>
+  </g>
+
+  <!-- Spider web top-right -->
+  <g opacity="0.25" stroke="#cc2200" stroke-width="0.8" fill="none">
+    <line x1="300" y1="0" x2="180" y2="120"/>
+    <line x1="260" y1="0" x2="180" y2="80"/>
+    <line x1="220" y1="0" x2="180" y2="40"/>
+    <line x1="300" y1="40" x2="220" y2="120"/>
+    <line x1="300" y1="80" x2="260" y2="120"/>
+    <circle cx="180" cy="0" r="20" fill="none"/>
+    <circle cx="180" cy="0" r="45" fill="none"/>
+    <circle cx="180" cy="0" r="75" fill="none"/>
+    <circle cx="180" cy="0" r="110" fill="none"/>
+  </g>
+
+  <!-- Spider-Man silhouette (stylized) -->
+  <g transform="translate(150,170)">
+    <!-- Body -->
+    <ellipse cx="0" cy="0" rx="28" ry="38" fill="#cc0000"/>
+    <!-- Head -->
+    <ellipse cx="0" cy="-45" rx="20" ry="22" fill="#cc0000"/>
+    <!-- Eyes - white almond shapes -->
+    <ellipse cx="-7" cy="-48" rx="8" ry="6" fill="white"/>
+    <ellipse cx="7" cy="-48" rx="8" ry="6" fill="white"/>
+    <!-- Web pattern on face -->
+    <line x1="-18" y1="-45" x2="18" y2="-45" stroke="#990000" stroke-width="0.8" opacity="0.7"/>
+    <line x1="0" y1="-67" x2="0" y2="-23" stroke="#990000" stroke-width="0.8" opacity="0.7"/>
+    <!-- Arms extended -->
+    <path d="M-28,0 Q-70,-25 -80,-50" stroke="#cc0000" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="M28,0 Q70,-25 80,-50" stroke="#cc0000" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <!-- Legs -->
+    <path d="M-18,38 Q-30,60 -25,90" stroke="#cc0000" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="M18,38 Q30,60 25,90" stroke="#cc0000" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <!-- Blue sections -->
+    <rect x="-28" y="-15" width="56" height="25" rx="5" fill="#0033cc" opacity="0.8"/>
+    <!-- Spider chest logo -->
+    <path d="M0,-8 L-12,2 L-6,2 L-10,12 L0,8 L10,12 L6,2 L12,2 Z" fill="black" opacity="0.7"/>
+    <!-- Web shooting from wrists -->
+    <line x1="-80" y1="-50" x2="-130" y2="-30" stroke="#cc8800" stroke-width="1" opacity="0.6"/>
+    <line x1="80" y1="-50" x2="130" y2="-30" stroke="#cc8800" stroke-width="1" opacity="0.6"/>
+  </g>
+
+  <!-- MARVEL'S text -->
+  <text x="150" y="32" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="11" font-weight="900" fill="#cc0000" letter-spacing="4">MARVEL'S</text>
+
+  <!-- SPIDER-MAN text -->
+  <text x="150" y="62" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="22" font-weight="900" fill="white" letter-spacing="2">SPIDER-MAN</text>
+
+  <!-- 2 large -->
+  <text x="150" y="98" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="38" font-weight="900" fill="#cc0000" letter-spacing="-2">2</text>
+
+  <!-- Bottom bar -->
+  <rect x="0" y="360" width="300" height="40" fill="#000011" opacity="0.9"/>
+
+  <!-- PS5 Badge -->
+  <rect x="10" y="367" width="52" height="26" rx="4" fill="#003791"/>
+  <text x="36" y="384" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="white">PS5</text>
+
+  <!-- Rating stars -->
+  <text x="180" y="383" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#ffd700">★★★★★</text>
+  <text x="250" y="383" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#aaa">4.8</text>
+
+  <!-- Border glow -->
+  <rect x="0" y="0" width="300" height="400" fill="none" stroke="#cc0000" stroke-width="2" opacity="0.4"/>
+  <rect x="2" y="2" width="296" height="396" fill="none" stroke="#cc0000" stroke-width="1" opacity="0.2"/>
+</svg>

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#050a05"/>
+      <stop offset="100%" style="stop-color:#0a150a"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="200" fill="url(#bg)"/>
+
+  <!-- Gift card representations -->
+  <!-- PSN card -->
+  <g transform="translate(60,85) rotate(-8)">
+    <rect x="-40" y="-30" width="80" height="52" rx="6" fill="#1144bb"/>
+    <rect x="-40" y="-30" width="80" height="22" rx="6" fill="#2255cc"/>
+    <text x="0" y="-12" text-anchor="middle" font-size="8" fill="white" font-weight="bold">PSN</text>
+    <rect x="-35" y="0" width="70" height="10" rx="2" fill="#003399" opacity="0.6"/>
+    <text x="0" y="8" text-anchor="middle" font-size="6" fill="#aabbff">KSh 2,000</text>
+  </g>
+
+  <!-- Xbox Game Pass card -->
+  <g transform="translate(150,85) rotate(3)">
+    <rect x="-40" y="-30" width="80" height="52" rx="6" fill="#0d7d12"/>
+    <rect x="-40" y="-30" width="80" height="22" rx="6" fill="#107c10"/>
+    <text x="0" y="-12" text-anchor="middle" font-size="7" fill="white" font-weight="bold">XBOX</text>
+    <text x="0" y="-3" text-anchor="middle" font-size="5.5" fill="#88ff88">GAME PASS</text>
+    <rect x="-35" y="0" width="70" height="10" rx="2" fill="#055508" opacity="0.6"/>
+    <text x="0" y="8" text-anchor="middle" font-size="6" fill="#aaffaa">KSh 4,500</text>
+  </g>
+
+  <!-- Nintendo eShop card -->
+  <g transform="translate(245,85) rotate(-5)">
+    <rect x="-40" y="-30" width="80" height="52" rx="6" fill="#cc0010"/>
+    <rect x="-40" y="-30" width="80" height="22" rx="6" fill="#e60012"/>
+    <text x="0" y="-12" text-anchor="middle" font-size="7" fill="white" font-weight="bold">Nintendo</text>
+    <text x="0" y="-3" text-anchor="middle" font-size="6" fill="#ffaaaa">eShop</text>
+    <rect x="-35" y="0" width="70" height="10" rx="2" fill="#aa0008" opacity="0.6"/>
+    <text x="0" y="8" text-anchor="middle" font-size="6" fill="#ffbbbb">KSh 1,500</text>
+  </g>
+
+  <!-- Steam card -->
+  <g transform="translate(338,85) rotate(6)">
+    <rect x="-40" y="-30" width="80" height="52" rx="6" fill="#1b2838"/>
+    <rect x="-40" y="-30" width="80" height="22" rx="6" fill="#2a3f5f"/>
+    <text x="0" y="-12" text-anchor="middle" font-size="9" fill="#66aaff" font-weight="bold">STEAM</text>
+    <rect x="-35" y="0" width="70" height="10" rx="2" fill="#0d1a27" opacity="0.6"/>
+    <text x="0" y="8" text-anchor="middle" font-size="6" fill="#88bbff">KSh 3,000</text>
+  </g>
+
+  <!-- Floating code digits in background -->
+  <g opacity="0.08" fill="#44ff44" font-family="monospace" font-size="10">
+    <text x="10" y="40">A4F2-K9P1</text>
+    <text x="300" y="30">BX7Y-9Z3M</text>
+    <text x="20" y="140">QR8N-2WKJ</text>
+    <text x="280" y="145">7H4X-KM9P</text>
+  </g>
+
+  <!-- Lightning bolt / instant delivery icon -->
+  <polygon points="210,20 200,42 210,38 200,62 220,35 209,38" fill="#ffdd00" opacity="0.6" filter="url(#glow)"/>
+
+  <!-- Category label -->
+  <rect x="0" y="155" width="400" height="45" fill="#000a00" opacity="0.9"/>
+  <text x="200" y="178" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="white" letter-spacing="2">DIGITAL CODES</text>
+  <text x="200" y="193" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#44aa44" letter-spacing="2">100+ CARDS · INSTANT DELIVERY</text>
+</svg>
