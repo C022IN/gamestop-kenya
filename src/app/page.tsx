@@ -20,12 +20,13 @@ import {
   ChevronRight,
   Zap,
   Clock,
+  Check,
 } from 'lucide-react';
 
 const featuredProducts = [
   {
     id: '1',
-    title: "Marvel's Spider-Man 2 — PlayStation 5",
+    title: "Marvel's Spider-Man 2 - PlayStation 5",
     image: '/images/games/spiderman-2.svg',
     price: 8500,
     originalPrice: 9500,
@@ -35,7 +36,7 @@ const featuredProducts = [
   },
   {
     id: '2',
-    title: 'Super Mario Bros. Wonder — Nintendo Switch',
+    title: 'Super Mario Bros. Wonder - Nintendo Switch',
     image: '/images/games/mario-wonder.svg',
     price: 7000,
     platform: 'Switch',
@@ -44,7 +45,7 @@ const featuredProducts = [
   },
   {
     id: '3',
-    title: 'Forza Horizon 5 — Xbox Series X',
+    title: 'Forza Horizon 5 - Xbox Series X',
     image: '/images/games/forza-horizon-5.svg',
     price: 6500,
     originalPrice: 7500,
@@ -54,7 +55,7 @@ const featuredProducts = [
   },
   {
     id: '4',
-    title: 'Cyberpunk 2077 Ultimate Edition — PC',
+    title: 'Cyberpunk 2077 Ultimate Edition - PC',
     image: '/images/games/cyberpunk-2077.svg',
     price: 5500,
     originalPrice: 8000,
@@ -67,7 +68,7 @@ const featuredProducts = [
 const flashDeals = [
   {
     id: 'f1',
-    title: "God of War: Ragnarök — PS5",
+    title: 'God of War: Ragnarok - PS5',
     image: '/images/games/god-of-war-ragnarok.svg',
     price: 7200,
     originalPrice: 9500,
@@ -77,7 +78,7 @@ const flashDeals = [
   },
   {
     id: 'f2',
-    title: 'Hogwarts Legacy — Xbox',
+    title: 'Hogwarts Legacy - Xbox',
     image: '/images/games/hogwarts-legacy.svg',
     price: 5800,
     originalPrice: 8500,
@@ -87,7 +88,7 @@ const flashDeals = [
   },
   {
     id: 'f3',
-    title: 'Zelda: Tears of the Kingdom — Switch',
+    title: 'Zelda: Tears of the Kingdom - Switch',
     image: '/images/games/zelda-totk.svg',
     price: 6800,
     originalPrice: 8200,
@@ -97,7 +98,7 @@ const flashDeals = [
   },
   {
     id: 'f4',
-    title: 'EA FC 25 — PS5',
+    title: 'EA FC 25 - PS5',
     image: '/images/games/ea-fc-25.svg',
     price: 6500,
     originalPrice: 8000,
@@ -110,7 +111,7 @@ const flashDeals = [
 const digitalProducts = [
   {
     id: '5',
-    title: 'PlayStation Network Card — KSh 2,000',
+    title: 'PlayStation Network Card - KSh 2,000',
     image: '/images/digital/psn-card.svg',
     price: 2000,
     platform: 'PlayStation',
@@ -119,7 +120,7 @@ const digitalProducts = [
   },
   {
     id: '6',
-    title: 'Xbox Game Pass Ultimate — 3 Months',
+    title: 'Xbox Game Pass Ultimate - 3 Months',
     image: '/images/digital/game-pass.svg',
     price: 4500,
     platform: 'Xbox',
@@ -128,7 +129,7 @@ const digitalProducts = [
   },
   {
     id: '7',
-    title: 'Nintendo eShop Card — KSh 1,500',
+    title: 'Nintendo eShop Card - KSh 1,500',
     image: '/images/digital/eshop-card.svg',
     price: 1500,
     platform: 'Nintendo',
@@ -137,7 +138,7 @@ const digitalProducts = [
   },
   {
     id: '8',
-    title: 'Steam Wallet Code — KSh 3,000',
+    title: 'Steam Wallet Code - KSh 3,000',
     image: '/images/digital/steam-wallet.svg',
     price: 3000,
     platform: 'PC',
@@ -186,7 +187,7 @@ const testimonials = [
     name: 'Brian Mutua',
     location: 'Nairobi CBD',
     rating: 5,
-    text: 'Ordered a PS5 on a Friday, got it delivered the same evening in Westlands. Packaging was perfect and price was unbeatable. GameStop Kenya is the real deal!',
+    text: 'Ordered a PS5 on Friday and received it the same evening in Westlands. Packaging was secure and pricing was fair.',
     product: 'PlayStation 5',
     date: 'January 2025',
   },
@@ -194,7 +195,7 @@ const testimonials = [
     name: 'Amina Wanjiru',
     location: 'Kilimani',
     rating: 5,
-    text: "I bought the Nintendo Switch OLED for my daughter's birthday. The team helped me choose the right bundle and delivery was on time. Very professional service!",
+    text: 'I bought the Nintendo Switch OLED as a birthday gift. The support team recommended the right bundle and delivered on time.',
     product: 'Nintendo Switch OLED',
     date: 'February 2025',
   },
@@ -202,21 +203,30 @@ const testimonials = [
     name: 'James Ochieng',
     location: 'Westlands',
     rating: 5,
-    text: 'The IPTV subscription has been amazing. 20,000+ channels and the Premier League in full HD. Set up was easy and support helped me configure it in 10 minutes.',
-    product: 'Premium IPTV — 3 Months',
+    text: 'The IPTV package works perfectly. Setup took less than 10 minutes and support helped immediately when I needed guidance.',
+    product: 'Premium IPTV - 3 Months',
     date: 'March 2025',
   },
   {
     name: 'Sandra Cherop',
     location: 'Thika Road',
     rating: 4,
-    text: 'Good selection of games and very fair prices. M-Pesa payment was quick and seamless. Got my Xbox Series S within 2 days. Will definitely order again.',
+    text: 'Great game selection and smooth M-Pesa checkout. My Xbox arrived in two days exactly as promised.',
     product: 'Xbox Series S',
     date: 'February 2025',
   },
 ];
 
-const brands = ['Sony', 'Microsoft', 'Nintendo', 'Razer', 'Logitech', 'SteelSeries', 'HyperX', 'Corsair'];
+const brands = [
+  'Sony',
+  'Microsoft',
+  'Nintendo',
+  'Razer',
+  'Logitech',
+  'SteelSeries',
+  'HyperX',
+  'Corsair',
+];
 
 function CountdownTimer({ targetHours = 8 }: { targetHours?: number }) {
   const [timeLeft, setTimeLeft] = useState({ h: targetHours, m: 0, s: 0 });
@@ -230,6 +240,7 @@ function CountdownTimer({ targetHours = 8 }: { targetHours?: number }) {
       const s = Math.floor((diff % 60000) / 1000);
       setTimeLeft({ h, m, s });
     };
+
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
@@ -241,10 +252,10 @@ function CountdownTimer({ targetHours = 8 }: { targetHours?: number }) {
     <div className="flex items-center gap-2">
       {[timeLeft.h, timeLeft.m, timeLeft.s].map((val, i) => (
         <span key={i} className="flex items-center gap-1">
-          <span className="bg-gray-900 text-white text-lg font-mono font-bold px-2.5 py-1 rounded-lg min-w-[2.5rem] text-center">
+          <span className="min-w-[2.5rem] rounded-lg bg-gray-900 px-2.5 py-1 text-center font-mono text-lg font-bold text-white">
             {pad(val)}
           </span>
-          {i < 2 && <span className="text-gray-500 font-bold">:</span>}
+          {i < 2 && <span className="font-bold text-gray-500">:</span>}
         </span>
       ))}
     </div>
@@ -255,10 +266,8 @@ export default function Home() {
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
 
   const toggleCurrency = () => {
-    setCurrency(prev =>
-      prev.code === 'KES'
-        ? { code: 'USD', symbol: '$' }
-        : { code: 'KES', symbol: 'KSh' }
+    setCurrency((prev) =>
+      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
     );
   };
 
@@ -266,24 +275,22 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <Header currency={currency} onCurrencyToggle={toggleCurrency} />
 
-      {/* Hero Slider */}
       <section className="container mx-auto px-4 py-6">
         <HeroSlider />
       </section>
 
-      {/* Trust Stats Bar */}
-      <section className="bg-white border-y border-gray-100 py-6">
+      <section className="border-y border-gray-100 bg-white py-6">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="grid grid-cols-2 gap-6 text-center md:grid-cols-4">
             {[
               { icon: Users, value: '50,000+', label: 'Happy Customers', color: 'text-blue-600' },
               { icon: Package, value: '10,000+', label: 'Products in Stock', color: 'text-green-600' },
               { icon: Award, value: '6 Years', label: 'Trusted Since 2019', color: 'text-purple-600' },
               { icon: Star, value: '4.9/5', label: 'Customer Rating', color: 'text-yellow-500' },
             ].map(({ icon: Icon, value, label, color }) => (
-              <div key={label} className="flex flex-col items-center gap-1">
-                <Icon className={`h-6 w-6 ${color}`} />
-                <span className="text-xl font-extrabold text-gray-900">{value}</span>
+              <div key={label} className="lux-card rounded-xl p-4">
+                <Icon className={`mx-auto mb-2 h-6 w-6 ${color}`} />
+                <span className="block text-xl font-extrabold text-gray-900">{value}</span>
                 <span className="text-xs text-gray-500">{label}</span>
               </div>
             ))}
@@ -291,27 +298,32 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Quick Categories */}
       <section className="container mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold">Shop by Category</h2>
-          <Link href="/games" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:underline">
+          <Link
+            href="/games"
+            className="flex items-center gap-1 text-sm font-semibold text-red-600 hover:underline"
+          >
             View All <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
           {categories.map((cat) => (
             <Link key={cat.name} href={cat.href}>
-              <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group overflow-hidden">
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+              <div className="lux-card group cursor-pointer overflow-hidden rounded-2xl">
+                <div className="lux-media h-32">
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                </div>
                 <div className="p-4 text-center">
-                  <cat.icon className={`h-7 w-7 mx-auto mb-1.5 ${cat.color}`} />
-                  <h3 className="font-bold text-sm">{cat.name}</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">{cat.count} items</p>
+                  <cat.icon className={`mx-auto mb-1.5 h-7 w-7 ${cat.color}`} />
+                  <h3 className="text-sm font-bold">{cat.name}</h3>
+                  <p className="mt-0.5 text-xs text-gray-500">{cat.count} items</p>
                 </div>
               </div>
             </Link>
@@ -319,17 +331,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Flash Deals */}
-      <section className="bg-white py-10 border-y border-gray-100">
+      <section className="border-y border-gray-100 bg-white py-10">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="bg-red-600 text-white p-2 rounded-lg">
+              <div className="rounded-lg bg-red-600 p-2 text-white">
                 <Zap className="h-5 w-5" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Flash Deals</h2>
-                <p className="text-sm text-gray-500">Limited time offers — grab them before they're gone!</p>
+                <p className="text-sm text-gray-500">
+                  Limited-time offers. Reserve these prices before they expire.
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -338,7 +351,7 @@ export default function Home() {
               <CountdownTimer targetHours={8} />
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {flashDeals.map((product) => (
               <ProductCard key={product.id} product={product} currency={currency} />
             ))}
@@ -346,88 +359,112 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Games */}
       <section className="container mx-auto px-4 py-10">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold">Featured Games</h2>
-          <Button variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50">View All</Button>
+          <Link href="/games">
+            <Button variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50">
+              View All
+            </Button>
+          </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} currency={currency} />
           ))}
         </div>
       </section>
 
-      {/* PlayStation Section */}
-      <section className="bg-gradient-to-br from-blue-900 to-blue-700 text-white py-14">
+      <section className="bg-gradient-to-br from-blue-900 to-blue-700 py-14 text-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
             <div className="md:w-1/2">
-              <span className="bg-blue-500/30 text-blue-200 text-xs font-bold px-3 py-1.5 rounded-full mb-4 inline-block">SONY PLAYSTATION</span>
-              <h2 className="text-4xl font-black mb-4">Shop All Things PlayStation</h2>
-              <p className="text-blue-200 text-lg mb-6">Discover the latest PS5 games, DualSense controllers, and exclusive digital content.</p>
+              <span className="mb-4 inline-block rounded-full bg-blue-500/30 px-3 py-1.5 text-xs font-bold text-blue-200">
+                SONY PLAYSTATION
+              </span>
+              <h2 className="mb-4 text-4xl font-black">Shop All Things PlayStation</h2>
+              <p className="mb-6 text-lg text-blue-200">
+                Discover the latest PS5 games, DualSense controllers, and premium digital content.
+              </p>
               <div className="flex gap-3">
                 <Link href="/playstation">
-                  <Button className="bg-white text-blue-800 hover:bg-blue-50 font-bold px-6">Shop PlayStation</Button>
+                  <Button className="bg-white px-6 font-bold text-blue-800 hover:bg-blue-50">
+                    Shop PlayStation
+                  </Button>
                 </Link>
                 <Link href="/digital-store">
-                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">PSN Cards</Button>
+                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">
+                    PSN Cards
+                  </Button>
                 </Link>
               </div>
             </div>
-            <div className="md:w-1/2 flex justify-center">
-              <img
-                src="/images/banners/ps5-banner.svg"
-                alt="PlayStation 5"
-                className="w-full max-w-sm drop-shadow-2xl"
-              />
+            <div className="md:w-1/2">
+              <div className="lux-media mx-auto max-w-sm rounded-3xl border border-white/20 p-6">
+                <img
+                  src="/images/banners/ps5-banner.svg"
+                  alt="PlayStation 5"
+                  className="w-full drop-shadow-2xl"
+                />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Digital Store */}
-      <section className="bg-gray-900 text-white py-14">
+      <section className="bg-gray-950 py-14 text-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-2">Digital Store</h2>
-            <p className="text-gray-400">Instant delivery — get your codes in minutes via email or WhatsApp</p>
+          <div className="mb-10 text-center">
+            <h2 className="mb-2 text-3xl font-bold">Digital Store</h2>
+            <p className="text-gray-400">
+              Instant delivery with secure code fulfillment via email or WhatsApp.
+            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {digitalProducts.map((product) => (
               <ProductCard key={product.id} product={product} currency={currency} />
             ))}
           </div>
-          <div className="text-center mt-8">
+          <div className="mt-8 text-center">
             <Link href="/digital-store">
-              <Button className="bg-red-600 hover:bg-red-700 px-8">Browse All Digital Products</Button>
+              <Button className="bg-red-600 px-8 hover:bg-red-700">
+                Browse All Digital Products
+              </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Nintendo Section */}
-      <section className="bg-gradient-to-br from-red-700 to-red-600 text-white py-14">
+      <section className="bg-gradient-to-br from-red-700 to-red-600 py-14 text-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="md:w-1/2 order-2 md:order-1 flex justify-center">
-              <img
-                src="/images/banners/switch-banner.svg"
-                alt="Nintendo Switch OLED"
-                className="w-full max-w-sm drop-shadow-2xl"
-              />
+          <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
+            <div className="order-2 md:order-1 md:w-1/2">
+              <div className="lux-media mx-auto max-w-sm rounded-3xl border border-white/20 p-6">
+                <img
+                  src="/images/banners/switch-banner.svg"
+                  alt="Nintendo Switch OLED"
+                  className="w-full drop-shadow-2xl"
+                />
+              </div>
             </div>
-            <div className="md:w-1/2 order-1 md:order-2">
-              <span className="bg-red-500/30 text-red-200 text-xs font-bold px-3 py-1.5 rounded-full mb-4 inline-block">NINTENDO</span>
-              <h2 className="text-4xl font-black mb-4">Shop All Things Nintendo</h2>
-              <p className="text-red-200 text-lg mb-6">Experience gaming anywhere with the Switch OLED and a library of iconic titles.</p>
+            <div className="order-1 md:order-2 md:w-1/2">
+              <span className="mb-4 inline-block rounded-full bg-red-500/30 px-3 py-1.5 text-xs font-bold text-red-200">
+                NINTENDO
+              </span>
+              <h2 className="mb-4 text-4xl font-black">Shop All Things Nintendo</h2>
+              <p className="mb-6 text-lg text-red-200">
+                Experience gaming anywhere with Switch OLED hardware and a strong first-party catalog.
+              </p>
               <div className="flex gap-3">
                 <Link href="/nintendo-switch">
-                  <Button className="bg-white text-red-700 hover:bg-red-50 font-bold px-6">Shop Nintendo</Button>
+                  <Button className="bg-white px-6 font-bold text-red-700 hover:bg-red-50">
+                    Shop Nintendo
+                  </Button>
                 </Link>
                 <Link href="/digital-store">
-                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">eShop Cards</Button>
+                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">
+                    eShop Cards
+                  </Button>
                 </Link>
               </div>
             </div>
@@ -435,107 +472,118 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Xbox Section */}
-      <section className="bg-gradient-to-br from-green-800 to-green-700 text-white py-14">
+      <section className="bg-gradient-to-br from-green-800 to-green-700 py-14 text-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
             <div className="md:w-1/2">
-              <span className="bg-green-600/40 text-green-200 text-xs font-bold px-3 py-1.5 rounded-full mb-4 inline-block">MICROSOFT XBOX</span>
-              <h2 className="text-4xl font-black mb-4">Shop All Things Xbox</h2>
-              <p className="text-green-200 text-lg mb-6">Power your passion with Xbox Series X|S and access to thousands of Game Pass titles.</p>
+              <span className="mb-4 inline-block rounded-full bg-green-600/40 px-3 py-1.5 text-xs font-bold text-green-200">
+                MICROSOFT XBOX
+              </span>
+              <h2 className="mb-4 text-4xl font-black">Shop All Things Xbox</h2>
+              <p className="mb-6 text-lg text-green-200">
+                Power your setup with Xbox Series X|S and a huge library through Game Pass.
+              </p>
               <div className="flex gap-3">
                 <Link href="/xbox">
-                  <Button className="bg-white text-green-800 hover:bg-green-50 font-bold px-6">Shop Xbox</Button>
+                  <Button className="bg-white px-6 font-bold text-green-800 hover:bg-green-50">
+                    Shop Xbox
+                  </Button>
                 </Link>
                 <Link href="/digital-store">
-                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">Game Pass</Button>
+                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">
+                    Game Pass
+                  </Button>
                 </Link>
               </div>
             </div>
-            <div className="md:w-1/2 flex justify-center">
-              <img
-                src="/images/banners/xbox-banner.svg"
-                alt="Xbox Series X"
-                className="w-full max-w-sm drop-shadow-2xl"
-              />
+            <div className="md:w-1/2">
+              <div className="lux-media mx-auto max-w-sm rounded-3xl border border-white/20 p-6">
+                <img src="/images/banners/xbox-banner.svg" alt="Xbox Series X" className="w-full drop-shadow-2xl" />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* IPTV Promo Banner */}
-      <section className="bg-gradient-to-r from-gray-900 via-purple-950 to-gray-900 text-white py-16">
+      <section className="bg-gradient-to-r from-gray-900 via-violet-950 to-gray-900 py-16 text-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="flex flex-col items-center justify-between gap-10 md:flex-row">
             <div className="md:w-1/2">
-              <div className="inline-flex items-center gap-2 bg-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white">
                 <Tv className="h-3.5 w-3.5" />
                 NEW SERVICE
               </div>
-              <h2 className="text-4xl font-black mb-4 leading-tight">
-                Premium IPTV —{' '}
-                <span className="text-purple-400">Stream Everything You Love</span>
+              <h2 className="mb-4 text-4xl font-black leading-tight">
+                Premium IPTV - <span className="text-violet-400">Stream Everything in One Place</span>
               </h2>
-              <p className="text-gray-300 text-lg mb-6">
-                20,000+ live channels, sports, movies & series in HD & 4K. Works on Smart TV, Android, iPhone, and PC. No cables. No contracts.
+              <p className="mb-6 text-lg text-gray-300">
+                20,000+ live channels, sports, movies, and series in HD and 4K. Works on Smart TV, Android, iPhone, and PC.
               </p>
-              <ul className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-8">
-                {['20,000+ Channels', 'Full HD & 4K', 'Sports & PPV', 'Movies & Series', 'Any Device', '24/7 Support'].map((f) => (
+              <ul className="mb-8 grid grid-cols-2 gap-2 text-sm text-gray-300">
+                {['20,000+ Channels', 'Full HD and 4K', 'Sports and PPV', 'Movies and Series', 'Any Device', '24/7 Support'].map((f) => (
                   <li key={f} className="flex items-center gap-2">
-                    <span className="text-green-400">✓</span> {f}
+                    <Check className="h-4 w-4 text-green-400" /> {f}
                   </li>
                 ))}
               </ul>
-              <div className="flex gap-4 flex-wrap">
+              <div className="flex flex-wrap gap-4">
                 <Link href="/iptv">
-                  <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-5 font-bold rounded-xl">
+                  <Button className="rounded-xl bg-violet-600 px-6 py-5 font-bold text-white hover:bg-violet-700">
                     View Plans
                   </Button>
                 </Link>
                 <a href="https://www.ppvarena.com" target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="border-purple-400 text-purple-300 hover:bg-purple-900 px-6 py-5 font-bold rounded-xl">
+                  <Button
+                    variant="outline"
+                    className="rounded-xl border-violet-400 px-6 py-5 font-bold text-violet-300 hover:bg-violet-900"
+                  >
                     Free Trial
                   </Button>
                 </a>
               </div>
             </div>
-            <div className="md:w-1/2 flex flex-col items-center">
-              <div className="bg-purple-900/50 border border-purple-700 rounded-3xl p-8 text-center w-full max-w-sm">
-                <Tv className="h-20 w-20 text-purple-400 mx-auto mb-4" />
-                <div className="text-5xl font-extrabold text-white mb-1">20,000+</div>
-                <div className="text-purple-300 text-lg mb-4">Live Channels Worldwide</div>
-                <div className="grid grid-cols-3 gap-3 text-center text-xs text-gray-400">
+            <div className="md:w-1/2">
+              <div className="lux-card rounded-3xl border border-violet-700/80 bg-violet-900/40 p-8 text-center">
+                <Tv className="mx-auto mb-4 h-20 w-20 text-violet-400" />
+                <div className="mb-1 text-5xl font-extrabold text-white">20,000+</div>
+                <div className="mb-4 text-lg text-violet-300">Live Channels Worldwide</div>
+                <div className="grid grid-cols-3 gap-3 text-center text-xs text-gray-300">
                   {['Sports', 'Movies', 'Series', 'Kids', 'News', 'Local'].map((c) => (
-                    <div key={c} className="bg-gray-800 rounded-lg p-2">{c}</div>
+                    <div key={c} className="rounded-lg bg-gray-800 p-2">
+                      {c}
+                    </div>
                   ))}
                 </div>
               </div>
-              <p className="text-yellow-400 text-sm font-medium mt-4">Limited spots available — Start today!</p>
+              <p className="mt-4 text-center text-sm font-medium text-amber-300">
+                Limited slots available. Start today.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-14 bg-gray-50">
+      <section className="bg-gray-50 py-14">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-2">What Our Customers Say</h2>
+          <div className="mb-10 text-center">
+            <h2 className="mb-2 text-3xl font-bold">What Our Customers Say</h2>
             <p className="text-gray-500">Trusted by 50,000+ gamers across Kenya</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {testimonials.map((t, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <div className="flex text-yellow-400 mb-3">
+              <div key={i} className="lux-card rounded-2xl p-6">
+                <div className="mb-3 flex text-yellow-400">
                   {Array.from({ length: t.rating }).map((_, j) => (
                     <Star key={j} className="h-4 w-4 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">"{t.text}"</p>
-                <div className="border-t border-gray-100 pt-3">
-                  <div className="font-bold text-sm text-gray-900">{t.name}</div>
-                  <div className="text-xs text-gray-400">{t.location} · {t.date}</div>
-                  <div className="text-xs text-red-500 mt-1">Purchased: {t.product}</div>
+                <p className="mb-4 text-sm leading-relaxed text-gray-600">"{t.text}"</p>
+                <div className="border-t border-gray-200 pt-3">
+                  <div className="text-sm font-bold text-gray-900">{t.name}</div>
+                  <div className="text-xs text-gray-500">
+                    {t.location} | {t.date}
+                  </div>
+                  <div className="mt-1 text-xs text-red-500">Purchased: {t.product}</div>
                 </div>
               </div>
             ))}
@@ -543,13 +591,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Brand Partners */}
-      <section className="bg-white border-y border-gray-100 py-10">
+      <section className="border-y border-gray-100 bg-white py-10">
         <div className="container mx-auto px-4">
-          <p className="text-center text-sm text-gray-400 uppercase tracking-widest mb-6 font-semibold">Official Partners & Brands</p>
-          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+          <p className="mb-6 text-center text-sm font-semibold uppercase tracking-widest text-gray-400">
+            Official Partners and Brands
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
             {brands.map((brand) => (
-              <div key={brand} className="text-gray-300 hover:text-gray-600 transition-colors text-xl font-bold">
+              <div key={brand} className="text-xl font-bold text-gray-300 transition-colors hover:text-gray-700">
                 {brand}
               </div>
             ))}
@@ -557,32 +606,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Loyalty Program */}
-      <section className="bg-gradient-to-r from-red-600 to-red-700 text-white py-12">
+      <section className="bg-gradient-to-r from-red-600 to-red-700 py-12 text-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-4">
-              <div className="bg-white/20 rounded-2xl p-4">
+              <div className="rounded-2xl bg-white/20 p-4">
                 <Award className="h-10 w-10" />
               </div>
               <div>
                 <h2 className="text-2xl font-black">GameStop Rewards</h2>
-                <p className="text-red-200">Earn points on every purchase. Redeem for discounts & exclusive rewards.</p>
+                <p className="text-red-100">
+                  Earn points on every purchase and redeem them for discounts and exclusive drops.
+                </p>
               </div>
             </div>
             <div className="flex gap-3">
-              <Button className="bg-white text-red-700 hover:bg-red-50 font-bold px-6">Join Free</Button>
-              <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">Learn More</Button>
+              <Button className="bg-white px-6 font-bold text-red-700 hover:bg-red-50">Join Free</Button>
+              <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">
+                Learn More
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Kenya Features */}
       <section className="bg-green-50 py-14">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-10 text-gray-900">Why Choose GameStop Kenya?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <h2 className="mb-10 text-center text-3xl font-bold text-gray-900">
+            Why Choose GameStop Kenya?
+          </h2>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             {[
               {
                 icon: Truck,
@@ -594,41 +647,44 @@ export default function Home() {
                 icon: CreditCard,
                 color: 'bg-green-600',
                 title: 'M-Pesa Ready',
-                desc: 'Pay easily with M-Pesa, Airtel Money, Visa, or Mastercard. Instant confirmation.',
+                desc: 'Pay easily with M-Pesa, Airtel Money, Visa, or Mastercard with instant confirmation.',
               },
               {
                 icon: ShoppingBag,
                 color: 'bg-green-600',
                 title: 'Local Support',
-                desc: 'Dedicated 24/7 customer service in Swahili and English. Always here to help.',
+                desc: 'Dedicated support team available in English and Swahili for quick issue resolution.',
               },
             ].map(({ icon: Icon, color, title, desc }) => (
-              <div key={title} className="text-center">
-                <div className={`${color} text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+              <div key={title} className="lux-card rounded-2xl p-6 text-center">
+                <div className={`${color} mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg`}>
                   <Icon className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">{title}</h3>
-                <p className="text-gray-600 leading-relaxed">{desc}</p>
+                <h3 className="mb-2 text-xl font-bold">{title}</h3>
+                <p className="leading-relaxed text-gray-600">{desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="bg-gray-900 text-white py-14">
+      <section className="bg-gray-900 py-14 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-2">Stay in the Game</h2>
-          <p className="text-gray-400 mb-8 max-w-md mx-auto">Get exclusive deals, new arrivals, and gaming news delivered to your inbox. No spam, ever.</p>
-          <div className="max-w-md mx-auto flex gap-3">
+          <h2 className="mb-2 text-3xl font-bold">Stay in the Game</h2>
+          <p className="mx-auto mb-8 max-w-md text-gray-400">
+            Get exclusive deals, new arrivals, and gaming news sent directly to your inbox.
+          </p>
+          <div className="mx-auto flex max-w-md gap-3">
             <input
               type="email"
               placeholder="Your email address"
-              className="flex-1 px-4 py-3 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+              className="flex-1 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500"
             />
-            <Button className="bg-red-600 hover:bg-red-700 px-6 rounded-xl font-bold">Subscribe</Button>
+            <Button className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
+              Subscribe
+            </Button>
           </div>
-          <p className="text-gray-500 text-xs mt-3">Join 50,000+ subscribers. Unsubscribe anytime.</p>
+          <p className="mt-3 text-xs text-gray-500">Join 50,000+ subscribers. Unsubscribe anytime.</p>
         </div>
       </section>
 

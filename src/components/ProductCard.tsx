@@ -1,6 +1,6 @@
 'use client';
 
-import { ShoppingCart, Heart } from 'lucide-react';
+import { ShoppingCart, Heart, Star, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 
@@ -23,6 +23,13 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, currency }: ProductCardProps) {
   const { addItem } = useCart();
+  const rating = product.rating ?? 0;
+  const isInStock = product.inStock ?? true;
+  const hasDiscount =
+    typeof product.originalPrice === 'number' && product.originalPrice > product.price;
+  const savingsRate = hasDiscount
+    ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)
+    : 0;
 
   const handleAddToCart = () => {
     addItem({
@@ -31,12 +38,11 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
       image: product.image,
       price: product.price,
       platform: product.platform || 'PC',
-      isDigital: product.isDigital
+      isDigital: product.isDigital,
     });
   };
 
   const formatPrice = (price: number) => {
-    // Convert KES to USD (approximate rate: 1 USD = 150 KES)
     const convertedPrice = currency.code === 'USD' ? price / 150 : price;
     return `${currency.symbol}${Math.round(convertedPrice).toLocaleString()}`;
   };
@@ -46,109 +52,121 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
       case 'playstation':
       case 'ps5':
       case 'ps4':
-        return 'bg-blue-600';
+        return 'bg-blue-600/95 ring-blue-300/70';
       case 'xbox':
-        return 'bg-green-600';
+        return 'bg-emerald-600/95 ring-emerald-300/70';
       case 'nintendo':
       case 'switch':
-        return 'bg-red-600';
+        return 'bg-red-600/95 ring-red-300/70';
       case 'pc':
-        return 'bg-gray-600';
+        return 'bg-slate-700/95 ring-slate-300/60';
       default:
-        return 'bg-gray-500';
+        return 'bg-gray-600/95 ring-gray-300/70';
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 group">
-      {/* Product Image */}
-      <div className="relative overflow-hidden rounded-t-lg">
+    <article className="lux-card group flex h-full flex-col overflow-hidden rounded-2xl">
+      <div className="lux-media relative rounded-t-2xl">
         <img
           src={product.image}
           alt={product.title}
-          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+          className="h-52 w-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent" />
 
-        {/* Platform badge */}
         {product.platform && (
-          <div className={`absolute top-2 left-2 ${getPlatformColor(product.platform)} text-white px-2 py-1 rounded text-xs font-semibold`}>
+          <div
+            className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ${getPlatformColor(product.platform)}`}
+          >
             {product.platform}
           </div>
         )}
 
-        {/* Digital badge */}
         {product.isDigital && (
-          <div className="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded text-xs font-semibold">
+          <div className="absolute right-3 top-3 rounded-full bg-violet-600/95 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-violet-300/70">
             DIGITAL
           </div>
         )}
 
-        {/* Wishlist button */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-2 right-2 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute bottom-3 right-3 h-9 w-9 rounded-full bg-white/85 text-gray-700 opacity-0 transition-opacity hover:bg-white group-hover:opacity-100"
         >
           <Heart className="h-4 w-4" />
         </Button>
 
-        {/* Stock status */}
-        {!product.inStock && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-white font-semibold">OUT OF STOCK</span>
+        {!isInStock && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+            <span className="font-semibold text-white">OUT OF STOCK</span>
           </div>
         )}
       </div>
 
-      {/* Product Info */}
-      <div className="p-4">
-        <h3 className="font-semibold text-sm mb-2 line-clamp-2 h-10">
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="mb-2 line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-gray-900">
           {product.title}
         </h3>
 
-        {/* Rating */}
-        {product.rating && (
-          <div className="flex items-center mb-2">
-            <div className="flex text-yellow-400">
+        {rating > 0 && (
+          <div className="mb-3 flex items-center">
+            <div className="flex items-center text-amber-400">
               {[...Array(5)].map((_, i) => (
-                <span key={i} className={i < Math.floor(product.rating!) ? 'text-yellow-400' : 'text-gray-300'}>
-                  ★
-                </span>
+                <Star
+                  key={i}
+                  className={`h-3.5 w-3.5 ${
+                    i < Math.floor(rating) ? 'fill-current text-amber-400' : 'text-gray-300'
+                  }`}
+                />
               ))}
             </div>
-            <span className="text-xs text-gray-500 ml-1">({product.rating})</span>
+            <span className="ml-1 text-xs font-medium text-gray-500">
+              {rating.toFixed(1)}
+            </span>
           </div>
         )}
 
-        {/* Price */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-red-600">
-              {formatPrice(product.price)}
-            </span>
-            {product.originalPrice && (
+            <span className="text-xl font-black tracking-tight text-red-600">{formatPrice(product.price)}</span>
+            {hasDiscount && (
               <span className="text-sm text-gray-500 line-through">
-                {formatPrice(product.originalPrice)}
+                {formatPrice(product.originalPrice!)}
               </span>
             )}
           </div>
 
-          {product.originalPrice && (
-            <div className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
-              SAVE {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+          {hasDiscount && (
+            <div className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-100">
+              SAVE {savingsRate}%
             </div>
           )}
         </div>
 
-        {/* Add to Cart */}
+        <div className="mb-3 flex items-center gap-2 text-xs text-gray-500">
+          {isInStock ? (
+            <>
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+              <span>In stock and ready to dispatch</span>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
+              <span>Backorder available on request</span>
+            </>
+          )}
+        </div>
+
         <Button
-          className="w-full bg-red-600 hover:bg-red-700"
-          disabled={!product.inStock}
+          className="mt-auto w-full bg-red-600 font-semibold hover:bg-red-700"
+          disabled={!isInStock}
           onClick={handleAddToCart}
         >
-          {product.inStock ? (
+          {isInStock ? (
             <>
-              <ShoppingCart className="h-4 w-4 mr-2" />
+              <ShoppingCart className="mr-2 h-4 w-4" />
               Add to Cart
             </>
           ) : (
@@ -156,6 +174,6 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
           )}
         </Button>
       </div>
-    </div>
+    </article>
   );
 }

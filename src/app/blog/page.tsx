@@ -51,8 +51,8 @@ export default function BlogPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {featuredPosts.map((post, index) => (
                 <article key={post.id} className={index === 0 ? 'lg:col-span-2' : ''}>
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="relative">
+                  <div className="lux-card overflow-hidden rounded-2xl">
+                    <div className="lux-media relative">
                       <img
                         src={post.coverImage}
                         alt={post.title}
@@ -131,8 +131,8 @@ export default function BlogPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPosts.map((post) => (
-              <article key={post.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-                <div className="relative">
+              <article key={post.id} className="lux-card overflow-hidden rounded-2xl">
+                <div className="lux-media relative">
                   <img src={post.coverImage} alt={post.title} className="w-full h-48 object-cover" />
                   <div className={`absolute top-3 left-3 ${post.category.color} text-white px-2 py-1 rounded-full text-xs font-bold`}>
                     {post.category.name}
@@ -150,7 +150,11 @@ export default function BlogPage() {
                   <p className="text-gray-500 text-sm mb-4 line-clamp-2">{post.excerpt}</p>
                   <div className="flex items-center justify-between text-xs text-gray-400">
                     <div className="flex items-center gap-2">
-                      <img src={post.author.avatar} alt={post.author.name} className="w-6 h-6 rounded-full" />
+                      <img
+                        src={post.author.avatar}
+                        alt={post.author.name}
+                        className="h-6 w-6 rounded-full ring-2 ring-white shadow-sm"
+                      />
                       <span>{post.author.name}</span>
                       <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{post.readTime}m</span>
                     </div>

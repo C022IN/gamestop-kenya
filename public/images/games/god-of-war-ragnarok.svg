@@ -1,5 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400">
   <defs>
+<linearGradient id="luxSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22"/>
+  <stop offset="40%" stop-color="#ffffff" stop-opacity="0.04"/>
+  <stop offset="100%" stop-color="#000000" stop-opacity="0.06"/>
+</linearGradient>
+<radialGradient id="luxVignette" cx="50%" cy="45%" r="75%">
+  <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+  <stop offset="100%" stop-color="#000000" stop-opacity="0.28"/>
+</radialGradient>
+<filter id="luxGrain">
+  <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="2" seed="7" stitchTiles="stitch"/>
+  <feColorMatrix type="saturate" values="0"/>
+  <feComponentTransfer>
+    <feFuncA type="table" tableValues="0 0.045"/>
+  </feComponentTransfer>
+</filter>
+
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#050810"/>
       <stop offset="40%" style="stop-color:#0d1525"/>
@@ -120,4 +137,7 @@
 
   <!-- Border -->
   <rect x="0" y="0" width="300" height="400" fill="none" stroke="#4488cc" stroke-width="2" opacity="0.5" filter="url(#softglow)"/>
+<rect data-lux-overlay="true" x="0" y="0" width="100%" height="100%" fill="url(#luxSheen)" opacity="0.22"/>
+<rect x="0" y="0" width="100%" height="100%" fill="url(#luxVignette)" opacity="0.32"/>
+<rect x="0" y="0" width="100%" height="100%" filter="url(#luxGrain)" opacity="0.24"/>
 </svg>
