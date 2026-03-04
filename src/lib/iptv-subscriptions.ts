@@ -171,3 +171,9 @@ export function getSubscriptionByPhone(phone: string): IptvSubscription[] {
   const ids = byPhone.get(phone) ?? [];
   return ids.map((id) => subscriptions.get(id)).filter(Boolean) as IptvSubscription[];
 }
+
+export function getAllSubscriptions(): IptvSubscription[] {
+  return Array.from(subscriptions.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
