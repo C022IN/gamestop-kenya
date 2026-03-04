@@ -29,6 +29,13 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## File Format Standards
+
+- Text files are tracked as UTF-8 with LF line endings (`.gitattributes`, `.editorconfig`).
+- Windows scripts (`.bat`, `.cmd`, `.ps1`) are kept as CRLF.
+- Binary assets (images, fonts, archives, PDFs) are explicitly marked as binary.
+- If you add a new file type, update `.gitattributes` so format behavior stays explicit.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

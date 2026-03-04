@@ -1,0 +1,34 @@
+# Enforce normalized line endings and text handling across the repo.
+* text=auto eol=lf
+
+# Keep Windows shell scripts in CRLF for native execution.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Treat source and config files as text explicitly.
+*.ts text
+*.tsx text
+*.js text
+*.mjs text
+*.json text
+*.css text
+*.md text
+*.toml text
+*.yaml text
+*.yml text
+*.lock text
+*.svg text
+
+# Binary assets should never be line-normalized.
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
