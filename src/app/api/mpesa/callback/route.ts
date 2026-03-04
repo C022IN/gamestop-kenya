@@ -1,21 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-/**
- * In-memory payment status store.
- *
- * NOTE: This works within a single server process. In production, replace
- * with a database (e.g. Redis, Postgres, PlanetScale) so multiple
- * serverless instances share state.
- */
-export const paymentResults = new Map<string, {
-  status: 'success' | 'failed';
-  resultCode: string;
-  resultDesc: string;
-  mpesaReceiptNumber?: string;
-  transactionDate?: string;
-  phoneNumber?: string;
-  amount?: number;
-}>();
+import { paymentResults } from '@/lib/mpesa-payment-results';
 
 /**
  * Safaricom sends the STK Push result to this URL.

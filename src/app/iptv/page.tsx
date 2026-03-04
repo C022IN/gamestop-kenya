@@ -210,11 +210,13 @@ const faqs = [
   },
 ];
 
+const FLASH_SALE_DURATION_MS = (5 * 3600 + 50 * 60 + 56) * 1000;
+
 function FlashCountdown() {
   const [time, setTime] = useState({ h: 5, m: 50, s: 56 });
 
   useEffect(() => {
-    const end = Date.now() + (time.h * 3600 + time.m * 60 + time.s) * 1000;
+    const end = Date.now() + FLASH_SALE_DURATION_MS;
     const id = setInterval(() => {
       const diff = Math.max(0, end - Date.now());
       setTime({

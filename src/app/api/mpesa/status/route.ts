@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryStkStatus } from '@/lib/mpesa';
-import { paymentResults } from '../callback/route';
+import { paymentResults } from '@/lib/mpesa-payment-results';
 
 /**
  * GET /api/mpesa/status?id=<checkoutRequestId>
