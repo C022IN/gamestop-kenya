@@ -28,7 +28,8 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
     'Xbox',
     'Pre-Owned',
     'Blog',
-    'Digital Store'
+    'Digital Store',
+    'IPTV'
   ];
 
   return (

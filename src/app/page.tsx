@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import HeroSlider from '@/components/HeroSlider';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Gamepad2, CreditCard, Truck } from 'lucide-react';
+import { ShoppingBag, Gamepad2, CreditCard, Truck, Tv } from 'lucide-react';
 
 export default function Home() {
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
@@ -234,6 +234,63 @@ export default function Home() {
                 alt="Xbox Series X"
                 className="w-full max-w-md mx-auto"
               />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* IPTV Promo Banner */}
+      <section className="bg-gradient-to-r from-gray-900 via-purple-950 to-gray-900 text-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-10">
+            <div className="md:w-1/2">
+              <div className="inline-flex items-center gap-2 bg-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+                <Tv className="h-3.5 w-3.5" />
+                NEW SERVICE
+              </div>
+              <h2 className="text-4xl font-bold mb-4 leading-tight">
+                Premium IPTV —{' '}
+                <span className="text-purple-400">Stream Everything You Love</span>
+              </h2>
+              <p className="text-gray-300 text-lg mb-6">
+                20,000+ live channels, sports, movies & series in HD & 4K. Works on Smart TV, Android, iPhone, and PC.
+                No cables. No contracts.
+              </p>
+              <ul className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-8">
+                {['20,000+ Channels', 'Full HD & 4K', 'Sports & PPV', 'Movies & Series', 'Any Device', '24/7 Support'].map((f) => (
+                  <li key={f} className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span> {f}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex gap-4">
+                <a href="/iptv">
+                  <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-5 font-bold rounded-xl">
+                    View Plans
+                  </Button>
+                </a>
+                <a href="https://www.ppvarena.com" target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" className="border-purple-400 text-purple-300 hover:bg-purple-900 px-6 py-5 font-bold rounded-xl">
+                    Free Trial
+                  </Button>
+                </a>
+              </div>
+            </div>
+            <div className="md:w-1/2 flex flex-col items-center">
+              <div className="bg-purple-900/50 border border-purple-700 rounded-3xl p-8 text-center w-full max-w-sm">
+                <Tv className="h-20 w-20 text-purple-400 mx-auto mb-4" />
+                <div className="text-5xl font-extrabold text-white mb-1">20,000+</div>
+                <div className="text-purple-300 text-lg mb-4">Live Channels Worldwide</div>
+                <div className="grid grid-cols-3 gap-3 text-center text-xs text-gray-400">
+                  <div className="bg-gray-800 rounded-lg p-2">Sports</div>
+                  <div className="bg-gray-800 rounded-lg p-2">Movies</div>
+                  <div className="bg-gray-800 rounded-lg p-2">Series</div>
+                  <div className="bg-gray-800 rounded-lg p-2">Kids</div>
+                  <div className="bg-gray-800 rounded-lg p-2">News</div>
+                  <div className="bg-gray-800 rounded-lg p-2">Local</div>
+                </div>
+              </div>
+              <p className="text-yellow-400 text-sm font-medium mt-4">Limited spots available — Start today!</p>
             </div>
           </div>
         </div>
