@@ -1,11 +1,255 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import HeroSlider from '@/components/HeroSlider';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, Gamepad2, CreditCard, Truck, Tv } from 'lucide-react';
+import {
+  ShoppingBag,
+  Gamepad2,
+  CreditCard,
+  Truck,
+  Tv,
+  Star,
+  Users,
+  Package,
+  Award,
+  ChevronRight,
+  Zap,
+  Clock,
+} from 'lucide-react';
+
+const featuredProducts = [
+  {
+    id: '1',
+    title: "Marvel's Spider-Man 2 — PlayStation 5",
+    image: 'https://via.placeholder.com/300x400/1e3a8a/93c5fd?text=Spider-Man+2+PS5',
+    price: 8500,
+    originalPrice: 9500,
+    platform: 'PS5',
+    rating: 4.8,
+    inStock: true,
+  },
+  {
+    id: '2',
+    title: 'Super Mario Bros. Wonder — Nintendo Switch',
+    image: 'https://via.placeholder.com/300x400/7f1d1d/fca5a5?text=Mario+Wonder',
+    price: 7000,
+    platform: 'Switch',
+    rating: 4.9,
+    inStock: true,
+  },
+  {
+    id: '3',
+    title: 'Forza Horizon 5 — Xbox Series X',
+    image: 'https://via.placeholder.com/300x400/052e16/86efac?text=Forza+5+Xbox',
+    price: 6500,
+    originalPrice: 7500,
+    platform: 'Xbox',
+    rating: 4.7,
+    inStock: true,
+  },
+  {
+    id: '4',
+    title: 'Cyberpunk 2077 Ultimate Edition — PC',
+    image: 'https://via.placeholder.com/300x400/111827/d1d5db?text=Cyberpunk+2077',
+    price: 5500,
+    originalPrice: 8000,
+    platform: 'PC',
+    rating: 4.5,
+    inStock: true,
+  },
+];
+
+const flashDeals = [
+  {
+    id: 'f1',
+    title: "God of War: Ragnarök — PS5",
+    image: 'https://via.placeholder.com/300x400/1e3a8a/93c5fd?text=God+of+War',
+    price: 7200,
+    originalPrice: 9500,
+    platform: 'PS5',
+    rating: 4.9,
+    inStock: true,
+  },
+  {
+    id: 'f2',
+    title: 'Hogwarts Legacy — Xbox',
+    image: 'https://via.placeholder.com/300x400/052e16/86efac?text=Hogwarts+Legacy',
+    price: 5800,
+    originalPrice: 8500,
+    platform: 'Xbox',
+    rating: 4.6,
+    inStock: true,
+  },
+  {
+    id: 'f3',
+    title: 'Zelda: Tears of the Kingdom — Switch',
+    image: 'https://via.placeholder.com/300x400/7f1d1d/fca5a5?text=Zelda+TOTK',
+    price: 6800,
+    originalPrice: 8200,
+    platform: 'Switch',
+    rating: 4.9,
+    inStock: true,
+  },
+  {
+    id: 'f4',
+    title: 'EA FC 25 — PS5',
+    image: 'https://via.placeholder.com/300x400/1e3a8a/93c5fd?text=EA+FC+25',
+    price: 6500,
+    originalPrice: 8000,
+    platform: 'PS5',
+    rating: 4.3,
+    inStock: true,
+  },
+];
+
+const digitalProducts = [
+  {
+    id: '5',
+    title: 'PlayStation Network Card — KSh 2,000',
+    image: 'https://via.placeholder.com/300x400/1d4ed8/bfdbfe?text=PSN+Card',
+    price: 2000,
+    platform: 'PlayStation',
+    isDigital: true,
+    inStock: true,
+  },
+  {
+    id: '6',
+    title: 'Xbox Game Pass Ultimate — 3 Months',
+    image: 'https://via.placeholder.com/300x400/15803d/bbf7d0?text=Game+Pass',
+    price: 4500,
+    platform: 'Xbox',
+    isDigital: true,
+    inStock: true,
+  },
+  {
+    id: '7',
+    title: 'Nintendo eShop Card — KSh 1,500',
+    image: 'https://via.placeholder.com/300x400/b91c1c/fecaca?text=eShop+Card',
+    price: 1500,
+    platform: 'Nintendo',
+    isDigital: true,
+    inStock: true,
+  },
+  {
+    id: '8',
+    title: 'Steam Wallet Code — KSh 3,000',
+    image: 'https://via.placeholder.com/300x400/374151/d1d5db?text=Steam+Wallet',
+    price: 3000,
+    platform: 'PC',
+    isDigital: true,
+    inStock: true,
+  },
+];
+
+const categories = [
+  {
+    name: 'Video Games',
+    icon: Gamepad2,
+    image: 'https://via.placeholder.com/400x200/1e3a8a/93c5fd?text=Video+Games',
+    count: '500+',
+    href: '/games',
+    color: 'text-blue-600',
+  },
+  {
+    name: 'Consoles',
+    icon: ShoppingBag,
+    image: 'https://via.placeholder.com/400x200/1d4ed8/bfdbfe?text=Consoles',
+    count: '50+',
+    href: '/consoles',
+    color: 'text-purple-600',
+  },
+  {
+    name: 'Digital Codes',
+    icon: CreditCard,
+    image: 'https://via.placeholder.com/400x200/15803d/bbf7d0?text=Digital+Codes',
+    count: '100+',
+    href: '/digital-store',
+    color: 'text-green-600',
+  },
+  {
+    name: 'Accessories',
+    icon: Truck,
+    image: 'https://via.placeholder.com/400x200/b91c1c/fecaca?text=Accessories',
+    count: '200+',
+    href: '/accessories',
+    color: 'text-red-600',
+  },
+];
+
+const testimonials = [
+  {
+    name: 'Brian Mutua',
+    location: 'Nairobi CBD',
+    rating: 5,
+    text: 'Ordered a PS5 on a Friday, got it delivered the same evening in Westlands. Packaging was perfect and price was unbeatable. GameStop Kenya is the real deal!',
+    product: 'PlayStation 5',
+    date: 'January 2025',
+  },
+  {
+    name: 'Amina Wanjiru',
+    location: 'Kilimani',
+    rating: 5,
+    text: "I bought the Nintendo Switch OLED for my daughter's birthday. The team helped me choose the right bundle and delivery was on time. Very professional service!",
+    product: 'Nintendo Switch OLED',
+    date: 'February 2025',
+  },
+  {
+    name: 'James Ochieng',
+    location: 'Westlands',
+    rating: 5,
+    text: 'The IPTV subscription has been amazing. 20,000+ channels and the Premier League in full HD. Set up was easy and support helped me configure it in 10 minutes.',
+    product: 'Premium IPTV — 3 Months',
+    date: 'March 2025',
+  },
+  {
+    name: 'Sandra Cherop',
+    location: 'Thika Road',
+    rating: 4,
+    text: 'Good selection of games and very fair prices. M-Pesa payment was quick and seamless. Got my Xbox Series S within 2 days. Will definitely order again.',
+    product: 'Xbox Series S',
+    date: 'February 2025',
+  },
+];
+
+const brands = ['Sony', 'Microsoft', 'Nintendo', 'Razer', 'Logitech', 'SteelSeries', 'HyperX', 'Corsair'];
+
+function CountdownTimer({ targetHours = 8 }: { targetHours?: number }) {
+  const [timeLeft, setTimeLeft] = useState({ h: targetHours, m: 0, s: 0 });
+
+  useEffect(() => {
+    const end = Date.now() + targetHours * 3600 * 1000;
+    const tick = () => {
+      const diff = Math.max(0, end - Date.now());
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeLeft({ h, m, s });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [targetHours]);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return (
+    <div className="flex items-center gap-2">
+      {[timeLeft.h, timeLeft.m, timeLeft.s].map((val, i) => (
+        <span key={i} className="flex items-center gap-1">
+          <span className="bg-gray-900 text-white text-lg font-mono font-bold px-2.5 py-1 rounded-lg min-w-[2.5rem] text-center">
+            {pad(val)}
+          </span>
+          {i < 2 && <span className="text-gray-500 font-bold">:</span>}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default function Home() {
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
@@ -18,158 +262,125 @@ export default function Home() {
     );
   };
 
-  // Sample product data
-  const featuredProducts = [
-    {
-      id: '1',
-      title: 'Marvel\'s Spider-Man 2 - PlayStation 5',
-      image: 'https://via.placeholder.com/300x400/1f2937/ffffff?text=Spider-Man+2+PS5',
-      price: 8500,
-      originalPrice: 9500,
-      platform: 'PS5',
-      rating: 4.8,
-      inStock: true
-    },
-    {
-      id: '2',
-      title: 'Super Mario Bros. Wonder - Nintendo Switch',
-      image: 'https://via.placeholder.com/300x400/dc2626/ffffff?text=Mario+Wonder+Switch',
-      price: 7000,
-      platform: 'Switch',
-      rating: 4.9,
-      inStock: true
-    },
-    {
-      id: '3',
-      title: 'Forza Horizon 5 - Xbox Series X',
-      image: 'https://via.placeholder.com/300x400/16a34a/ffffff?text=Forza+5+Xbox',
-      price: 6500,
-      originalPrice: 7500,
-      platform: 'Xbox',
-      rating: 4.7,
-      inStock: true
-    },
-    {
-      id: '4',
-      title: 'Cyberpunk 2077 Ultimate Edition - PC',
-      image: 'https://via.placeholder.com/300x400/6b7280/ffffff?text=Cyberpunk+2077+PC',
-      price: 5500,
-      originalPrice: 8000,
-      platform: 'PC',
-      rating: 4.2,
-      inStock: true
-    }
-  ];
-
-  const digitalProducts = [
-    {
-      id: '5',
-      title: 'PlayStation Network Card - KSh 2000',
-      image: 'https://via.placeholder.com/300x400/2563eb/ffffff?text=PSN+Card+2000',
-      price: 2000,
-      platform: 'PlayStation',
-      isDigital: true,
-      inStock: true
-    },
-    {
-      id: '6',
-      title: 'Xbox Live Gold 12 Months',
-      image: 'https://via.placeholder.com/300x400/16a34a/ffffff?text=Xbox+Live+Gold',
-      price: 4500,
-      platform: 'Xbox',
-      isDigital: true,
-      inStock: true
-    },
-    {
-      id: '7',
-      title: 'Nintendo eShop Card - KSh 1500',
-      image: 'https://via.placeholder.com/300x400/dc2626/ffffff?text=eShop+Card+1500',
-      price: 1500,
-      platform: 'Nintendo',
-      isDigital: true,
-      inStock: true
-    },
-    {
-      id: '8',
-      title: 'Steam Wallet Code - KSh 3000',
-      image: 'https://via.placeholder.com/300x400/1f2937/ffffff?text=Steam+Wallet+3000',
-      price: 3000,
-      platform: 'PC',
-      isDigital: true,
-      inStock: true
-    }
-  ];
-
-  const categories = [
-    { name: 'Video Games', icon: Gamepad2, image: 'https://via.placeholder.com/400x200/1f2937/ffffff?text=Video+Games', count: '500+' },
-    { name: 'Consoles', icon: ShoppingBag, image: 'https://via.placeholder.com/400x200/2563eb/ffffff?text=Consoles', count: '50+' },
-    { name: 'Digital Codes', icon: CreditCard, image: 'https://via.placeholder.com/400x200/16a34a/ffffff?text=Digital+Codes', count: '100+' },
-    { name: 'Accessories', icon: Truck, image: 'https://via.placeholder.com/400x200/dc2626/ffffff?text=Accessories', count: '200+' }
-  ];
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header currency={currency} onCurrencyToggle={toggleCurrency} />
 
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-8">
+      {/* Hero Slider */}
+      <section className="container mx-auto px-4 py-6">
         <HeroSlider />
       </section>
 
-      {/* Quick Categories */}
-      <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6">Shop by Category</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {categories.map((category, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer">
-              <img
-                src={category.image}
-                alt={category.name}
-                className="w-full h-32 object-cover rounded-t-lg"
-              />
-              <div className="p-4 text-center">
-                <category.icon className="h-8 w-8 mx-auto mb-2 text-red-600" />
-                <h3 className="font-semibold">{category.name}</h3>
-                <p className="text-sm text-gray-500">{category.count} items</p>
+      {/* Trust Stats Bar */}
+      <section className="bg-white border-y border-gray-100 py-6">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { icon: Users, value: '50,000+', label: 'Happy Customers', color: 'text-blue-600' },
+              { icon: Package, value: '10,000+', label: 'Products in Stock', color: 'text-green-600' },
+              { icon: Award, value: '6 Years', label: 'Trusted Since 2019', color: 'text-purple-600' },
+              { icon: Star, value: '4.9/5', label: 'Customer Rating', color: 'text-yellow-500' },
+            ].map(({ icon: Icon, value, label, color }) => (
+              <div key={label} className="flex flex-col items-center gap-1">
+                <Icon className={`h-6 w-6 ${color}`} />
+                <span className="text-xl font-extrabold text-gray-900">{value}</span>
+                <span className="text-xs text-gray-500">{label}</span>
               </div>
-            </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Categories */}
+      <section className="container mx-auto px-4 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Shop by Category</h2>
+          <Link href="/games" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:underline">
+            View All <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+          {categories.map((cat) => (
+            <Link key={cat.name} href={cat.href}>
+              <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group overflow-hidden">
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="p-4 text-center">
+                  <cat.icon className={`h-7 w-7 mx-auto mb-1.5 ${cat.color}`} />
+                  <h3 className="font-bold text-sm">{cat.name}</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">{cat.count} items</p>
+                </div>
+              </div>
+            </Link>
           ))}
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Featured Games</h2>
-          <Button variant="outline">View All</Button>
+      {/* Flash Deals */}
+      <section className="bg-white py-10 border-y border-gray-100">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="bg-red-600 text-white p-2 rounded-lg">
+                <Zap className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Flash Deals</h2>
+                <p className="text-sm text-gray-500">Limited time offers — grab them before they're gone!</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Clock className="h-4 w-4 text-red-600" />
+              <span className="text-sm font-medium text-gray-600">Ends in:</span>
+              <CountdownTimer targetHours={8} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {flashDeals.map((product) => (
+              <ProductCard key={product.id} product={product} currency={currency} />
+            ))}
+          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      </section>
+
+      {/* Featured Games */}
+      <section className="container mx-auto px-4 py-10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Featured Games</h2>
+          <Button variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50">View All</Button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {featuredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              currency={currency}
-            />
+            <ProductCard key={product.id} product={product} currency={currency} />
           ))}
         </div>
       </section>
 
       {/* PlayStation Section */}
-      <section className="bg-blue-600 text-white py-12">
+      <section className="bg-gradient-to-br from-blue-900 to-blue-700 text-white py-14">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="md:w-1/2 mb-8 md:mb-0">
-              <h2 className="text-4xl font-bold mb-4">Shop All Things PlayStation</h2>
-              <p className="text-xl mb-6">Discover the latest PS5 games, accessories, and digital content</p>
-              <Button className="bg-white text-blue-600 hover:bg-gray-100">
-                Shop PlayStation
-              </Button>
-            </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="md:w-1/2">
+              <span className="bg-blue-500/30 text-blue-200 text-xs font-bold px-3 py-1.5 rounded-full mb-4 inline-block">SONY PLAYSTATION</span>
+              <h2 className="text-4xl font-black mb-4">Shop All Things PlayStation</h2>
+              <p className="text-blue-200 text-lg mb-6">Discover the latest PS5 games, DualSense controllers, and exclusive digital content.</p>
+              <div className="flex gap-3">
+                <Link href="/playstation">
+                  <Button className="bg-white text-blue-800 hover:bg-blue-50 font-bold px-6">Shop PlayStation</Button>
+                </Link>
+                <Link href="/digital-store">
+                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">PSN Cards</Button>
+                </Link>
+              </div>
+            </div>
+            <div className="md:w-1/2 flex justify-center">
               <img
-                src="https://via.placeholder.com/400x400/ffffff/2563eb?text=PlayStation+5"
+                src="https://via.placeholder.com/400x350/1e3a8a/93c5fd?text=PlayStation+5"
                 alt="PlayStation 5"
-                className="w-full max-w-md mx-auto"
+                className="w-full max-w-sm drop-shadow-2xl"
               />
             </div>
           </div>
@@ -177,62 +388,75 @@ export default function Home() {
       </section>
 
       {/* Digital Store */}
-      <section className="bg-gray-900 text-white py-12">
+      <section className="bg-gray-900 text-white py-14">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Digital Store</h2>
-            <p className="text-lg">Instant delivery of digital codes and gift cards</p>
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-2">Digital Store</h2>
+            <p className="text-gray-400">Instant delivery — get your codes in minutes via email or WhatsApp</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {digitalProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                currency={currency}
-              />
+              <ProductCard key={product.id} product={product} currency={currency} />
             ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link href="/digital-store">
+              <Button className="bg-red-600 hover:bg-red-700 px-8">Browse All Digital Products</Button>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Nintendo Section */}
-      <section className="bg-red-600 text-white py-12">
+      <section className="bg-gradient-to-br from-red-700 to-red-600 text-white py-14">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="md:w-1/2">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="md:w-1/2 order-2 md:order-1 flex justify-center">
               <img
-                src="https://via.placeholder.com/400x400/ffffff/dc2626?text=Nintendo+Switch"
-                alt="Nintendo Switch"
-                className="w-full max-w-md mx-auto"
+                src="https://via.placeholder.com/400x350/7f1d1d/fca5a5?text=Nintendo+Switch+OLED"
+                alt="Nintendo Switch OLED"
+                className="w-full max-w-sm drop-shadow-2xl"
               />
             </div>
-            <div className="md:w-1/2 mb-8 md:mb-0">
-              <h2 className="text-4xl font-bold mb-4">Shop All Things Nintendo</h2>
-              <p className="text-xl mb-6">Experience gaming anywhere with Nintendo Switch</p>
-              <Button className="bg-white text-red-600 hover:bg-gray-100">
-                Shop Nintendo
-              </Button>
+            <div className="md:w-1/2 order-1 md:order-2">
+              <span className="bg-red-500/30 text-red-200 text-xs font-bold px-3 py-1.5 rounded-full mb-4 inline-block">NINTENDO</span>
+              <h2 className="text-4xl font-black mb-4">Shop All Things Nintendo</h2>
+              <p className="text-red-200 text-lg mb-6">Experience gaming anywhere with the Switch OLED and a library of iconic titles.</p>
+              <div className="flex gap-3">
+                <Link href="/nintendo-switch">
+                  <Button className="bg-white text-red-700 hover:bg-red-50 font-bold px-6">Shop Nintendo</Button>
+                </Link>
+                <Link href="/digital-store">
+                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">eShop Cards</Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Xbox Section */}
-      <section className="bg-green-600 text-white py-12">
+      <section className="bg-gradient-to-br from-green-800 to-green-700 text-white py-14">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="md:w-1/2 mb-8 md:mb-0">
-              <h2 className="text-4xl font-bold mb-4">Shop All Things Xbox</h2>
-              <p className="text-xl mb-6">Power your dreams with Xbox Series X|S</p>
-              <Button className="bg-white text-green-600 hover:bg-gray-100">
-                Shop Xbox
-              </Button>
-            </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="md:w-1/2">
+              <span className="bg-green-600/40 text-green-200 text-xs font-bold px-3 py-1.5 rounded-full mb-4 inline-block">MICROSOFT XBOX</span>
+              <h2 className="text-4xl font-black mb-4">Shop All Things Xbox</h2>
+              <p className="text-green-200 text-lg mb-6">Power your passion with Xbox Series X|S and access to thousands of Game Pass titles.</p>
+              <div className="flex gap-3">
+                <Link href="/xbox">
+                  <Button className="bg-white text-green-800 hover:bg-green-50 font-bold px-6">Shop Xbox</Button>
+                </Link>
+                <Link href="/digital-store">
+                  <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">Game Pass</Button>
+                </Link>
+              </div>
+            </div>
+            <div className="md:w-1/2 flex justify-center">
               <img
-                src="https://via.placeholder.com/400x400/ffffff/16a34a?text=Xbox+Series+X"
+                src="https://via.placeholder.com/400x350/052e16/86efac?text=Xbox+Series+X"
                 alt="Xbox Series X"
-                className="w-full max-w-md mx-auto"
+                className="w-full max-w-sm drop-shadow-2xl"
               />
             </div>
           </div>
@@ -248,13 +472,12 @@ export default function Home() {
                 <Tv className="h-3.5 w-3.5" />
                 NEW SERVICE
               </div>
-              <h2 className="text-4xl font-bold mb-4 leading-tight">
+              <h2 className="text-4xl font-black mb-4 leading-tight">
                 Premium IPTV —{' '}
                 <span className="text-purple-400">Stream Everything You Love</span>
               </h2>
               <p className="text-gray-300 text-lg mb-6">
-                20,000+ live channels, sports, movies & series in HD & 4K. Works on Smart TV, Android, iPhone, and PC.
-                No cables. No contracts.
+                20,000+ live channels, sports, movies & series in HD & 4K. Works on Smart TV, Android, iPhone, and PC. No cables. No contracts.
               </p>
               <ul className="grid grid-cols-2 gap-2 text-sm text-gray-300 mb-8">
                 {['20,000+ Channels', 'Full HD & 4K', 'Sports & PPV', 'Movies & Series', 'Any Device', '24/7 Support'].map((f) => (
@@ -263,12 +486,12 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <div className="flex gap-4">
-                <a href="/iptv">
+              <div className="flex gap-4 flex-wrap">
+                <Link href="/iptv">
                   <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-5 font-bold rounded-xl">
                     View Plans
                   </Button>
-                </a>
+                </Link>
                 <a href="https://www.ppvarena.com" target="_blank" rel="noopener noreferrer">
                   <Button variant="outline" className="border-purple-400 text-purple-300 hover:bg-purple-900 px-6 py-5 font-bold rounded-xl">
                     Free Trial
@@ -282,12 +505,9 @@ export default function Home() {
                 <div className="text-5xl font-extrabold text-white mb-1">20,000+</div>
                 <div className="text-purple-300 text-lg mb-4">Live Channels Worldwide</div>
                 <div className="grid grid-cols-3 gap-3 text-center text-xs text-gray-400">
-                  <div className="bg-gray-800 rounded-lg p-2">Sports</div>
-                  <div className="bg-gray-800 rounded-lg p-2">Movies</div>
-                  <div className="bg-gray-800 rounded-lg p-2">Series</div>
-                  <div className="bg-gray-800 rounded-lg p-2">Kids</div>
-                  <div className="bg-gray-800 rounded-lg p-2">News</div>
-                  <div className="bg-gray-800 rounded-lg p-2">Local</div>
+                  {['Sports', 'Movies', 'Series', 'Kids', 'News', 'Local'].map((c) => (
+                    <div key={c} className="bg-gray-800 rounded-lg p-2">{c}</div>
+                  ))}
                 </div>
               </div>
               <p className="text-yellow-400 text-sm font-medium mt-4">Limited spots available — Start today!</p>
@@ -296,83 +516,123 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Kenya Features */}
-      <section className="bg-green-100 py-12">
+      {/* Testimonials */}
+      <section className="py-14 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-8 text-green-800">Why Choose GameStop Kenya?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-green-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Truck className="h-8 w-8" />
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-2">What Our Customers Say</h2>
+            <p className="text-gray-500">Trusted by 50,000+ gamers across Kenya</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {testimonials.map((t, i) => (
+              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div className="flex text-yellow-400 mb-3">
+                  {Array.from({ length: t.rating }).map((_, j) => (
+                    <Star key={j} className="h-4 w-4 fill-current" />
+                  ))}
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4">"{t.text}"</p>
+                <div className="border-t border-gray-100 pt-3">
+                  <div className="font-bold text-sm text-gray-900">{t.name}</div>
+                  <div className="text-xs text-gray-400">{t.location} · {t.date}</div>
+                  <div className="text-xs text-red-500 mt-1">Purchased: {t.product}</div>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Fast Delivery</h3>
-              <p className="text-gray-600">Free delivery in Nairobi for orders above KSh 5,000</p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Brand Partners */}
+      <section className="bg-white border-y border-gray-100 py-10">
+        <div className="container mx-auto px-4">
+          <p className="text-center text-sm text-gray-400 uppercase tracking-widest mb-6 font-semibold">Official Partners & Brands</p>
+          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+            {brands.map((brand) => (
+              <div key={brand} className="text-gray-300 hover:text-gray-600 transition-colors text-xl font-bold">
+                {brand}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Loyalty Program */}
+      <section className="bg-gradient-to-r from-red-600 to-red-700 text-white py-12">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 rounded-2xl p-4">
+                <Award className="h-10 w-10" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black">GameStop Rewards</h2>
+                <p className="text-red-200">Earn points on every purchase. Redeem for discounts & exclusive rewards.</p>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="bg-green-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CreditCard className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">M-Pesa Ready</h3>
-              <p className="text-gray-600">Pay easily with M-Pesa, cards, or mobile money</p>
-            </div>
-            <div className="text-center">
-              <div className="bg-green-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShoppingBag className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Local Support</h3>
-              <p className="text-gray-600">Dedicated customer service in Swahili and English</p>
+            <div className="flex gap-3">
+              <Button className="bg-white text-red-700 hover:bg-red-50 font-bold px-6">Join Free</Button>
+              <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">Learn More</Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      {/* Kenya Features */}
+      <section className="bg-green-50 py-14">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="text-2xl font-bold">
-                  <span className="text-white">Game</span>
-                  <span className="text-red-600">Stop</span>
+          <h2 className="text-3xl font-bold text-center mb-10 text-gray-900">Why Choose GameStop Kenya?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Truck,
+                color: 'bg-green-600',
+                title: 'Fast Delivery',
+                desc: 'Same-day delivery within Nairobi CBD. Free delivery for orders above KSh 5,000.',
+              },
+              {
+                icon: CreditCard,
+                color: 'bg-green-600',
+                title: 'M-Pesa Ready',
+                desc: 'Pay easily with M-Pesa, Airtel Money, Visa, or Mastercard. Instant confirmation.',
+              },
+              {
+                icon: ShoppingBag,
+                color: 'bg-green-600',
+                title: 'Local Support',
+                desc: 'Dedicated 24/7 customer service in Swahili and English. Always here to help.',
+              },
+            ].map(({ icon: Icon, color, title, desc }) => (
+              <div key={title} className="text-center">
+                <div className={`${color} text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                  <Icon className="h-8 w-8" />
                 </div>
-                <span className="text-sm text-green-400 bg-green-800 px-2 py-1 rounded">KENYA</span>
+                <h3 className="text-xl font-bold mb-2">{title}</h3>
+                <p className="text-gray-600 leading-relaxed">{desc}</p>
               </div>
-              <p className="text-gray-400">Kenya's premier gaming destination for consoles, games, and digital content.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">About Us</a></li>
-                <li><a href="#" className="hover:text-white">Track Order</a></li>
-                <li><a href="#" className="hover:text-white">Return Policy</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Categories</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">PlayStation</a></li>
-                <li><a href="#" className="hover:text-white">Xbox</a></li>
-                <li><a href="#" className="hover:text-white">Nintendo</a></li>
-                <li><a href="#" className="hover:text-white">PC Gaming</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Contact Info</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>📧 support@gamestop.co.ke</li>
-                <li>📱 +254 700 123 456</li>
-                <li>🏢 Nairobi, Kenya</li>
-                <li>⏰ Mon-Sat: 9AM-8PM</li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 GameStop Kenya. All rights reserved.</p>
+            ))}
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* Newsletter */}
+      <section className="bg-gray-900 text-white py-14">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-2">Stay in the Game</h2>
+          <p className="text-gray-400 mb-8 max-w-md mx-auto">Get exclusive deals, new arrivals, and gaming news delivered to your inbox. No spam, ever.</p>
+          <div className="max-w-md mx-auto flex gap-3">
+            <input
+              type="email"
+              placeholder="Your email address"
+              className="flex-1 px-4 py-3 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+            />
+            <Button className="bg-red-600 hover:bg-red-700 px-6 rounded-xl font-bold">Subscribe</Button>
+          </div>
+          <p className="text-gray-500 text-xs mt-3">Join 50,000+ subscribers. Unsubscribe anytime.</p>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 }

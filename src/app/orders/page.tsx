@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Search, Package, Truck, CheckCircle, Clock, ArrowLeft } from 'lucide-react';
 
 interface Order {
@@ -23,7 +25,9 @@ interface Order {
 
 export default function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [currency] = useState({ code: 'KES', symbol: 'KSh' });
+  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const toggleCurrency = () =>
+    setCurrency(prev => prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' });
 
   // Sample orders data (in a real app, this would come from an API)
   const sampleOrders: Order[] = [
@@ -129,9 +133,10 @@ export default function OrdersPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
+    <div className="min-h-screen bg-gray-50">
+      <Header currency={currency} onCurrencyToggle={toggleCurrency} />
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href="/">
@@ -296,6 +301,7 @@ export default function OrdersPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

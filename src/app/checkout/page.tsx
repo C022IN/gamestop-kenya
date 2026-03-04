@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { ArrowLeft, ArrowRight, Check, CreditCard, Smartphone, MapPin, User, Mail, Phone, Shield } from 'lucide-react';
 
 interface CustomerInfo {
@@ -24,7 +26,9 @@ interface ShippingInfo {
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const [currentStep, setCurrentStep] = useState(1);
-  const [currency] = useState({ code: 'KES', symbol: 'KSh' });
+  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const toggleCurrency = () =>
+    setCurrency(prev => prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' });
 
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     firstName: '',
@@ -99,26 +103,27 @@ export default function CheckoutPage() {
 
   if (items.length === 0 && !orderPlaced) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
+      <div className="min-h-screen bg-gray-50">
+        <Header currency={currency} onCurrencyToggle={toggleCurrency} />
+        <div className="container mx-auto px-4 py-24 text-center">
+          <div className="max-w-md mx-auto">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Cart is Empty</h1>
             <p className="text-gray-600 mb-8">Add some items to your cart before checking out.</p>
             <Link href="/">
-              <Button className="bg-red-600 hover:bg-red-700">
-                Continue Shopping
-              </Button>
+              <Button className="bg-red-600 hover:bg-red-700">Continue Shopping</Button>
             </Link>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
+    <div className="min-h-screen bg-gray-50">
+      <Header currency={currency} onCurrencyToggle={toggleCurrency} />
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href="/cart">
@@ -547,6 +552,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
