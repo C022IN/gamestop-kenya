@@ -36,7 +36,7 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/accessories',
     gradient: 'from-blue-950 via-blue-900 to-blue-800',
     accentColor: 'text-blue-300',
-    image: 'https://via.placeholder.com/600x500/1e3a8a/60a5fa?text=PlayStation+5',
+    image: '/images/heroes/ps5.svg',
   },
   {
     id: '2',
@@ -51,7 +51,7 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: 'https://www.ppvarena.com',
     gradient: 'from-purple-950 via-purple-900 to-indigo-900',
     accentColor: 'text-purple-300',
-    image: 'https://via.placeholder.com/600x500/3b0764/c084fc?text=20%2C000%2B+Channels',
+    image: '/images/heroes/iptv.svg',
   },
   {
     id: '3',
@@ -67,7 +67,7 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/digital-store',
     gradient: 'from-green-950 via-green-900 to-emerald-900',
     accentColor: 'text-green-300',
-    image: 'https://via.placeholder.com/600x500/052e16/4ade80?text=Xbox+Series+X',
+    image: '/images/heroes/xbox-series-x.svg',
   },
   {
     id: '4',
@@ -82,7 +82,7 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/nintendo-switch',
     gradient: 'from-red-950 via-red-900 to-rose-900',
     accentColor: 'text-red-300',
-    image: 'https://via.placeholder.com/600x500/450a0a/f87171?text=Nintendo+Switch+OLED',
+    image: '/images/heroes/switch-oled.svg',
   },
   {
     id: '5',
@@ -96,7 +96,7 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/digital-store',
     gradient: 'from-gray-950 via-gray-900 to-zinc-800',
     accentColor: 'text-gray-300',
-    image: 'https://via.placeholder.com/600x500/111827/9ca3af?text=PC+Gaming+Gear',
+    image: '/images/heroes/pc-gaming.svg',
   },
 ];
 

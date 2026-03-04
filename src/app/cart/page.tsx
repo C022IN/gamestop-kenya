@@ -238,10 +238,10 @@ export default function CartPage() {
           <h2 className="text-xl font-bold mb-5">You Might Also Like</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { title: "God of War Ragnarök", price: 7500, img: 'https://via.placeholder.com/200x200/1e3a8a/93c5fd?text=God+of+War' },
-              { title: "Mortal Kombat 1", price: 6800, img: 'https://via.placeholder.com/200x200/7f1d1d/fca5a5?text=MK1' },
-              { title: "FIFA 25 PS5", price: 6500, img: 'https://via.placeholder.com/200x200/052e16/86efac?text=FC25' },
-              { title: "Resident Evil 4", price: 5500, img: 'https://via.placeholder.com/200x200/111827/d1d5db?text=RE4' },
+              { title: "God of War Ragnarök", price: 7500, img: '/images/games/god-of-war-ragnarok.svg' },
+              { title: "Mortal Kombat 1", price: 6800, img: '/images/games/mortal-kombat-1.svg' },
+              { title: "EA FC 25", price: 6500, img: '/images/games/ea-fc-25.svg' },
+              { title: "Resident Evil 4", price: 5500, img: '/images/games/resident-evil-4.svg' },
             ].map((rec) => (
               <div key={rec.title} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
                 <img src={rec.img} alt={rec.title} className="w-full h-32 object-cover rounded-lg mb-3" />

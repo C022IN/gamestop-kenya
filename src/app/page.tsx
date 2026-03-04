@@ -26,7 +26,7 @@ const featuredProducts = [
   {
     id: '1',
     title: "Marvel's Spider-Man 2 — PlayStation 5",
-    image: 'https://via.placeholder.com/300x400/1e3a8a/93c5fd?text=Spider-Man+2+PS5',
+    image: '/images/games/spiderman-2.svg',
     price: 8500,
     originalPrice: 9500,
     platform: 'PS5',
@@ -36,7 +36,7 @@ const featuredProducts = [
   {
     id: '2',
     title: 'Super Mario Bros. Wonder — Nintendo Switch',
-    image: 'https://via.placeholder.com/300x400/7f1d1d/fca5a5?text=Mario+Wonder',
+    image: '/images/games/mario-wonder.svg',
     price: 7000,
     platform: 'Switch',
     rating: 4.9,
@@ -45,7 +45,7 @@ const featuredProducts = [
   {
     id: '3',
     title: 'Forza Horizon 5 — Xbox Series X',
-    image: 'https://via.placeholder.com/300x400/052e16/86efac?text=Forza+5+Xbox',
+    image: '/images/games/forza-horizon-5.svg',
     price: 6500,
     originalPrice: 7500,
     platform: 'Xbox',
@@ -55,7 +55,7 @@ const featuredProducts = [
   {
     id: '4',
     title: 'Cyberpunk 2077 Ultimate Edition — PC',
-    image: 'https://via.placeholder.com/300x400/111827/d1d5db?text=Cyberpunk+2077',
+    image: '/images/games/cyberpunk-2077.svg',
     price: 5500,
     originalPrice: 8000,
     platform: 'PC',
@@ -68,7 +68,7 @@ const flashDeals = [
   {
     id: 'f1',
     title: "God of War: Ragnarök — PS5",
-    image: 'https://via.placeholder.com/300x400/1e3a8a/93c5fd?text=God+of+War',
+    image: '/images/games/god-of-war-ragnarok.svg',
     price: 7200,
     originalPrice: 9500,
     platform: 'PS5',
@@ -78,7 +78,7 @@ const flashDeals = [
   {
     id: 'f2',
     title: 'Hogwarts Legacy — Xbox',
-    image: 'https://via.placeholder.com/300x400/052e16/86efac?text=Hogwarts+Legacy',
+    image: '/images/games/hogwarts-legacy.svg',
     price: 5800,
     originalPrice: 8500,
     platform: 'Xbox',
@@ -88,7 +88,7 @@ const flashDeals = [
   {
     id: 'f3',
     title: 'Zelda: Tears of the Kingdom — Switch',
-    image: 'https://via.placeholder.com/300x400/7f1d1d/fca5a5?text=Zelda+TOTK',
+    image: '/images/games/zelda-totk.svg',
     price: 6800,
     originalPrice: 8200,
     platform: 'Switch',
@@ -98,7 +98,7 @@ const flashDeals = [
   {
     id: 'f4',
     title: 'EA FC 25 — PS5',
-    image: 'https://via.placeholder.com/300x400/1e3a8a/93c5fd?text=EA+FC+25',
+    image: '/images/games/ea-fc-25.svg',
     price: 6500,
     originalPrice: 8000,
     platform: 'PS5',
@@ -111,7 +111,7 @@ const digitalProducts = [
   {
     id: '5',
     title: 'PlayStation Network Card — KSh 2,000',
-    image: 'https://via.placeholder.com/300x400/1d4ed8/bfdbfe?text=PSN+Card',
+    image: '/images/digital/psn-card.svg',
     price: 2000,
     platform: 'PlayStation',
     isDigital: true,
@@ -120,7 +120,7 @@ const digitalProducts = [
   {
     id: '6',
     title: 'Xbox Game Pass Ultimate — 3 Months',
-    image: 'https://via.placeholder.com/300x400/15803d/bbf7d0?text=Game+Pass',
+    image: '/images/digital/game-pass.svg',
     price: 4500,
     platform: 'Xbox',
     isDigital: true,
@@ -129,7 +129,7 @@ const digitalProducts = [
   {
     id: '7',
     title: 'Nintendo eShop Card — KSh 1,500',
-    image: 'https://via.placeholder.com/300x400/b91c1c/fecaca?text=eShop+Card',
+    image: '/images/digital/eshop-card.svg',
     price: 1500,
     platform: 'Nintendo',
     isDigital: true,
@@ -138,7 +138,7 @@ const digitalProducts = [
   {
     id: '8',
     title: 'Steam Wallet Code — KSh 3,000',
-    image: 'https://via.placeholder.com/300x400/374151/d1d5db?text=Steam+Wallet',
+    image: '/images/digital/steam-wallet.svg',
     price: 3000,
     platform: 'PC',
     isDigital: true,
@@ -150,7 +150,7 @@ const categories = [
   {
     name: 'Video Games',
     icon: Gamepad2,
-    image: 'https://via.placeholder.com/400x200/1e3a8a/93c5fd?text=Video+Games',
+    image: '/images/categories/video-games.svg',
     count: '500+',
     href: '/games',
     color: 'text-blue-600',
@@ -158,7 +158,7 @@ const categories = [
   {
     name: 'Consoles',
     icon: ShoppingBag,
-    image: 'https://via.placeholder.com/400x200/1d4ed8/bfdbfe?text=Consoles',
+    image: '/images/categories/consoles.svg',
     count: '50+',
     href: '/consoles',
     color: 'text-purple-600',
@@ -166,7 +166,7 @@ const categories = [
   {
     name: 'Digital Codes',
     icon: CreditCard,
-    image: 'https://via.placeholder.com/400x200/15803d/bbf7d0?text=Digital+Codes',
+    image: '/images/categories/digital-codes.svg',
     count: '100+',
     href: '/digital-store',
     color: 'text-green-600',
@@ -174,7 +174,7 @@ const categories = [
   {
     name: 'Accessories',
     icon: Truck,
-    image: 'https://via.placeholder.com/400x200/b91c1c/fecaca?text=Accessories',
+    image: '/images/categories/accessories.svg',
     count: '200+',
     href: '/accessories',
     color: 'text-red-600',
@@ -378,7 +378,7 @@ export default function Home() {
             </div>
             <div className="md:w-1/2 flex justify-center">
               <img
-                src="https://via.placeholder.com/400x350/1e3a8a/93c5fd?text=PlayStation+5"
+                src="/images/banners/ps5-banner.svg"
                 alt="PlayStation 5"
                 className="w-full max-w-sm drop-shadow-2xl"
               />
@@ -413,7 +413,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="md:w-1/2 order-2 md:order-1 flex justify-center">
               <img
-                src="https://via.placeholder.com/400x350/7f1d1d/fca5a5?text=Nintendo+Switch+OLED"
+                src="/images/banners/switch-banner.svg"
                 alt="Nintendo Switch OLED"
                 className="w-full max-w-sm drop-shadow-2xl"
               />
@@ -454,7 +454,7 @@ export default function Home() {
             </div>
             <div className="md:w-1/2 flex justify-center">
               <img
-                src="https://via.placeholder.com/400x350/052e16/86efac?text=Xbox+Series+X"
+                src="/images/banners/xbox-banner.svg"
                 alt="Xbox Series X"
                 className="w-full max-w-sm drop-shadow-2xl"
               />

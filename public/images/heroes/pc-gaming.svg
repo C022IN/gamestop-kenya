@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 500" width="600" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#050505"/>
+      <stop offset="50%" style="stop-color:#0a0a0f"/>
+      <stop offset="100%" style="stop-color:#050505"/>
+    </linearGradient>
+    <radialGradient id="rgb_glow" cx="60%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ff0088;stop-opacity:0.12"/>
+      <stop offset="100%" style="stop-color:#050505;stop-opacity:0"/>
+    </radialGradient>
+    <linearGradient id="monitor_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1a40"/>
+      <stop offset="100%" style="stop-color:#050a20"/>
+    </linearGradient>
+    <linearGradient id="rgb_strip" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff0000"/>
+      <stop offset="20%" style="stop-color:#ff8800"/>
+      <stop offset="40%" style="stop-color:#ffff00"/>
+      <stop offset="60%" style="stop-color:#00ff00"/>
+      <stop offset="80%" style="stop-color:#0088ff"/>
+      <stop offset="100%" style="stop-color:#ff00ff"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#000000" flood-opacity="0.7"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="600" height="500" fill="url(#bg)"/>
+  <rect width="600" height="500" fill="url(#rgb_glow)"/>
+
+  <!-- RGB diagonal lines in background -->
+  <g opacity="0.04">
+    <line x1="0" y1="0" x2="600" y2="500" stroke="#ff0088" stroke-width="2"/>
+    <line x1="50" y1="0" x2="600" y2="450" stroke="#0088ff" stroke-width="2"/>
+    <line x1="100" y1="0" x2="600" y2="400" stroke="#00ff88" stroke-width="2"/>
+    <line x1="150" y1="0" x2="600" y2="350" stroke="#ff8800" stroke-width="2"/>
+    <line x1="200" y1="0" x2="600" y2="300" stroke="#ff0088" stroke-width="2"/>
+    <line x1="0" y1="50" x2="550" y2="500" stroke="#8800ff" stroke-width="2"/>
+    <line x1="0" y1="100" x2="500" y2="500" stroke="#0088ff" stroke-width="2"/>
+  </g>
+
+  <!-- Gaming PC tower -->
+  <g transform="translate(430, 290)" filter="url(#shadow)">
+    <!-- Case body -->
+    <rect x="-55" y="-160" width="110" height="310" rx="8" fill="#111115"/>
+    <!-- Case side panel (tempered glass effect) -->
+    <rect x="-50" y="-155" width="100" height="300" rx="6" fill="#0d0d15" opacity="0.9"/>
+    <!-- Front panel -->
+    <rect x="-52" y="-158" width="20" height="306" rx="6" fill="#0a0a10"/>
+
+    <!-- Front panel details -->
+    <!-- Power button -->
+    <circle cx="-42" cy="-100" r="8" fill="#1a1a25"/>
+    <circle cx="-42" cy="-100" r="5" fill="#333" />
+    <!-- USB ports on front -->
+    <rect x="-50" y="-70" width="12" height="6" rx="2" fill="#333"/>
+    <rect x="-50" y="-58" width="12" height="5" rx="2" fill="#222"/>
+    <!-- Headphone jack -->
+    <circle cx="-44" cy="-42" r="3" fill="#222"/>
+
+    <!-- RGB strip on front -->
+    <rect x="-52" y="-158" width="4" height="306" rx="2" fill="url(#rgb_strip)" opacity="0.8" filter="url(#glow)"/>
+
+    <!-- Inside components visible through glass -->
+    <!-- Motherboard (dark) -->
+    <rect x="-45" y="-130" width="85" height="170" rx="3" fill="#0a1020" opacity="0.8"/>
+    <!-- GPU (large card) -->
+    <rect x="-40" y="-120" width="80" height="40" rx="3" fill="#1a1a2a"/>
+    <rect x="-38" y="-118" width="65" height="36" rx="2" fill="#222233"/>
+    <!-- GPU fans -->
+    <circle cx="-15" cy="-100" r="12" fill="#1a1a2a"/>
+    <circle cx="-15" cy="-100" r="8" fill="#333" opacity="0.7"/>
+    <circle cx="15" cy="-100" r="12" fill="#1a1a2a"/>
+    <circle cx="15" cy="-100" r="8" fill="#333" opacity="0.7"/>
+    <!-- GPU RGB -->
+    <rect x="-40" y="-82" width="80" height="2" fill="url(#rgb_strip)" opacity="0.6" filter="url(#glow)"/>
+
+    <!-- RAM sticks -->
+    <rect x="-38" y="-75" width="8" height="45" rx="1" fill="#1a2040"/>
+    <rect x="-26" y="-75" width="8" height="45" rx="1" fill="#1a2040"/>
+    <rect x="-14" y="-75" width="8" height="45" rx="1" fill="#1a2040"/>
+    <rect x="-2" y="-75" width="8" height="45" rx="1" fill="#1a2040"/>
+    <!-- RAM RGB -->
+    <rect x="-38" y="-75" width="8" height="4" rx="1" fill="#ff0088" opacity="0.8" filter="url(#glow)"/>
+    <rect x="-26" y="-75" width="8" height="4" rx="1" fill="#0088ff" opacity="0.8" filter="url(#glow)"/>
+    <rect x="-14" y="-75" width="8" height="4" rx="1" fill="#00ff00" opacity="0.8" filter="url(#glow)"/>
+    <rect x="-2" y="-75" width="8" height="4" rx="1" fill="#ff8800" opacity="0.8" filter="url(#glow)"/>
+
+    <!-- CPU cooler -->
+    <circle cx="25" cy="-52" r="20" fill="#1a1a2a"/>
+    <circle cx="25" cy="-52" r="14" fill="#222233"/>
+    <circle cx="25" cy="-52" r="8" fill="#333" opacity="0.7"/>
+    <!-- Cooler RGB ring -->
+    <circle cx="25" cy="-52" r="16" fill="none" stroke="url(#rgb_strip)" stroke-width="3" opacity="0.8" filter="url(#glow)"/>
+
+    <!-- Power supply at bottom -->
+    <rect x="-40" y="40" width="80" height="45" rx="3" fill="#111120"/>
+    <rect x="-38" y="42" width="50" height="41" fill="#0a0a18"/>
+
+    <!-- Bottom RGB strip -->
+    <rect x="-52" y="130" width="104" height="4" fill="url(#rgb_strip)" opacity="0.8" filter="url(#glow)"/>
+
+    <!-- Shadow beneath case -->
+    <ellipse cx="0" cy="152" rx="60" ry="8" fill="#000000" opacity="0.4"/>
+  </g>
+
+  <!-- Monitor -->
+  <g transform="translate(330, 220)" filter="url(#shadow)">
+    <!-- Monitor outer frame -->
+    <rect x="-110" y="-115" width="220" height="170" rx="10" fill="#0d0d15"/>
+    <!-- Screen -->
+    <rect x="-105" y="-110" width="210" height="160" rx="6" fill="url(#monitor_grad)"/>
+
+    <!-- On-screen: FPS game view -->
+    <!-- Sky -->
+    <rect x="-105" y="-110" width="210" height="80" rx="6" fill="#0a1a35"/>
+    <!-- Ground -->
+    <rect x="-105" y="-30" width="210" height="80" rx="0" fill="#1a1a0a"/>
+    <rect x="-105" y="47" width="210" height="3" rx="6" fill="#1a1a0a"/>
+    <!-- Crosshair -->
+    <line x1="-10" y1="-15" x2="10" y2="-15" stroke="white" stroke-width="1.5" opacity="0.8"/>
+    <line x1="0" y1="-25" x2="0" y2="-5" stroke="white" stroke-width="1.5" opacity="0.8"/>
+    <circle cx="0" cy="-15" r="4" fill="none" stroke="white" stroke-width="1" opacity="0.8"/>
+    <!-- Enemy player silhouette -->
+    <rect x="40" y="-30" width="8" height="20" rx="2" fill="#cc4444" opacity="0.7"/>
+    <circle cx="44" cy="-37" r="6" fill="#cc4444" opacity="0.7"/>
+    <!-- HUD elements -->
+    <rect x="-100" y="-105" width="60" height="8" rx="2" fill="#cc0000" opacity="0.7"/>
+    <text x="-100" y="-98" font-size="7" fill="white" opacity="0.8">HP: 85</text>
+    <rect x="-38" y="-105" width="36" height="8" rx="2" fill="#0044cc" opacity="0.5"/>
+    <text x="-38" y="-98" font-size="7" fill="white" opacity="0.8">325 🔫</text>
+    <!-- Kill count -->
+    <text x="50" y="-100" font-size="8" fill="#ffcc00" opacity="0.8">K: 12</text>
+    <!-- RGB Glow on screen edges -->
+    <rect x="-105" y="-110" width="210" height="160" rx="6" fill="none" stroke="#ff0088" stroke-width="1.5" opacity="0.3" filter="url(#glow)"/>
+
+    <!-- Monitor screen glare -->
+    <path d="M-105,-110 L-60,-110 L-105,-70 Z" fill="white" opacity="0.04"/>
+
+    <!-- Monitor stand neck -->
+    <rect x="-8" y="55" width="16" height="30" rx="4" fill="#0a0a12"/>
+    <!-- Monitor stand base -->
+    <rect x="-40" y="82" width="80" height="10" rx="5" fill="#0d0d18"/>
+
+    <!-- Monitor RGB strip (bottom edge) -->
+    <rect x="-105" y="46" width="210" height="3" fill="url(#rgb_strip)" opacity="0.7" filter="url(#glow)"/>
+
+    <!-- Monitor shadow -->
+    <ellipse cx="0" cy="96" rx="50" ry="5" fill="#000000" opacity="0.3"/>
+  </g>
+
+  <!-- RGB Gaming keyboard (bottom) -->
+  <g transform="translate(360, 430)">
+    <rect x="-135" y="-18" width="270" height="35" rx="5" fill="#0d0d15"/>
+    <!-- Key rows -->
+    <g fill="#1a1a2a">
+      <rect x="-130" y="-14" width="260" height="8" rx="2"/>
+      <rect x="-128" y="-3" width="260" height="8" rx="2"/>
+      <rect x="-125" y="8" width="255" height="8" rx="2"/>
+    </g>
+    <!-- RGB on keys -->
+    <rect x="-130" y="-14" width="260" height="4" rx="1" fill="url(#rgb_strip)" opacity="0.6" filter="url(#glow)"/>
+    <rect x="-128" y="-3" width="260" height="4" rx="1" fill="url(#rgb_strip)" opacity="0.5" filter="url(#glow)"/>
+    <rect x="-125" y="8" width="255" height="4" rx="1" fill="url(#rgb_strip)" opacity="0.4" filter="url(#glow)"/>
+  </g>
+
+  <!-- RGB gaming mouse -->
+  <g transform="translate(520, 390)">
+    <path d="M-20,-35 Q-22,-55 0,-55 Q22,-55 20,-35 Q22,0 0,15 Q-22,0 -20,-35 Z" fill="#111115"/>
+    <line x1="0" y1="-55" x2="0" y2="-5" stroke="#333" stroke-width="1.5"/>
+    <!-- Mouse RGB -->
+    <ellipse cx="0" cy="5" rx="15" ry="10" fill="url(#rgb_strip)" opacity="0.5" filter="url(#glow)"/>
+    <!-- Scroll wheel -->
+    <rect x="-4" y="-40" width="8" height="12" rx="3" fill="#333"/>
+  </g>
+
+  <!-- PC text (left side) -->
+  <text x="55" y="145" font-family="Arial Black, sans-serif" font-size="12" fill="#ff0088" letter-spacing="4" filter="url(#glow)">HIGH PERFORMANCE GAMING</text>
+  <text x="55" y="192" font-family="Arial Black, sans-serif" font-size="30" font-weight="900" fill="white">Ultimate</text>
+  <text x="55" y="240" font-family="Arial Black, sans-serif" font-size="42" font-weight="900" fill="url(#rgb_strip)" filter="url(#glow)">PC GAMING</text>
+  <text x="55" y="270" font-family="Arial Black, sans-serif" font-size="20" font-weight="900" fill="#aaaaaa">GEAR</text>
+
+  <!-- RGB accent line under title -->
+  <rect x="55" y="278" width="200" height="3" fill="url(#rgb_strip)" opacity="0.8" filter="url(#glow)"/>
+
+  <!-- Features -->
+  <circle cx="55" cy="320" r="3" fill="#ff0088" filter="url(#glow)"/>
+  <text x="65" y="325" font-family="Arial, sans-serif" font-size="11" fill="#cc9999">RTX 4090 · i9 · 64GB RAM</text>
+  <circle cx="55" cy="343" r="3" fill="#0088ff" filter="url(#glow)"/>
+  <text x="65" y="348" font-family="Arial, sans-serif" font-size="11" fill="#9999cc">Steam · Epic · All Platforms</text>
+  <circle cx="55" cy="366" r="3" fill="#00ff00" filter="url(#glow)"/>
+  <text x="65" y="371" font-family="Arial, sans-serif" font-size="11" fill="#99cc99">RGB Keyboards · Mice · Headsets</text>
+  <circle cx="55" cy="389" r="3" fill="#ffff00" filter="url(#glow)"/>
+  <text x="65" y="394" font-family="Arial, sans-serif" font-size="11" fill="#cccc99">4K 240Hz Gaming Monitors</text>
+
+  <!-- Bottom line -->
+  <line x1="0" y1="490" x2="600" y2="490" fill="none" stroke="url(#rgb_strip)" stroke-width="3" opacity="0.6" filter="url(#glow)"/>
+</svg>

@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 350" width="400" height="350">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000a00"/>
+      <stop offset="100%" style="stop-color:#001a00"/>
+    </linearGradient>
+    <radialGradient id="greenglow" cx="65%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#00aa00;stop-opacity:0.2"/>
+      <stop offset="100%" style="stop-color:#000a00;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="350" fill="url(#bg)"/>
+  <rect width="400" height="350" fill="url(#greenglow)"/>
+
+  <!-- Xbox Series X (tall monolith) centered-right -->
+  <g transform="translate(285,175)">
+    <!-- Main body -->
+    <rect x="-50" y="-115" width="100" height="230" rx="7" fill="#111111"/>
+    <!-- Vent top -->
+    <rect x="-47" y="-112" width="94" height="58" rx="5" fill="#0a0a0a"/>
+    <g stroke="#222" stroke-width="0.8">
+      <line x1="-43" y1="-105" x2="43" y2="-105"/>
+      <line x1="-43" y1="-98" x2="43" y2="-98"/>
+      <line x1="-43" y1="-91" x2="43" y2="-91"/>
+      <line x1="-43" y1="-84" x2="43" y2="-84"/>
+      <line x1="-43" y1="-77" x2="43" y2="-77"/>
+      <line x1="-43" y1="-70" x2="43" y2="-70"/>
+    </g>
+    <!-- Xbox button circle -->
+    <circle cx="0" cy="-76" r="22" fill="#0d0d0d"/>
+    <circle cx="0" cy="-76" r="18" fill="none" stroke="#107c10" stroke-width="2" filter="url(#glow)"/>
+    <circle cx="0" cy="-76" r="12" fill="#107c10" opacity="0.25"/>
+    <!-- X cross -->
+    <line x1="-9" y1="-85" x2="9" y2="-67" stroke="#107c10" stroke-width="4" stroke-linecap="round" filter="url(#glow)"/>
+    <line x1="9" y1="-85" x2="-9" y2="-67" stroke="#107c10" stroke-width="4" stroke-linecap="round" filter="url(#glow)"/>
+    <!-- Middle section texture -->
+    <rect x="-46" y="-54" width="92" height="120" rx="3" fill="#141414"/>
+    <!-- Dot texture grid -->
+    <g fill="#1e1e1e">
+      <circle cx="-33" cy="-38" r="1.5"/>
+      <circle cx="-22" cy="-38" r="1.5"/>
+      <circle cx="-11" cy="-38" r="1.5"/>
+      <circle cx="0" cy="-38" r="1.5"/>
+      <circle cx="11" cy="-38" r="1.5"/>
+      <circle cx="22" cy="-38" r="1.5"/>
+      <circle cx="33" cy="-38" r="1.5"/>
+      <circle cx="-33" cy="-26" r="1.5"/>
+      <circle cx="-22" cy="-26" r="1.5"/>
+      <circle cx="-11" cy="-26" r="1.5"/>
+      <circle cx="0" cy="-26" r="1.5"/>
+      <circle cx="11" cy="-26" r="1.5"/>
+      <circle cx="22" cy="-26" r="1.5"/>
+      <circle cx="33" cy="-26" r="1.5"/>
+    </g>
+    <!-- Disc slot -->
+    <rect x="-22" y="10" width="44" height="3" rx="1" fill="#0a0a0a"/>
+    <!-- USB + power -->
+    <rect x="-28" y="22" width="10" height="6" rx="2" fill="#0a0a0a"/>
+    <rect x="-14" y="22" width="10" height="6" rx="2" fill="#0a0a0a"/>
+    <circle cx="25" cy="25" r="6" fill="#107c10" opacity="0.6" filter="url(#glow)"/>
+    <!-- Bottom vent -->
+    <rect x="-46" y="66" width="92" height="48" rx="5" fill="#0a0a0a"/>
+    <g stroke="#1a1a1a" stroke-width="0.8">
+      <line x1="-42" y1="75" x2="42" y2="75"/>
+      <line x1="-42" y1="83" x2="42" y2="83"/>
+      <line x1="-42" y1="91" x2="42" y2="91"/>
+      <line x1="-42" y1="99" x2="42" y2="99"/>
+      <line x1="-42" y1="107" x2="42" y2="107"/>
+    </g>
+    <!-- Green bottom RGB -->
+    <rect x="-50" y="112" width="100" height="3" fill="#107c10" opacity="0.7" filter="url(#glow)"/>
+    <!-- Shadow -->
+    <ellipse cx="0" cy="118" rx="55" ry="7" fill="#000a00" opacity="0.4"/>
+  </g>
+
+  <!-- Text -->
+  <text x="30" y="75" font-family="Arial Black, sans-serif" font-size="10" fill="#44ff44" letter-spacing="4" filter="url(#glow)">4K NEXT-GEN POWER</text>
+  <text x="28" y="110" font-family="Arial Black, sans-serif" font-size="20" font-weight="900" fill="white">XBOX SERIES</text>
+  <text x="28" y="155" font-family="Arial Black, sans-serif" font-size="52" font-weight="900" fill="#107c10" filter="url(#glow)">X</text>
+
+  <!-- Price -->
+  <rect x="28" y="172" width="168" height="42" rx="8" fill="#001500" opacity="0.7"/>
+  <text x="36" y="193" font-family="Arial Black, sans-serif" font-size="10" fill="#44ff44">FROM</text>
+  <text x="36" y="207" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" fill="white">KSh 56,000</text>
+
+  <!-- Features -->
+  <text x="28" y="248" font-family="Arial, sans-serif" font-size="9" fill="#66aa66">● 4K @ 120fps · Auto HDR</text>
+  <text x="28" y="266" font-family="Arial, sans-serif" font-size="9" fill="#66aa66">● Xbox Game Pass Ultimate</text>
+  <text x="28" y="284" font-family="Arial, sans-serif" font-size="9" fill="#66aa66">● Quick Resume</text>
+  <text x="28" y="302" font-family="Arial, sans-serif" font-size="9" fill="#66aa66">● Xbox Velocity Architecture</text>
+
+  <!-- Xbox logo badge -->
+  <circle cx="44" cy="325" r="15" fill="#001a00" stroke="#107c10" stroke-width="1.5"/>
+  <line x1="36" y1="317" x2="52" y2="333" stroke="#107c10" stroke-width="3" stroke-linecap="round" filter="url(#glow)"/>
+  <line x1="52" y1="317" x2="36" y2="333" stroke="#107c10" stroke-width="3" stroke-linecap="round" filter="url(#glow)"/>
+
+  <rect x="0" y="0" width="400" height="350" fill="none" stroke="#004400" stroke-width="2" opacity="0.5"/>
+  <line x1="0" y1="346" x2="400" y2="346" stroke="#107c10" stroke-width="3" opacity="0.5" filter="url(#glow)"/>
+</svg>
