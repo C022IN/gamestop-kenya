@@ -62,7 +62,7 @@ export default function Footer() {
                 { Icon: Twitter, href: 'https://x.com/gamestopkenya', label: 'Twitter', color: 'hover:text-sky-400' },
                 { Icon: Instagram, href: 'https://instagram.com/gamestopkenya', label: 'Instagram', color: 'hover:text-pink-500' },
                 { Icon: Youtube, href: 'https://youtube.com/@gamestopkenya', label: 'YouTube', color: 'hover:text-red-500' },
-                { Icon: MessageCircle, href: 'https://wa.me/254700123456', label: 'WhatsApp', color: 'hover:text-green-400' },
+                { Icon: MessageCircle, href: 'https://wa.me/254717402034', label: 'WhatsApp', color: 'hover:text-green-400' },
               ].map(({ Icon, href, label, color }) => (
                 <a
                   key={label}
@@ -133,8 +133,8 @@ export default function Footer() {
               <li className="flex items-start gap-3">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                 <div>
-                  <a href="tel:+254700123456" className="font-medium text-white transition-colors hover:text-red-400">
-                    +254 700 123 456
+                  <a href="tel:0717402034" className="font-medium text-white transition-colors hover:text-red-400">
+                    0717402034
                   </a>
                   <div className="text-xs">Call or WhatsApp</div>
                 </div>

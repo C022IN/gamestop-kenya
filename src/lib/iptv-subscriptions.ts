@@ -4,9 +4,11 @@
  * In-memory store for IPTV subscriptions.
  * In production, replace with a database (PostgreSQL/Supabase/Planetscale).
  *
- * Credentials are generated locally. Connect a real Xtream Codes panel
- * (or any IPTV API) in provisionCredentials() to deliver live streams.
+ * Credentials are provisioned through the configured backend.
+ * In production, point provisionCredentials() at a licensed IPTV/Xtream-compatible
+ * service instead of relying on local fallback generation.
  */
+import { provisionCredentials } from '@/lib/iptv-provisioning';
 
 export type PlanId = '3mo' | '12mo' | '24mo';
 
@@ -63,24 +65,6 @@ function generateId(): string {
   return 'IPTV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
-function generateCredentials(subscriptionId: string): IptvCredentials {
-  const rand = (len: number) =>
-    Math.random().toString(36).slice(2, 2 + len).toLowerCase();
-
-  // Generate Xtream-style credentials
-  const username = 'gsk_' + rand(8);
-  const password = rand(6) + '_' + rand(6);
-  const host = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gamestopkenya.com';
-
-  return {
-    xtreamHost: host,
-    xtreamPort: 8080,
-    xtreamUsername: username,
-    xtreamPassword: password,
-    m3uUrl: `${host}/api/iptv/stream/${subscriptionId}/playlist.m3u`,
-  };
-}
-
 export function createPendingSubscription(params: {
   planId: PlanId;
   customerName: string;
@@ -124,11 +108,14 @@ export function createPendingSubscription(params: {
   return sub;
 }
 
-export function activateSubscription(subscriptionId: string, mpesaReceipt: string): IptvSubscription | null {
+export async function activateSubscription(subscriptionId: string, mpesaReceipt: string): Promise<IptvSubscription | null> {
   const sub = subscriptions.get(subscriptionId);
   if (!sub) return null;
 
-  const credentials = generateCredentials(subscriptionId);
+  const credentials = await provisionCredentials({
+    ...sub,
+    mpesaReceipt,
+  });
   const updated: IptvSubscription = {
     ...sub,
     status: 'active',
@@ -141,7 +128,7 @@ export function activateSubscription(subscriptionId: string, mpesaReceipt: strin
   return updated;
 }
 
-export function activateByCheckoutId(checkoutRequestId: string, mpesaReceipt: string): IptvSubscription | null {
+export async function activateByCheckoutId(checkoutRequestId: string, mpesaReceipt: string): Promise<IptvSubscription | null> {
   const subId = byCheckoutId.get(checkoutRequestId);
   if (!subId) return null;
   return activateSubscription(subId, mpesaReceipt);

@@ -1,24 +1,26 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { DEVICE_ONBOARDING_GUIDES } from '@/lib/iptv-product';
 import {
   ArrowLeft,
   Check,
   CheckCircle2,
   Copy,
   Loader2,
+  Monitor,
   Smartphone,
   Shield,
+  Tablet,
   Tv,
   XCircle,
-  User,
-  Mail,
   Phone,
+  PlayCircle,
 } from 'lucide-react';
 
 const PLANS = {
@@ -50,12 +52,24 @@ interface ActivatedSubscription {
   expiresAt: string;
 }
 
+interface MemberCredentials {
+  profileId: string;
+  accessCode: string;
+}
+
+const deviceIcons = {
+  tv: Tv,
+  mobile: Smartphone,
+  web: Monitor,
+  box: Tablet,
+} as const;
+
 type MpesaPhase =
   | { phase: 'idle' }
   | { phase: 'sending' }
   | { phase: 'waiting'; checkoutRequestId: string; subscriptionId: string; msg: string }
   | { phase: 'confirming' }
-  | { phase: 'success'; subscription: ActivatedSubscription }
+  | { phase: 'success'; subscription: ActivatedSubscription; member: MemberCredentials }
   | { phase: 'failed'; reason: string };
 
 function CopyBtn({ value }: { value: string }) {
@@ -75,15 +89,12 @@ function CopyBtn({ value }: { value: string }) {
 
 export default function IPTVSubscribePage() {
   const { planId } = useParams<{ planId: string }>();
-  const router = useRouter();
   const plan = PLANS[planId as PlanId];
 
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
   const toggleCurrency = () =>
     setCurrency((p) => (p.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }));
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [mpesaState, setMpesaState] = useState<MpesaPhase>({ phase: 'idle' });
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -132,7 +143,11 @@ export default function IPTVSubscribePage() {
             return;
           }
 
-          setMpesaState({ phase: 'success', subscription: confData.subscription });
+          setMpesaState({
+            phase: 'success',
+            subscription: confData.subscription,
+            member: confData.member,
+          });
         } else if (data.status === 'failed') {
           clearInterval(pollRef.current!);
           setMpesaState({ phase: 'failed', reason: data.resultDesc ?? 'Payment was not completed.' });
@@ -148,7 +163,7 @@ export default function IPTVSubscribePage() {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !phone) return;
+    if (!phone) return;
 
     setMpesaState({ phase: 'sending' });
 
@@ -156,7 +171,7 @@ export default function IPTVSubscribePage() {
       const res = await fetch('/api/iptv/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: plan.id, customerName: name, email, phone }),
+        body: JSON.stringify({ planId: plan.id, phone }),
       });
       const data = await res.json();
 
@@ -180,6 +195,7 @@ export default function IPTVSubscribePage() {
 
   const isSuccess = mpesaState.phase === 'success';
   const sub = isSuccess ? mpesaState.subscription : null;
+  const member = isSuccess ? mpesaState.member : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -198,7 +214,7 @@ export default function IPTVSubscribePage() {
             <div className="md:col-span-3">
               <div className="rounded-2xl border border-gray-100 bg-white p-7 shadow-sm">
                 <h1 className="mb-1 text-2xl font-black">Subscribe to IPTV</h1>
-                <p className="mb-6 text-sm text-gray-500">Fill in your details and pay via M-Pesa to activate instantly.</p>
+                <p className="mb-6 text-sm text-gray-500">Enter your M-Pesa number and pay to activate instantly. Your movie account is created automatically after payment.</p>
 
                 {(mpesaState.phase === 'idle' || mpesaState.phase === 'failed') && (
                   <form onSubmit={handleSubscribe} className="space-y-5">
@@ -214,33 +230,6 @@ export default function IPTVSubscribePage() {
 
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">
-                        <User className="mr-1.5 inline h-4 w-4 text-gray-400" />Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="John Kamau"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-violet-500 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
-                        <Mail className="mr-1.5 inline h-4 w-4 text-gray-400" />Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="john@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-violet-500 focus:outline-none"
-                      />
-                      <p className="mt-1 text-xs text-gray-400">Used to retrieve your subscription later.</p>
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
                         <Phone className="mr-1.5 inline h-4 w-4 text-gray-400" />M-Pesa Phone Number *
                       </label>
                       <input
@@ -251,7 +240,7 @@ export default function IPTVSubscribePage() {
                         onChange={(e) => setPhone(e.target.value)}
                         className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-violet-500 focus:outline-none"
                       />
-                      <p className="mt-1 text-xs text-gray-400">An M-Pesa STK push will be sent to this number.</p>
+                      <p className="mt-1 text-xs text-gray-400">This number becomes your profile ID after normalization to the 254XXXXXXXXX format.</p>
                     </div>
 
                     <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
@@ -260,7 +249,7 @@ export default function IPTVSubscribePage() {
                         <li>Click "Pay {displayPrice} with M-Pesa" below</li>
                         <li>A pop-up appears on your phone</li>
                         <li>Enter your M-Pesa PIN to confirm</li>
-                        <li>Your IPTV credentials are delivered instantly</li>
+                        <li>Your movie access code and IPTV credentials are delivered instantly</li>
                       </ol>
                     </div>
 
@@ -369,7 +358,7 @@ export default function IPTVSubscribePage() {
                 </div>
                 <h1 className="text-3xl font-black text-gray-900">Subscription Activated!</h1>
                 <p className="mt-2 text-gray-500">
-                  Welcome, {sub!.customerName}. Your IPTV is ready. Save your credentials below.
+                  Your profile has been created automatically from your M-Pesa number. Save the access details below before you leave this page.
                 </p>
               </div>
 
@@ -378,6 +367,10 @@ export default function IPTVSubscribePage() {
                 <div className="flex justify-between">
                   <span className="text-gray-500">Subscription ID</span>
                   <span className="font-mono font-bold">{sub!.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Profile ID</span>
+                  <span className="font-mono font-bold">{member!.profileId}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Plan</span>
@@ -397,6 +390,27 @@ export default function IPTVSubscribePage() {
                   <span className="text-gray-500">Expires</span>
                   <span className="font-semibold">{new Date(sub!.expiresAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                 </div>
+              </div>
+
+              <div className="mb-6">
+                <h2 className="mb-3 text-lg font-bold">Your Movie Login Code</h2>
+                <div className="space-y-2 rounded-xl border border-red-200 bg-red-50 p-4">
+                  {[
+                    { label: 'Profile ID', value: member!.profileId },
+                    { label: 'Access Code', value: member!.accessCode },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-lg bg-white p-3">
+                      <p className="mb-0.5 text-xs font-semibold text-gray-500">{label}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="break-all font-mono text-xs text-red-800">{value}</span>
+                        <CopyBtn value={value} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-gray-400">
+                  You are already signed in on this device. Use these details later if you need to log back into GameStop Movies.
+                </p>
               </div>
 
               {/* Credentials */}
@@ -420,8 +434,7 @@ export default function IPTVSubscribePage() {
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-gray-400">
-                    Save these credentials. You can also retrieve them anytime on the{' '}
-                    <Link href="/iptv/my-subscription" className="text-violet-600 underline">My Subscription</Link> page using your email.
+                    Save these credentials now. If you need them re-issued later, contact the admin or support team with your payment details.
                   </p>
                 </div>
               )}
@@ -435,11 +448,41 @@ export default function IPTVSubscribePage() {
                   <li>Enter the Host, Username, and Password above</li>
                   <li>Or paste the M3U URL into any IPTV player</li>
                 </ol>
+                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {DEVICE_ONBOARDING_GUIDES.map((guide) => {
+                    const Icon = deviceIcons[guide.platform];
+                    return (
+                      <div key={guide.id} className="rounded-xl bg-white p-4">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-violet-500">
+                          {guide.title}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-gray-900">{guide.app}</p>
+                        <ul className="mt-3 space-y-1 text-xs text-gray-600">
+                          {guide.steps.map((step) => (
+                            <li key={step} className="flex items-start gap-2">
+                              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                              <span>{step}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
+                <Link href="/movies" className="flex-1">
+                  <Button className="w-full rounded-xl bg-red-600 hover:bg-red-700">
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Open My Movies
+                  </Button>
+                </Link>
                 <a
-                  href={`https://wa.me/254700123456?text=Hi! I need help setting up my IPTV. Subscription ID: ${sub!.id}`}
+                  href={`https://wa.me/254717402034?text=Hi! I need help setting up my IPTV. Subscription ID: ${sub!.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1"
@@ -448,8 +491,10 @@ export default function IPTVSubscribePage() {
                     WhatsApp Setup Help
                   </Button>
                 </a>
-                <Link href="/iptv/my-subscription" className="flex-1">
-                  <Button className="w-full rounded-xl bg-violet-600 hover:bg-violet-700">View My Subscription</Button>
+                <Link href="/iptv" className="flex-1 sm:flex-none">
+                  <Button variant="outline" className="w-full rounded-xl border-violet-300 text-violet-700 hover:bg-violet-50">
+                    Back to Payment Dashboard
+                  </Button>
                 </Link>
               </div>
             </div>

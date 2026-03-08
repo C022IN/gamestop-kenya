@@ -28,6 +28,13 @@ export async function GET(req: NextRequest) {
   // 2. Fall back to a direct STK query
   try {
     const result = await queryStkStatus(checkoutRequestId);
+    if (result.status === 'success' || result.status === 'failed') {
+      paymentResults.set(checkoutRequestId, {
+        status: result.status,
+        resultCode: result.resultCode ?? '',
+        resultDesc: result.resultDesc ?? '',
+      });
+    }
     return NextResponse.json(result);
   } catch (err) {
     console.error('STK status query error:', err);

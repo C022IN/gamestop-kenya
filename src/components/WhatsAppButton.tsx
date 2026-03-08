@@ -5,7 +5,7 @@ import { MessageCircle } from 'lucide-react';
 export default function WhatsAppButton() {
   return (
     <a
-      href="https://wa.me/254700123456?text=Hello%20GameStop%20Kenya!%20I%20need%20help%20with%20my%20order."
+      href="https://wa.me/254717402034?text=Hello%20GameStop%20Kenya!%20I%20need%20help%20with%20my%20order."
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp"

@@ -46,6 +46,7 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
     { label: 'Pre-Owned', href: '/pre-owned' },
     { label: 'Blog', href: '/blog' },
     { label: 'Digital Store', href: '/digital-store' },
+    { label: 'Movies', href: '/movies/login', badge: 'NEW' },
     { label: 'IPTV', href: '/iptv', badge: 'NEW' },
   ];
 
@@ -109,9 +110,11 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
               {currency.code}
             </Button>
 
-            <Button variant="ghost" size="icon" className="hidden hover:bg-red-50 sm:flex">
-              <User className="h-5 w-5" />
-            </Button>
+            <Link href="/movies/login">
+              <Button variant="ghost" size="icon" className="hidden hover:bg-red-50 sm:flex">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
 
             <Link href="/cart">
               <Button variant="ghost" size="icon" className="relative hover:bg-red-50">

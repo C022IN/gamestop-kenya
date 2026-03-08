@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { lookupSubscriptions, getSubscription } from '@/lib/iptv-subscriptions';
 
-/** GET /api/iptv/lookup?q=email_or_phone  OR  ?id=subscriptionId */
+function isAuthorized(req: NextRequest): boolean {
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) return false;
+  const auth = req.headers.get('x-admin-secret') ?? req.nextUrl.searchParams.get('secret');
+  return auth === secret;
+}
+
+/** Admin-only lookup by email, phone, or subscription ID */
 export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { searchParams } = req.nextUrl;
   const q = searchParams.get('q');
   const id = searchParams.get('id');

@@ -6,7 +6,7 @@ const contactContent: RoutePageContent = {
   intro:
     'Need help with an order, payment, product choice, or setup? Reach our support team through phone, WhatsApp, or email and we will guide you quickly.',
   facts: [
-    { label: 'Call / WhatsApp', value: '+254 700 123 456' },
+    { label: 'Call / WhatsApp', value: '0717402034' },
     { label: 'Email', value: 'support@gamestop.co.ke' },
     { label: 'Location', value: 'Westlands' },
     { label: 'Typical Reply', value: '< 2 Hours' },
@@ -23,7 +23,7 @@ const contactContent: RoutePageContent = {
       description:
         'For urgent order updates and payment confirmations, WhatsApp is usually fastest.',
       points: [
-        'Use +254 700 123 456 for both call and WhatsApp.',
+        'Use 0717402034 for both call and WhatsApp.',
         'Share your order number for immediate lookup.',
         'Attach payment confirmation screenshots if needed.',
       ],
