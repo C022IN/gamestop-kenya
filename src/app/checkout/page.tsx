@@ -318,7 +318,7 @@ export default function CheckoutPage() {
                     <input
                       type="tel"
                       required
-                      placeholder="0712 345 678"
+                      placeholder="0717 402 034"
                       value={customerInfo.phone}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-red-500 text-sm"
@@ -449,7 +449,7 @@ export default function CheckoutPage() {
                             </label>
                             <input
                               type="tel"
-                              placeholder="0712 345 678"
+                              placeholder="0717 402 034"
                               value={mpesaPhone || customerInfo.phone}
                               onChange={(e) => setMpesaPhone(e.target.value)}
                               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-green-500 text-sm"

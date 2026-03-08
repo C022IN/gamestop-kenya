@@ -9,10 +9,10 @@ import {
   Check,
   CheckCircle2,
   CreditCard,
+  PlayCircle,
   ShieldCheck,
   Smartphone,
   Tv,
-  UserCog,
   Wallet,
 } from 'lucide-react';
 
@@ -37,8 +37,8 @@ const plans: Plan[] = [
     kesPrice: 4499,
     badge: 'Starter',
     features: [
-      'M-Pesa payment dashboard',
-      'Instant credential delivery after activation',
+      'Easy M-Pesa checkout',
+      'Login details shown right after payment',
       '1 stream at a time',
       'WhatsApp setup support',
     ],
@@ -52,10 +52,10 @@ const plans: Plan[] = [
     badge: 'Best Value',
     popular: true,
     features: [
-      'M-Pesa payment dashboard',
-      'Instant credential delivery after activation',
+      'Easy M-Pesa checkout',
+      'Login details shown right after payment',
       'Priority support queue',
-      'Renewal handled by admin team',
+      'Renewal help on WhatsApp',
     ],
   },
   {
@@ -66,10 +66,10 @@ const plans: Plan[] = [
     kesPrice: 22499,
     badge: 'Long-Term',
     features: [
-      'M-Pesa payment dashboard',
-      'Instant credential delivery after activation',
+      'Easy M-Pesa checkout',
+      'Login details shown right after payment',
       'VIP support queue',
-      'Admin-managed renewals',
+      'Renewal help on WhatsApp',
     ],
   },
 ];
@@ -104,28 +104,28 @@ export default function IPTVPage() {
               <div>
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-violet-500/20 px-3 py-1.5 text-xs font-semibold text-violet-200">
                   <Wallet className="h-3.5 w-3.5" />
-                  Customer Payment Dashboard
+                  Movies, TV, and Live Sports
                 </div>
                 <h1 className="text-4xl font-black leading-tight md:text-6xl">
-                  Pay, Confirm, and Receive Your Login Codes
+                  Choose a Plan and Start Watching
                 </h1>
                 <p className="mt-5 max-w-2xl text-lg text-gray-300">
-                  Customers only need one flow: choose a plan, approve the M-Pesa payment request, and receive the movie access code plus Xtream and M3U login details after activation. Subscription management stays with the admin team.
+                  Pay with M-Pesa, save your login details, and start watching on your phone, TV, or favorite player in minutes.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
                   <Button asChild className="rounded-xl bg-violet-600 px-8 py-6 text-lg font-bold hover:bg-violet-700">
-                    <a href="#plans">Open Payment Plans</a>
+                    <a href="#plans">See Plans</a>
                   </Button>
                   <Link href="/movies/login">
                     <Button
                       variant="outline"
                       className="rounded-xl border-white/25 bg-transparent px-8 py-6 text-lg font-bold text-white hover:bg-white/10"
                     >
-                      Member Login
+                      Sign In
                     </Button>
                   </Link>
                   <a
-                    href="https://wa.me/254717402034?text=Hi!%20I%20need%20help%20with%20the%20IPTV%20payment%20dashboard"
+                    href="https://wa.me/254717402034?text=Hi!%20I%20need%20help%20choosing%20a%20plan%20or%20completing%20payment."
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -133,7 +133,7 @@ export default function IPTVPage() {
                       variant="outline"
                       className="rounded-xl border-white/25 bg-transparent px-8 py-6 text-lg font-bold text-white hover:bg-white/10"
                     >
-                      Payment Support
+                      WhatsApp Help
                     </Button>
                   </a>
                 </div>
@@ -141,14 +141,14 @@ export default function IPTVPage() {
 
               <div className="rounded-3xl border border-violet-500/30 bg-violet-900/50 p-6 backdrop-blur-sm">
                 <p className="text-sm font-semibold uppercase tracking-wide text-violet-200">
-                  Fulfillment Flow
+                  How It Works
                 </p>
                 <div className="mt-4 space-y-4">
                   {[
-                    { icon: CreditCard, title: '1. Select a plan', text: 'The customer opens one payment page and picks a subscription term.' },
-                    { icon: Smartphone, title: '2. Approve M-Pesa', text: 'The STK push is sent to the customer phone and payment is confirmed.' },
-                    { icon: CheckCircle2, title: '3. Create user automatically', text: 'The normalized M-Pesa number becomes the profile ID and an access code is generated.' },
-                    { icon: UserCog, title: '4. Open the movie library', text: 'The customer is signed in automatically while admins still manage renewals and support.' },
+                    { icon: CreditCard, title: '1. Choose your plan', text: 'Pick the option that works best for you.' },
+                    { icon: Smartphone, title: '2. Approve payment', text: 'Enter your M-Pesa PIN on your phone to complete payment.' },
+                    { icon: CheckCircle2, title: '3. Save your details', text: 'Your phone number, movie code, and TV app login details appear right away.' },
+                    { icon: PlayCircle, title: '4. Start watching', text: 'Open your movie library or set up your TV app on any supported device.' },
                   ].map(({ icon: Icon, title, text }) => (
                     <div key={title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                       <div className="flex items-start gap-3">
@@ -175,18 +175,18 @@ export default function IPTVPage() {
             {[
               {
                 icon: ShieldCheck,
-                title: 'Admin-managed subscriptions',
-                text: 'Renewals, manual activations, and status corrections happen from the internal admin dashboard.',
+                title: 'Simple checkout',
+                text: 'Use your M-Pesa number, approve the prompt, and finish payment in a few taps.',
               },
               {
                 icon: Tv,
-                title: 'Codes delivered after payment',
-                text: 'Customers receive the movie access code, Xtream credentials, and M3U details immediately after activation.',
+                title: 'Instant login details',
+                text: 'Your movie code and TV app details appear as soon as payment is confirmed.',
               },
               {
                 icon: Smartphone,
-                title: 'M-Pesa first',
-                text: 'The customer flow is centered on STK push so checkout stays simple on mobile.',
+                title: 'Watch anywhere',
+                text: 'Use your phone, Smart TV, streaming stick, tablet, or laptop.',
               },
             ].map(({ icon: Icon, title, text }) => (
               <article key={title} className="rounded-2xl border border-gray-100 bg-gray-50 p-6">
@@ -206,7 +206,7 @@ export default function IPTVPage() {
           <div className="mb-10 text-center">
             <h2 className="text-3xl font-bold">Choose a Payment Plan</h2>
             <p className="mt-2 text-gray-400">
-              Payment activates the subscription, creates the member profile, and opens the logged-in movie flow.
+              Pay once, save your login details, and start watching right away.
             </p>
           </div>
 
@@ -242,7 +242,7 @@ export default function IPTVPage() {
                         : 'bg-violet-600 text-white hover:bg-violet-700'
                     }`}
                   >
-                    Open Payment Dashboard
+                    Choose Plan
                   </Button>
                 </Link>
               </article>
@@ -254,23 +254,23 @@ export default function IPTVPage() {
       <section className="bg-white py-14">
         <div className="container mx-auto max-w-4xl px-4">
           <div className="rounded-3xl border border-violet-100 bg-violet-50 p-8">
-            <h2 className="text-2xl font-black text-gray-900">How this works</h2>
+            <h2 className="text-2xl font-black text-gray-900">Before You Pay</h2>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl bg-white p-5">
-                <p className="text-sm font-semibold text-violet-700">Customer side</p>
+                <p className="text-sm font-semibold text-violet-700">Use your phone number</p>
                 <p className="mt-2 text-sm text-gray-600">
-                  Select a plan, complete the M-Pesa payment, save the generated codes, and continue directly into the movie library.
+                  Enter the M-Pesa number you want to use for payment and for future sign-in.
                 </p>
               </div>
               <div className="rounded-2xl bg-white p-5">
-                <p className="text-sm font-semibold text-violet-700">Admin side</p>
+                <p className="text-sm font-semibold text-violet-700">After payment</p>
                 <p className="mt-2 text-sm text-gray-600">
-                  Manage pending or active subscriptions, handle exceptions, and re-issue support from the internal dashboard.
+                  Save your movie code and TV app details somewhere safe before leaving the page.
                 </p>
               </div>
             </div>
             <p className="mt-6 text-sm text-violet-800">
-              Returning users sign in with M-Pesa number plus access code. If they lose the code after payment, the recovery path should still be handled by the admin team.
+              Already paid? Sign in with your phone number and movie code, or message us on WhatsApp if you need help finding your details.
             </p>
           </div>
         </div>

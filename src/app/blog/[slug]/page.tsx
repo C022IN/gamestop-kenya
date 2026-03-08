@@ -1,14 +1,12 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { blogPosts } from '@/data/blog';
+import { getBlogPostBySlug, listBlogPosts, listBlogSlugs } from '@/lib/blog-repository';
 import SocialShare from '@/components/SocialShare';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Eye, Heart, User, ArrowLeft, Tag } from 'lucide-react';
 
-export function generateStaticParams() {
-  return blogPosts.map((post) => ({
-    slug: post.slug,
-  }));
+export async function generateStaticParams() {
+  return await listBlogSlugs();
 }
 
 interface BlogPostPageProps {
@@ -17,13 +15,13 @@ interface BlogPostPageProps {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const post = blogPosts.find(post => post.slug === slug);
+  const [post, posts] = await Promise.all([getBlogPostBySlug(slug), listBlogPosts()]);
 
   if (!post) {
     notFound();
   }
 
-  const relatedPosts = blogPosts
+  const relatedPosts = posts
     .filter(p => p.id !== post.id && p.category.id === post.category.id)
     .slice(0, 3);
 

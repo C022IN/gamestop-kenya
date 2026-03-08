@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { paymentResults } from '@/lib/mpesa-payment-results';
+import { getPaymentResult, setPaymentResult } from '@/lib/mpesa-payment-results';
 import { queryStkStatus } from '@/lib/mpesa';
 import { activateByCheckoutId, getSubscriptionByCheckout } from '@/lib/iptv-subscriptions';
 import {
@@ -21,16 +21,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify the payment actually succeeded in our store
-    let payment = paymentResults.get(checkoutRequestId);
+    let payment = await getPaymentResult(checkoutRequestId);
     if (!payment) {
       const queried = await queryStkStatus(checkoutRequestId);
       if (queried.status === 'success' || queried.status === 'failed') {
-        paymentResults.set(checkoutRequestId, {
+        await setPaymentResult(checkoutRequestId, {
           status: queried.status,
           resultCode: queried.resultCode ?? '',
           resultDesc: queried.resultDesc ?? '',
         });
-        payment = paymentResults.get(checkoutRequestId);
+        payment = await getPaymentResult(checkoutRequestId);
       }
     }
 
@@ -43,10 +43,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if already activated
-    const existing = getSubscriptionByCheckout(checkoutRequestId);
+    const existing = await getSubscriptionByCheckout(checkoutRequestId);
     if (existing?.status === 'active') {
-      const member = provisionMemberFromSubscription(existing);
-      const session = createMovieSession(member.profileId);
+      const member = await provisionMemberFromSubscription(existing);
+      const session = await createMovieSession(member.profileId);
       const response = NextResponse.json({
         subscription: existing,
         member: {
@@ -73,8 +73,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Subscription record not found' }, { status: 404 });
     }
 
-    const member = provisionMemberFromSubscription(subscription);
-    const session = createMovieSession(member.profileId);
+    const member = await provisionMemberFromSubscription(subscription);
+    const session = await createMovieSession(member.profileId);
     const response = NextResponse.json({
       subscription,
       member: {

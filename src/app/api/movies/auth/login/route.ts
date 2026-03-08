@@ -13,12 +13,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'phone and accessCode are required' }, { status: 400 });
     }
 
-    const profile = getProfileByAccessCode(String(phone), String(accessCode));
+    const profile = await getProfileByAccessCode(String(phone), String(accessCode));
     if (!profile) {
       return NextResponse.json({ error: 'Invalid phone or access code' }, { status: 401 });
     }
 
-    const session = createMovieSession(profile.profileId);
+    const session = await createMovieSession(profile.profileId);
     if (!session) {
       return NextResponse.json({ error: 'Could not create session' }, { status: 500 });
     }

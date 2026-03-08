@@ -20,12 +20,12 @@ export default async function WatchPage({ params }: WatchPageProps) {
   }
 
   const { slug } = await params;
-  const item = getContentItemBySlug(slug);
+  const item = await getContentItemBySlug(slug);
   if (!item) {
     notFound();
   }
 
-  if (!canAccessContent(memberState.profile.profileId, item.id)) {
+  if (!(await canAccessContent(memberState.profile.profileId, item.id))) {
     redirect('/movies');
   }
 

@@ -6,10 +6,10 @@ export async function getCurrentMovieMember() {
   const token = cookieStore.get(MOVIE_SESSION_COOKIE)?.value;
   if (!token) return null;
 
-  const session = getSessionByToken(token);
+  const session = await getSessionByToken(token);
   if (!session) return null;
 
-  const profile = getProfileById(session.profileId);
+  const profile = await getProfileById(session.profileId);
   if (!profile) return null;
 
   return { session, profile };

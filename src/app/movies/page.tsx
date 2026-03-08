@@ -13,7 +13,7 @@ export default async function MoviesPage() {
   }
 
   const { profile } = memberState;
-  const contentItems = getAccessibleContentForProfile(profile.profileId);
+  const contentItems = await getAccessibleContentForProfile(profile.profileId);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">

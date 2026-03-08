@@ -48,27 +48,27 @@ export default function MoviesLoginPage() {
               GameStop Movies
             </p>
             <h1 className="mt-3 text-4xl font-black leading-tight md:text-6xl">
-              Sign In With Your M-Pesa Number and Access Code
+              Sign In With Your Phone Number and Movie Code
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-gray-300">
-              Your movie account is created automatically after successful payment. Use the normalized M-Pesa number as your profile ID and the generated access code from the payment screen.
+              Your account is created automatically after payment. Use the same M-Pesa number you paid with and the movie code shown on your payment page.
             </p>
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
                 {
                   icon: Smartphone,
-                  title: 'Phone-based identity',
-                  text: 'No email or password is required in V1.',
+                  title: 'No password needed',
+                  text: 'Just use the number you paid with.',
                 },
                 {
                   icon: LockKeyhole,
-                  title: 'Code-based login',
-                  text: 'Use the access code generated at activation.',
+                  title: 'Use your movie code',
+                  text: 'Your code appears after payment.',
                 },
                 {
                   icon: Tv,
-                  title: 'Movie library access',
-                  text: 'Watch entitled titles after sign-in.',
+                  title: 'Open your library',
+                  text: 'Start watching right after sign-in.',
                 },
               ].map(({ icon: Icon, title, text }) => (
                 <div key={title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -83,29 +83,29 @@ export default function MoviesLoginPage() {
           </section>
 
           <section className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-            <h2 className="text-2xl font-black">Member Login</h2>
+            <h2 className="text-2xl font-black">Sign In</h2>
             <p className="mt-2 text-sm text-gray-300">
-              Example profile ID format: <span className="font-mono">254712345678</span>
+              You can enter <span className="font-mono">0717402034</span> or <span className="font-mono">254717402034</span>.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-200">M-Pesa Number</label>
+                <label className="mb-1 block text-sm font-medium text-gray-200">Phone Number</label>
                 <input
                   type="tel"
                   required
-                  placeholder="0712 345 678 or 254712345678"
+                  placeholder="0717 402 034 or 254717402034"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-red-400 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-200">Access Code</label>
+                <label className="mb-1 block text-sm font-medium text-gray-200">Movie Code</label>
                 <input
                   type="text"
                   required
-                  placeholder="Generated after payment"
+                  placeholder="Shown after payment"
                   value={accessCode}
                   onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                   className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm uppercase tracking-[0.2em] text-white placeholder-gray-500 focus:border-red-400 focus:outline-none"
@@ -122,13 +122,13 @@ export default function MoviesLoginPage() {
             </form>
 
             <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
-              <p className="font-semibold">No access code yet?</p>
+              <p className="font-semibold">No movie code yet?</p>
               <p className="mt-1">
                 Complete payment first from the{' '}
                 <Link href="/iptv" className="underline">
-                  IPTV dashboard
+                  plans page
                 </Link>
-                . If you already paid and lost the code, contact support or the admin team.
+                . If you already paid and cannot find your code, contact support.
               </p>
             </div>
           </section>

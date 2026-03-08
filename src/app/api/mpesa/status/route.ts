@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryStkStatus } from '@/lib/mpesa';
-import { paymentResults } from '@/lib/mpesa-payment-results';
+import { getPaymentResult, setPaymentResult } from '@/lib/mpesa-payment-results';
 
 /**
  * GET /api/mpesa/status?id=<checkoutRequestId>
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   }
 
   // 1. Check if Safaricom has already called back
-  const cached = paymentResults.get(checkoutRequestId);
+  const cached = await getPaymentResult(checkoutRequestId);
   if (cached) {
     return NextResponse.json(cached);
   }
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   try {
     const result = await queryStkStatus(checkoutRequestId);
     if (result.status === 'success' || result.status === 'failed') {
-      paymentResults.set(checkoutRequestId, {
+      await setPaymentResult(checkoutRequestId, {
         status: result.status,
         resultCode: result.resultCode ?? '',
         resultDesc: result.resultDesc ?? '',

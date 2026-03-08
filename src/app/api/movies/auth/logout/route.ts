@@ -4,7 +4,7 @@ import { destroyMovieSession, MOVIE_SESSION_COOKIE } from '@/lib/movie-platform'
 export async function POST(req: NextRequest) {
   const token = req.cookies.get(MOVIE_SESSION_COOKIE)?.value;
   if (token) {
-    destroyMovieSession(token);
+    await destroyMovieSession(token);
   }
 
   const response = NextResponse.json({ ok: true });

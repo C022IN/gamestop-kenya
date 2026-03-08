@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { paymentResults } from '@/lib/mpesa-payment-results';
+import { setPaymentResult } from '@/lib/mpesa-payment-results';
 
 /**
  * Safaricom sends the STK Push result to this URL.
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       const get = (name: string) =>
         items.find((i) => i.Name === name)?.Value;
 
-      paymentResults.set(checkoutRequestId, {
+      await setPaymentResult(checkoutRequestId, {
         status: 'success',
         resultCode,
         resultDesc,
@@ -35,14 +35,14 @@ export async function POST(req: NextRequest) {
         transactionDate: String(get('TransactionDate') ?? ''),
         phoneNumber: String(get('PhoneNumber') ?? ''),
         amount: Number(get('Amount') ?? 0),
-      });
+      }, { payload: body });
     } else {
       // Payment failed or was cancelled
-      paymentResults.set(checkoutRequestId, {
+      await setPaymentResult(checkoutRequestId, {
         status: 'failed',
         resultCode,
         resultDesc,
-      });
+      }, { payload: body });
     }
 
     return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });

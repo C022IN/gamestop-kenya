@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create a pending subscription record
-    const subscription = createPendingSubscription({
+    const subscription = await createPendingSubscription({
       planId: planId as PlanId,
       customerName: `Customer ${normalisedPhone.slice(-4)}`,
       email: `${normalisedPhone}@profile.gamestop.local`,

@@ -1,5 +1,6 @@
 import type { IptvSubscription } from '@/lib/iptv-subscriptions';
 import { normaliseMpesaPhone } from '@/lib/mpesa';
+import { getSupabaseAdminClient } from '@/lib/supabase/server';
 
 export const MOVIE_SESSION_COOKIE = 'gsm_movie_session';
 
@@ -46,6 +47,43 @@ export interface PlaybackSource {
   dashUrl: string;
   signed: boolean;
   streamUid: string;
+}
+
+interface ContentItemRow {
+  id: string;
+  slug: string;
+  title: string;
+  synopsis: string;
+  genres: string[];
+  year: number;
+  duration_minutes: number;
+  maturity_rating: string;
+  cloudflare_stream_uid: string | null;
+  requires_signed_playback: boolean;
+}
+
+interface MemberProfileRow {
+  profile_id: string;
+  phone: string;
+  access_code: string;
+  created_at: string;
+  last_login_at: string | null;
+  subscription_ids: string[] | null;
+}
+
+interface MemberSessionRow {
+  token: string;
+  profile_id: string;
+  created_at: string;
+  expires_at: string;
+}
+
+interface EntitlementRow {
+  profile_id: string;
+  content_item_id: string;
+  subscription_id: string;
+  granted_at: string;
+  expires_at: string;
 }
 
 const memberProfiles = new Map<string, MemberProfile>();
@@ -130,23 +168,173 @@ const CONTENT_ITEMS: ContentItem[] = [
   },
 ];
 
+function fromContentRow(row: ContentItemRow): ContentItem {
+  const fallback = CONTENT_ITEMS.find((item) => item.id === row.id || item.slug === row.slug);
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    synopsis: row.synopsis,
+    genres: row.genres ?? [],
+    year: row.year,
+    durationMinutes: row.duration_minutes,
+    maturityRating: row.maturity_rating,
+    cloudflareStreamUid: row.cloudflare_stream_uid ?? fallback?.cloudflareStreamUid ?? undefined,
+    requiresSignedPlayback: row.requires_signed_playback ?? fallback?.requiresSignedPlayback ?? false,
+  };
+}
+
+function fromProfileRow(row: MemberProfileRow): MemberProfile {
+  return {
+    profileId: row.profile_id,
+    phone: row.phone,
+    accessCode: row.access_code,
+    createdAt: row.created_at,
+    lastLoginAt: row.last_login_at ?? undefined,
+    subscriptionIds: row.subscription_ids ?? [],
+  };
+}
+
+function fromSessionRow(row: MemberSessionRow): MemberSession {
+  return {
+    token: row.token,
+    profileId: row.profile_id,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+  };
+}
+
+function fromEntitlementRow(row: EntitlementRow): Entitlement {
+  return {
+    profileId: row.profile_id,
+    contentItemId: row.content_item_id,
+    subscriptionId: row.subscription_id,
+    grantedAt: row.granted_at,
+    expiresAt: row.expires_at,
+  };
+}
+
 export function getProfileIdFromPhone(phone: string): string {
   return normaliseMpesaPhone(phone);
 }
 
-export function getContentItems(): ContentItem[] {
-  return CONTENT_ITEMS;
+export async function getContentItems(): Promise<ContentItem[]> {
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) {
+    return CONTENT_ITEMS;
+  }
+
+  const { data, error } = await supabase
+    .from('movie_content_items')
+    .select(
+      'id, slug, title, synopsis, genres, year, duration_minutes, maturity_rating, cloudflare_stream_uid, requires_signed_playback'
+    )
+    .eq('is_published', true)
+    .order('year', { ascending: false });
+
+  if (error || !data || data.length === 0) {
+    await supabase.from('movie_content_items').upsert(
+      CONTENT_ITEMS.map((item) => ({
+        id: item.id,
+        slug: item.slug,
+        title: item.title,
+        synopsis: item.synopsis,
+        genres: item.genres,
+        year: item.year,
+        duration_minutes: item.durationMinutes,
+        maturity_rating: item.maturityRating,
+        cloudflare_stream_uid: item.cloudflareStreamUid ?? null,
+        requires_signed_playback: item.requiresSignedPlayback ?? false,
+        is_published: true,
+      })),
+      { onConflict: 'id' }
+    );
+    return CONTENT_ITEMS;
+  }
+
+  return (data as ContentItemRow[]).map(fromContentRow);
 }
 
-export function getContentItemBySlug(slug: string): ContentItem | null {
-  return CONTENT_ITEMS.find((item) => item.slug === slug) ?? null;
+export async function getContentItemBySlug(slug: string): Promise<ContentItem | null> {
+  const items = await getContentItems();
+  return items.find((item) => item.slug === slug) ?? null;
 }
 
-export function provisionMemberFromSubscription(subscription: IptvSubscription): MemberProfile {
+async function upsertEntitlements(profileId: string, subscription: IptvSubscription) {
+  const currentItems = await getContentItems();
+  const now = new Date().toISOString();
+  const next = currentItems.map((item) => ({
+    profile_id: profileId,
+    content_item_id: item.id,
+    subscription_id: subscription.id,
+    granted_at: now,
+    expires_at: subscription.expiresAt,
+  }));
+
+  const supabase = getSupabaseAdminClient();
+  if (supabase) {
+    await supabase.from('movie_entitlements').upsert(next, {
+      onConflict: 'profile_id,content_item_id,subscription_id',
+    });
+    return;
+  }
+
+  const current = memberEntitlements.get(profileId) ?? [];
+  const otherSubscriptions = current.filter(
+    (entitlement) => entitlement.subscriptionId !== subscription.id
+  );
+  memberEntitlements.set(
+    profileId,
+    [...otherSubscriptions, ...next.map((item) => fromEntitlementRow(item))]
+  );
+}
+
+export async function provisionMemberFromSubscription(
+  subscription: IptvSubscription
+): Promise<MemberProfile> {
   const profileId = getProfileIdFromPhone(subscription.phone);
-  const existing = memberProfiles.get(profileId);
+  const supabase = getSupabaseAdminClient();
   const now = new Date().toISOString();
 
+  if (supabase) {
+    const { data } = await supabase
+      .from('movie_profiles')
+      .select('profile_id, phone, access_code, created_at, last_login_at, subscription_ids')
+      .eq('profile_id', profileId)
+      .maybeSingle();
+
+    const existing = data ? fromProfileRow(data as MemberProfileRow) : null;
+    const profile: MemberProfile = existing
+      ? {
+          ...existing,
+          phone: profileId,
+          subscriptionIds: Array.from(new Set([...existing.subscriptionIds, subscription.id])),
+        }
+      : {
+          profileId,
+          phone: profileId,
+          accessCode: generateAccessCode(),
+          createdAt: now,
+          subscriptionIds: [subscription.id],
+        };
+
+    await supabase.from('movie_profiles').upsert(
+      {
+        profile_id: profile.profileId,
+        phone: profile.phone,
+        access_code: profile.accessCode,
+        created_at: profile.createdAt,
+        last_login_at: profile.lastLoginAt ?? null,
+        subscription_ids: profile.subscriptionIds,
+      },
+      { onConflict: 'profile_id' }
+    );
+
+    await upsertEntitlements(profileId, subscription);
+    return profile;
+  }
+
+  const existing = memberProfiles.get(profileId);
   const profile: MemberProfile = existing
     ? {
         ...existing,
@@ -162,39 +350,12 @@ export function provisionMemberFromSubscription(subscription: IptvSubscription):
       };
 
   memberProfiles.set(profileId, profile);
-  grantEntitlements(profileId, subscription);
+  await upsertEntitlements(profileId, subscription);
   return profile;
 }
 
-function grantEntitlements(profileId: string, subscription: IptvSubscription) {
-  const current = memberEntitlements.get(profileId) ?? [];
-  const now = new Date().toISOString();
-
-  const next = CONTENT_ITEMS.map((item) => {
-    const existing = current.find(
-      (entitlement) =>
-        entitlement.subscriptionId === subscription.id && entitlement.contentItemId === item.id
-    );
-
-    return (
-      existing ?? {
-        profileId,
-        contentItemId: item.id,
-        subscriptionId: subscription.id,
-        grantedAt: now,
-        expiresAt: subscription.expiresAt,
-      }
-    );
-  });
-
-  const otherSubscriptions = current.filter(
-    (entitlement) => entitlement.subscriptionId !== subscription.id
-  );
-  memberEntitlements.set(profileId, [...otherSubscriptions, ...next]);
-}
-
-export function createMovieSession(profileId: string): MemberSession | null {
-  const profile = memberProfiles.get(profileId);
+export async function createMovieSession(profileId: string): Promise<MemberSession | null> {
+  const profile = await getProfileById(profileId);
   if (!profile) return null;
 
   const now = new Date();
@@ -208,53 +369,152 @@ export function createMovieSession(profileId: string): MemberSession | null {
     expiresAt: expiresAt.toISOString(),
   };
 
-  profile.lastLoginAt = now.toISOString();
-  memberProfiles.set(profileId, profile);
-  memberSessions.set(session.token, session);
+  const supabase = getSupabaseAdminClient();
+  if (supabase) {
+    await supabase
+      .from('movie_profiles')
+      .update({ last_login_at: now.toISOString() })
+      .eq('profile_id', profileId);
+
+    await supabase.from('movie_sessions').upsert(
+      {
+        token: session.token,
+        profile_id: session.profileId,
+        created_at: session.createdAt,
+        expires_at: session.expiresAt,
+      },
+      { onConflict: 'token' }
+    );
+  } else {
+    memberProfiles.set(profileId, { ...profile, lastLoginAt: now.toISOString() });
+    memberSessions.set(session.token, session);
+  }
+
   return session;
 }
 
-export function getProfileByAccessCode(phone: string, accessCode: string): MemberProfile | null {
+export async function getProfileByAccessCode(
+  phone: string,
+  accessCode: string
+): Promise<MemberProfile | null> {
   const profileId = getProfileIdFromPhone(phone);
+  const supabase = getSupabaseAdminClient();
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('movie_profiles')
+      .select('profile_id, phone, access_code, created_at, last_login_at, subscription_ids')
+      .eq('profile_id', profileId)
+      .eq('access_code', accessCode.trim().toUpperCase())
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return fromProfileRow(data as MemberProfileRow);
+  }
+
   const profile = memberProfiles.get(profileId);
   if (!profile) return null;
   return profile.accessCode === accessCode.trim().toUpperCase() ? profile : null;
 }
 
-export function getSessionByToken(token: string): MemberSession | null {
-  const session = memberSessions.get(token);
-  if (!session) return null;
+export async function getSessionByToken(token: string): Promise<MemberSession | null> {
+  const supabase = getSupabaseAdminClient();
+  let session: MemberSession | null = null;
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('movie_sessions')
+      .select('token, profile_id, created_at, expires_at')
+      .eq('token', token)
+      .maybeSingle();
+
+    if (!error && data) {
+      session = fromSessionRow(data as MemberSessionRow);
+    }
+  } else {
+    session = memberSessions.get(token) ?? null;
+  }
+
+  if (!session) {
+    return null;
+  }
 
   if (new Date(session.expiresAt).getTime() < Date.now()) {
-    memberSessions.delete(token);
+    await destroyMovieSession(token);
     return null;
   }
 
   return session;
 }
 
-export function destroyMovieSession(token: string) {
+export async function destroyMovieSession(token: string) {
+  const supabase = getSupabaseAdminClient();
+  if (supabase) {
+    await supabase.from('movie_sessions').delete().eq('token', token);
+    return;
+  }
+
   memberSessions.delete(token);
 }
 
-export function getProfileById(profileId: string): MemberProfile | null {
+export async function getProfileById(profileId: string): Promise<MemberProfile | null> {
+  const supabase = getSupabaseAdminClient();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('movie_profiles')
+      .select('profile_id, phone, access_code, created_at, last_login_at, subscription_ids')
+      .eq('profile_id', profileId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return fromProfileRow(data as MemberProfileRow);
+  }
+
   return memberProfiles.get(profileId) ?? null;
 }
 
-export function getEntitlementsForProfile(profileId: string): Entitlement[] {
+export async function getEntitlementsForProfile(profileId: string): Promise<Entitlement[]> {
+  const supabase = getSupabaseAdminClient();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('movie_entitlements')
+      .select('profile_id, content_item_id, subscription_id, granted_at, expires_at')
+      .eq('profile_id', profileId)
+      .gt('expires_at', new Date().toISOString());
+
+    if (error || !data) {
+      return [];
+    }
+
+    return (data as EntitlementRow[]).map(fromEntitlementRow);
+  }
+
   const now = Date.now();
   return (memberEntitlements.get(profileId) ?? []).filter(
     (entitlement) => new Date(entitlement.expiresAt).getTime() > now
   );
 }
 
-export function getAccessibleContentForProfile(profileId: string): ContentItem[] {
-  const entitledIds = new Set(getEntitlementsForProfile(profileId).map((item) => item.contentItemId));
-  return CONTENT_ITEMS.filter((item) => entitledIds.has(item.id));
+export async function getAccessibleContentForProfile(profileId: string): Promise<ContentItem[]> {
+  const entitledIds = new Set(
+    (await getEntitlementsForProfile(profileId)).map((item) => item.contentItemId)
+  );
+  const items = await getContentItems();
+  return items.filter((item) => entitledIds.has(item.id));
 }
 
-export function canAccessContent(profileId: string, contentItemId: string): boolean {
-  return getEntitlementsForProfile(profileId).some((item) => item.contentItemId === contentItemId);
+export async function canAccessContent(
+  profileId: string,
+  contentItemId: string
+): Promise<boolean> {
+  const entitlements = await getEntitlementsForProfile(profileId);
+  return entitlements.some((item) => item.contentItemId === contentItemId);
 }
 
 export async function buildPlaybackSource(content: ContentItem): Promise<PlaybackSource | null> {
