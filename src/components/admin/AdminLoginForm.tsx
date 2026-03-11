@@ -7,10 +7,9 @@ import { AlertCircle, Loader2, LockKeyhole, ShieldCheck, Smartphone } from 'luci
 
 interface AdminLoginFormProps {
   configured: boolean;
-  loginHint: string | null;
 }
 
-export default function AdminLoginForm({ configured, loginHint }: AdminLoginFormProps) {
+export default function AdminLoginForm({ configured }: AdminLoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [identifier, setIdentifier] = useState('');
@@ -93,7 +92,7 @@ export default function AdminLoginForm({ configured, loginHint }: AdminLoginForm
             <h2 className="text-2xl font-black">Admin Sign-In</h2>
             <p className="mt-2 text-sm text-gray-300">
               {configured
-                ? `Configured login: ${loginHint ?? 'your admin identity'}`
+                ? 'Admin login is configured on the server.'
                 : 'Admin login is not configured yet. Add the super-admin environment variables first.'}
             </p>
 
@@ -104,7 +103,7 @@ export default function AdminLoginForm({ configured, loginHint }: AdminLoginForm
                   type="text"
                   required
                   disabled={!configured || loading}
-                  placeholder="admin@gamestop.co.ke or 0717402034"
+                  placeholder="admin@example.com or 0712345678"
                   value={identifier}
                   onChange={(event) => setIdentifier(event.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-violet-400 focus:outline-none disabled:opacity-60"

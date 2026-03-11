@@ -28,7 +28,7 @@ create index if not exists admin_accounts_created_by_idx on admin_accounts(creat
 
 create table if not exists admin_sessions (
   token text primary key,
-  admin_id text not null,
+  admin_id text not null references admin_accounts(id) on delete cascade,
   created_at timestamptz not null default timezone('utc', now()),
   expires_at timestamptz not null,
   last_seen_at timestamptz,
@@ -361,7 +361,7 @@ on conflict (id) do update set
 create table if not exists iptv_subscriptions (
   id text primary key,
   customer_id uuid references customers(id) on delete set null,
-  plan_id text not null,
+  plan_id text not null references iptv_plans(id) on delete restrict,
   plan_name text not null,
   months integer not null default 0,
   amount_kes numeric(12,2) not null,

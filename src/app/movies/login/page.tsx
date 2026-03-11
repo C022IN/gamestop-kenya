@@ -100,8 +100,7 @@ export default function MoviesLoginPage() {
               <div>
                 <h2 className="text-2xl font-black text-white">Member Sign In</h2>
                 <p className="mt-2 text-sm text-white/[0.62]">
-                  You can enter <span className="font-mono text-white">0717402034</span> or{' '}
-                  <span className="font-mono text-white">254717402034</span>.
+                  Enter the same phone number you used to activate the subscription.
                 </p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-300/15 text-emerald-200">
@@ -115,7 +114,7 @@ export default function MoviesLoginPage() {
                 <input
                   type="tel"
                   required
-                  placeholder="0717 402 034 or 254717402034"
+                  placeholder="0712 345 678 or 254712345678"
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
                   className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-sky-300 focus:outline-none"

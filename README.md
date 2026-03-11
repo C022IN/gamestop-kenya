@@ -41,7 +41,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 For the provider-managed IPTV flow, use:
 
 - `docs/iptv-provider-setup.md`
-- `supabase/seed_iptv_provider.template.sql`
+- `supabase/schema.sql`
 
 ## Deploy on Vercel
 

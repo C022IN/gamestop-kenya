@@ -1008,7 +1008,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                 />
                 <input
                   type="email"
-                  placeholder="admin@gamestop.co.ke"
+                  placeholder="admin@example.com"
                   value={newAdminEmail}
                   onChange={(event) => setNewAdminEmail(event.target.value)}
                   className="rounded-xl border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"

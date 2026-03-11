@@ -230,7 +230,7 @@ create table iptv_access_codes (
 );
 ```
 
-See [seed_iptv_provider.template.sql](../supabase/seed_iptv_provider.template.sql) for the full catalog schema.
+See [schema.sql](../supabase/schema.sql) for the full catalog schema and table definitions.
 
 ---
 
