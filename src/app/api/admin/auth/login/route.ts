@@ -12,20 +12,20 @@ function getRequestIp(req: NextRequest): string | null {
 
 export async function POST(req: NextRequest) {
   try {
-    const { identifier, password } = await req.json();
+    const { email, password } = await req.json();
 
-    if (!identifier || !password) {
-      return NextResponse.json({ error: 'identifier and password are required' }, { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json({ error: 'email and password are required' }, { status: 400 });
     }
 
-    const auth = await authenticateAdmin(identifier, password);
+    const auth = await authenticateAdmin(email, password);
 
     if (!auth.ok || !auth.admin) {
       await recordAdminAudit({
         action: 'admin_sign_in',
         status: 'failed',
         actorId: null,
-        actorLabel: String(identifier).trim() || 'Unknown',
+        actorLabel: String(email).trim() || 'Unknown',
         summary: auth.error ?? 'Failed admin sign-in attempt.',
         target: null,
         ipAddress: getRequestIp(req),

@@ -999,18 +999,18 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                   className="rounded-xl border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"
                 />
                 <input
-                  type="tel"
-                  required
-                  placeholder="0717 402 034"
-                  value={newAdminPhone}
-                  onChange={(event) => setNewAdminPhone(event.target.value)}
-                  className="rounded-xl border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"
-                />
-                <input
                   type="email"
+                  required
                   placeholder="admin@example.com"
                   value={newAdminEmail}
                   onChange={(event) => setNewAdminEmail(event.target.value)}
+                  className="rounded-xl border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"
+                />
+                <input
+                  type="tel"
+                  placeholder="Phone (optional)"
+                  value={newAdminPhone}
+                  onChange={(event) => setNewAdminPhone(event.target.value)}
                   className="rounded-xl border border-gray-700 bg-gray-950 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"
                 />
                 <div className="flex gap-3">

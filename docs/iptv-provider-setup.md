@@ -12,15 +12,14 @@ Create or edit `.env.local` in the project root:
 
 ```env
 SUPER_ADMIN_NAME=Your Name
-SUPER_ADMIN_PHONE=0712345678
 SUPER_ADMIN_EMAIL=you@gamestop.co.ke
 SUPER_ADMIN_PASSWORD=a-very-strong-secret
 ```
 
-- Either `SUPER_ADMIN_PHONE` or `SUPER_ADMIN_EMAIL` is required (both is fine).
+- `SUPER_ADMIN_EMAIL` is required.
 - `SUPER_ADMIN_PASSWORD` is required.
 - Restart the dev server or redeploy for changes to take effect.
-- Log in at `/admin` with the phone or email + password above.
+- Log in at `/admin` with the email + password above.
 
 On Vercel (or any hosting platform), set the same four keys in the environment variable settings panel instead of a file.
 

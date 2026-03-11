@@ -12,7 +12,7 @@ interface AdminLoginFormProps {
 export default function AdminLoginForm({ configured }: AdminLoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [identifier, setIdentifier] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,7 +28,7 @@ export default function AdminLoginForm({ configured }: AdminLoginFormProps) {
       const res = await fetch('/api/admin/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
 
@@ -57,7 +57,7 @@ export default function AdminLoginForm({ configured }: AdminLoginFormProps) {
               Manage subscriptions, codes, and client recovery
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-gray-300">
-              Sign in with your admin email or phone number to view generated movie codes, IPTV credentials, and recent subscription activity.
+              Sign in with your admin email to view generated movie codes, IPTV credentials, and recent subscription activity.
             </p>
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
@@ -68,8 +68,8 @@ export default function AdminLoginForm({ configured }: AdminLoginFormProps) {
                 },
                 {
                   icon: Smartphone,
-                  title: 'Phone or email login',
-                  text: 'Use the super-admin identity you configure on the server.',
+                  title: 'Email login',
+                  text: 'Use the admin email configured on the server.',
                 },
                 {
                   icon: LockKeyhole,
@@ -98,14 +98,14 @@ export default function AdminLoginForm({ configured }: AdminLoginFormProps) {
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-200">Email or Phone</label>
+                <label className="mb-1 block text-sm font-medium text-gray-200">Email</label>
                 <input
-                  type="text"
+                  type="email"
                   required
                   disabled={!configured || loading}
-                  placeholder="admin@example.com or 0712345678"
-                  value={identifier}
-                  onChange={(event) => setIdentifier(event.target.value)}
+                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-violet-400 focus:outline-none disabled:opacity-60"
                 />
               </div>
@@ -143,7 +143,7 @@ export default function AdminLoginForm({ configured }: AdminLoginFormProps) {
             <div className="mt-6 rounded-2xl border border-violet-500/20 bg-violet-500/10 p-4 text-sm text-violet-100">
               <p className="font-semibold">Required setup</p>
               <p className="mt-1">
-                Set <span className="font-mono">SUPER_ADMIN_EMAIL</span> or <span className="font-mono">SUPER_ADMIN_PHONE</span>, plus <span className="font-mono">SUPER_ADMIN_PASSWORD</span> in your server environment.
+                Set <span className="font-mono">SUPER_ADMIN_EMAIL</span> plus <span className="font-mono">SUPER_ADMIN_PASSWORD</span> in your server environment.
               </p>
             </div>
           </section>

@@ -77,8 +77,8 @@ export async function POST(req: NextRequest) {
     const { name, phone, email, password } = await req.json();
     const result = await createStaffAdmin({
       name: String(name ?? ''),
-      phone: String(phone ?? ''),
-      email: typeof email === 'string' ? email : null,
+      phone: typeof phone === 'string' ? phone : null,
+      email: String(email ?? ''),
       password: String(password ?? ''),
       createdByAdminId: auth.current.admin.id,
     });
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
         actorId: auth.current.admin.id,
         actorLabel: auth.current.admin.name,
         summary: result.error ?? 'Failed to create admin.',
-        target: typeof phone === 'string' ? phone : null,
+        target: typeof email === 'string' ? email : null,
         ipAddress: getRequestIp(req),
         userAgent: req.headers.get('user-agent'),
       });

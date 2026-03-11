@@ -141,14 +141,6 @@ function passwordsMatch(input: string, storedHash: string): boolean {
   return false;
 }
 
-function getLoginPhoneIdentifier(identifier: string): string | null {
-  try {
-    return normaliseMpesaPhone(identifier);
-  } catch {
-    return null;
-  }
-}
-
 function toIdentity(record: AdminRecord): AdminIdentity {
   return {
     id: record.id,
@@ -203,7 +195,7 @@ function getSuperAdminRecord(): AdminRecord | null {
   const phone = normaliseAdminPhone(trimEnv(process.env.SUPER_ADMIN_PHONE));
   const password = getConfiguredPassword();
 
-  if ((!email && !phone) || !password) {
+  if (!email || !password) {
     return null;
   }
 
@@ -268,18 +260,15 @@ async function getAllAdminRecords(): Promise<AdminRecord[]> {
   return superAdmin ? [superAdmin, ...team] : team;
 }
 
-async function getAdminByIdentifier(identifier: string): Promise<AdminRecord | null> {
-  const normalizedIdentifier = identifier.trim().toLowerCase();
-  const loginPhone = getLoginPhoneIdentifier(identifier);
+async function getAdminByEmail(email: string): Promise<AdminRecord | null> {
+  const normalizedEmail = normaliseEmail(email);
+  if (!normalizedEmail) {
+    return null;
+  }
+
   const admins = await getAllAdminRecords();
 
-  return (
-    admins.find((admin) => {
-      const matchesEmail = admin.email ? normalizedIdentifier === admin.email : false;
-      const matchesPhone = admin.phone ? loginPhone === admin.phone : false;
-      return matchesEmail || matchesPhone;
-    }) ?? null
-  );
+  return admins.find((admin) => admin.email === normalizedEmail) ?? null;
 }
 
 export async function getConfiguredAdmin(): Promise<AdminIdentity | null> {
@@ -306,7 +295,7 @@ export function isSuperAdmin(admin: Pick<AdminIdentity, 'role'> | null | undefin
   return admin?.role === 'super_admin';
 }
 
-export async function authenticateAdmin(identifier: string, password: string): Promise<{
+export async function authenticateAdmin(email: string, password: string): Promise<{
   ok: boolean;
   admin?: AdminIdentity;
   error?: string;
@@ -315,11 +304,11 @@ export async function authenticateAdmin(identifier: string, password: string): P
     return {
       ok: false,
       error:
-        'Super-admin login is not configured. Set SUPER_ADMIN_PHONE or SUPER_ADMIN_EMAIL, plus SUPER_ADMIN_PASSWORD.',
+        'Super-admin login is not configured. Set SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD.',
     };
   }
 
-  const admin = await getAdminByIdentifier(identifier);
+  const admin = await getAdminByEmail(email);
   if (!admin) {
     return { ok: false, error: 'Invalid login details.' };
   }
@@ -333,22 +322,22 @@ export async function authenticateAdmin(identifier: string, password: string): P
 
 export async function createStaffAdmin(params: {
   name: string;
-  phone: string;
-  email?: string | null;
+  phone?: string | null;
+  email: string;
   password: string;
   createdByAdminId: string;
 }): Promise<{ ok: boolean; admin?: AdminIdentity; error?: string }> {
   const name = params.name.trim();
   const password = params.password.trim();
-  const phone = normaliseAdminPhone(params.phone);
-  const email = normaliseEmail(params.email ?? null);
+  const phone = normaliseAdminPhone(params.phone ?? null);
+  const email = normaliseEmail(params.email);
 
   if (!name) {
     return { ok: false, error: 'Admin name is required.' };
   }
 
-  if (!phone) {
-    return { ok: false, error: 'A valid Kenyan phone number is required.' };
+  if (!email) {
+    return { ok: false, error: 'A valid admin email is required.' };
   }
 
   if (!password) {
@@ -356,16 +345,16 @@ export async function createStaffAdmin(params: {
   }
 
   const allAdmins = await getAllAdminRecords();
-  if (allAdmins.some((admin) => admin.phone && admin.phone === phone)) {
+  if (phone && allAdmins.some((admin) => admin.phone && admin.phone === phone)) {
     return { ok: false, error: 'That phone number is already in use by another admin.' };
   }
 
-  if (email && allAdmins.some((admin) => admin.email && admin.email === email)) {
+  if (allAdmins.some((admin) => admin.email && admin.email === email)) {
     return { ok: false, error: 'That email address is already in use by another admin.' };
   }
 
   const record: AdminRecord = {
-    id: makeAdminId('admin', phone),
+    id: makeAdminId('admin', email),
     role: 'admin',
     name,
     email,
