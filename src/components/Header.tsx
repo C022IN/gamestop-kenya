@@ -18,7 +18,7 @@ interface HeaderProps {
 
 const announcements = [
   'Free delivery in Nairobi for orders above KSh 5,000.',
-  'NEW: Premium IPTV - 20,000+ channels from KSh 1,500/month.',
+  'NEW: Premium IPTV - member login, protected playlists, and M-Pesa activation.',
   'Flash deal: up to 40% off selected PS5 and Xbox games today only.',
   'Pay with M-Pesa, Visa, Mastercard, or Airtel Money.',
   'Same-day delivery available in Nairobi CBD - order before 2 PM.',

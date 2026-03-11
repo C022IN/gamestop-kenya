@@ -21,7 +21,7 @@ export default function MemberLogoutButton() {
       variant="outline"
       onClick={logout}
       disabled={loading}
-      className="border-white/20 bg-transparent text-white hover:bg-white/10"
+      className="rounded-2xl border-white/15 bg-transparent px-6 py-5 font-bold text-white hover:bg-white/10"
     >
       {loading ? 'Signing out...' : 'Sign Out'}
     </Button>

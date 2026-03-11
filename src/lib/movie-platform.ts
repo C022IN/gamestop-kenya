@@ -1,4 +1,5 @@
-import type { IptvSubscription } from '@/lib/iptv-subscriptions';
+import { createHmac } from 'node:crypto';
+import { getSubscription, type IptvSubscription } from '@/lib/iptv-subscriptions';
 import { normaliseMpesaPhone } from '@/lib/mpesa';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 
@@ -94,8 +95,31 @@ function generateAccessCode(length = 8): string {
   return Math.random().toString(36).slice(2, 2 + length).toUpperCase();
 }
 
-function generateSessionToken(): string {
-  return `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+function getMovieTokenSecret(): string {
+  return process.env.SUPER_ADMIN_PASSWORD ?? 'movie-dev-fallback-secret';
+}
+
+function generateSessionToken(profileId: string, expiresAt: string): string {
+  const payload = `${profileId}|${expiresAt}`;
+  const sig = createHmac('sha256', getMovieTokenSecret()).update(payload).digest('hex');
+  return Buffer.from(`${payload}|${sig}`).toString('base64url');
+}
+
+function verifySessionToken(token: string): { profileId: string; expiresAt: string } | null {
+  try {
+    const decoded = Buffer.from(token, 'base64url').toString();
+    const parts = decoded.split('|');
+    if (parts.length < 3) return null;
+    const sig = parts[parts.length - 1];
+    const payload = parts.slice(0, -1).join('|');
+    const expectedSig = createHmac('sha256', getMovieTokenSecret()).update(payload).digest('hex');
+    if (sig !== expectedSig) return null;
+    const [profileId, expiresAt] = payload.split('|');
+    if (!profileId || !expiresAt) return null;
+    return { profileId, expiresAt };
+  } catch {
+    return null;
+  }
 }
 
 function getCustomerCode(): string | null {
@@ -363,7 +387,7 @@ export async function createMovieSession(profileId: string): Promise<MemberSessi
   expiresAt.setDate(expiresAt.getDate() + 30);
 
   const session: MemberSession = {
-    token: generateSessionToken(),
+    token: generateSessionToken(profileId, expiresAt.toISOString()),
     profileId,
     createdAt: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
@@ -436,6 +460,17 @@ export async function getSessionByToken(token: string): Promise<MemberSession | 
     }
   } else {
     session = memberSessions.get(token) ?? null;
+    if (!session) {
+      const verified = verifySessionToken(token);
+      if (verified) {
+        session = {
+          token,
+          profileId: verified.profileId,
+          createdAt: new Date().toISOString(),
+          expiresAt: verified.expiresAt,
+        };
+      }
+    }
   }
 
   if (!session) {
@@ -507,6 +542,32 @@ export async function getAccessibleContentForProfile(profileId: string): Promise
   );
   const items = await getContentItems();
   return items.filter((item) => entitledIds.has(item.id));
+}
+
+export async function getActiveSubscriptionsForProfile(
+  profileId: string
+): Promise<IptvSubscription[]> {
+  const profile = await getProfileById(profileId);
+  if (!profile) {
+    return [];
+  }
+
+  const subscriptions = await Promise.all(
+    profile.subscriptionIds.map((subscriptionId) => getSubscription(subscriptionId))
+  );
+
+  const now = Date.now();
+  return subscriptions.filter((subscription): subscription is IptvSubscription => {
+    if (!subscription || subscription.status !== 'active') {
+      return false;
+    }
+
+    return new Date(subscription.expiresAt).getTime() > now;
+  });
+}
+
+export async function hasActiveSubscriptionForProfile(profileId: string): Promise<boolean> {
+  return (await getActiveSubscriptionsForProfile(profileId)).length > 0;
 }
 
 export async function canAccessContent(

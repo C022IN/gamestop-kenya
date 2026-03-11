@@ -1,7 +1,7 @@
 import type { IptvCredentials, IptvSubscription } from '@/lib/iptv-subscriptions';
 
 function getSiteHost(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gamestopkenya.com';
+  return (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gamestopkenya.com').replace(/\/+$/, '');
 }
 
 function buildLocalCredentials(subscriptionId: string): IptvCredentials {
@@ -9,13 +9,14 @@ function buildLocalCredentials(subscriptionId: string): IptvCredentials {
   const username = 'gsk_' + rand(8);
   const password = rand(6) + '_' + rand(6);
   const host = getSiteHost();
+  const port = host.startsWith('https://') ? 443 : 80;
 
   return {
     xtreamHost: host,
-    xtreamPort: 8080,
+    xtreamPort: port,
     xtreamUsername: username,
     xtreamPassword: password,
-    m3uUrl: `${host}/api/iptv/stream/${subscriptionId}/playlist.m3u`,
+    m3uUrl: `${host}/api/iptv/stream/${subscriptionId}/playlist.m3u?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
   };
 }
 

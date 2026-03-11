@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LockKeyhole, Smartphone, Tv } from 'lucide-react';
+import { LockKeyhole, ShieldCheck, Smartphone, Tv2, Waves } from 'lucide-react';
 
 export default function MoviesLoginPage() {
   const router = useRouter();
@@ -13,8 +13,8 @@ export default function MoviesLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
     setError('');
 
@@ -25,13 +25,13 @@ export default function MoviesLoginPage() {
         body: JSON.stringify({ phone, accessCode }),
       });
       const data = await res.json();
+
       if (!res.ok) {
         setError(data.error ?? 'Login failed.');
         return;
       }
 
-      router.push('/movies');
-      router.refresh();
+      window.location.href = '/movies';
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -40,95 +40,119 @@ export default function MoviesLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-red-950 to-gray-950 px-4 py-16 text-white">
-      <div className="mx-auto max-w-5xl">
-        <div className="grid gap-8 md:grid-cols-[1.05fr,0.95fr] md:items-center">
+    <div className="min-h-screen overflow-hidden bg-[#040814] px-4 py-14 text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(251,191,36,0.16),transparent_22%),linear-gradient(180deg,#040814_0%,#08111f_55%,#040814_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:48px_48px] opacity-30" />
+
+      <div className="relative mx-auto max-w-6xl">
+        <div className="grid gap-8 lg:grid-cols-[1.15fr,0.85fr] lg:items-center">
           <section>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-300">
-              GameStop Movies
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-200/80">
+              GameStop IPTV Member Access
             </p>
-            <h1 className="mt-3 text-4xl font-black leading-tight md:text-6xl">
-              Sign In With Your Phone Number and Movie Code
+            <h1 className="mt-4 max-w-4xl text-4xl font-black leading-tight md:text-6xl">
+              Sign in once and open your live TV, movies, series, and sports hub.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg text-gray-300">
-              Your account is created automatically after payment. Use the same M-Pesa number you paid with and the movie code shown on your payment page.
+            <p className="mt-5 max-w-2xl text-lg text-white/[0.66]">
+              Use the same phone number you paid with and the access code shown after payment.
+              Your membership session opens the full catalog tied to your active subscription.
             </p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
               {[
                 {
                   icon: Smartphone,
-                  title: 'No password needed',
-                  text: 'Just use the number you paid with.',
+                  title: 'Phone-first sign in',
+                  text: 'Use your M-Pesa number as the member identifier.',
                 },
                 {
                   icon: LockKeyhole,
-                  title: 'Use your movie code',
-                  text: 'Your code appears after payment.',
+                  title: 'Access code protected',
+                  text: 'Your code is generated when the subscription activates.',
                 },
                 {
-                  icon: Tv,
-                  title: 'Open your library',
-                  text: 'Start watching right after sign-in.',
+                  icon: Tv2,
+                  title: 'One media hub',
+                  text: 'Open live TV, movies, series, and sports from one dashboard.',
                 },
               ].map(({ icon: Icon, title, text }) => (
-                <div key={title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/20 text-red-100">
+                <div
+                  key={title}
+                  className="rounded-[28px] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-xl"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.08] text-white/80">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <p className="font-semibold text-white">{title}</p>
-                  <p className="mt-1 text-sm text-gray-300">{text}</p>
+                  <p className="mt-4 text-lg font-bold text-white">{title}</p>
+                  <p className="mt-2 text-sm leading-6 text-white/[0.64]">{text}</p>
                 </div>
               ))}
             </div>
+
+            <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-amber-200/15 bg-amber-300/10 px-4 py-2 text-sm text-amber-100">
+              <Waves className="h-4 w-4" />
+              Premium sports slots only go live after a provider feed is configured.
+            </div>
           </section>
 
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-            <h2 className="text-2xl font-black">Sign In</h2>
-            <p className="mt-2 text-sm text-gray-300">
-              You can enter <span className="font-mono">0717402034</span> or <span className="font-mono">254717402034</span>.
-            </p>
-
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <section className="rounded-[32px] border border-white/10 bg-white/[0.06] p-6 backdrop-blur-2xl">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-200">Phone Number</label>
+                <h2 className="text-2xl font-black text-white">Member Sign In</h2>
+                <p className="mt-2 text-sm text-white/[0.62]">
+                  You can enter <span className="font-mono text-white">0717402034</span> or{' '}
+                  <span className="font-mono text-white">254717402034</span>.
+                </p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-300/15 text-emerald-200">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-white/84">Phone Number</label>
                 <input
                   type="tel"
                   required
                   placeholder="0717 402 034 or 254717402034"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white placeholder-gray-500 focus:border-red-400 focus:outline-none"
+                  onChange={(event) => setPhone(event.target.value)}
+                  className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-sky-300 focus:outline-none"
                 />
               </div>
+
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-200">Movie Code</label>
+                <label className="mb-2 block text-sm font-medium text-white/84">Access Code</label>
                 <input
                   type="text"
                   required
-                  placeholder="Shown after payment"
+                  placeholder="Shown after activation"
                   value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm uppercase tracking-[0.2em] text-white placeholder-gray-500 focus:border-red-400 focus:outline-none"
+                  onChange={(event) => setAccessCode(event.target.value.toUpperCase())}
+                  className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm uppercase tracking-[0.2em] text-white placeholder-white/30 focus:border-sky-300 focus:outline-none"
                 />
               </div>
-              {error && <p className="text-sm text-red-300">{error}</p>}
+
+              {error && <p className="text-sm text-rose-300">{error}</p>}
+
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-red-600 py-6 text-base font-bold hover:bg-red-700"
+                className="w-full rounded-2xl bg-white py-6 text-base font-bold text-slate-950 hover:bg-slate-100"
               >
-                {loading ? 'Signing in...' : 'Open My Movies'}
+                {loading ? 'Signing in...' : 'Open My Hub'}
               </Button>
             </form>
 
-            <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
-              <p className="font-semibold">No movie code yet?</p>
-              <p className="mt-1">
-                Complete payment first from the{' '}
-                <Link href="/iptv" className="underline">
-                  plans page
+            <div className="mt-6 rounded-[24px] border border-white/10 bg-black/20 p-4 text-sm text-white/[0.66]">
+              <p className="font-semibold text-white">No access code yet?</p>
+              <p className="mt-1 leading-6">
+                Complete payment from the{' '}
+                <Link href="/iptv" className="font-semibold text-sky-200 underline">
+                  IPTV plans page
                 </Link>
-                . If you already paid and cannot find your code, contact support.
+                . If your payment already succeeded, contact support with your phone number or receipt.
               </p>
             </div>
           </section>

@@ -24,9 +24,24 @@ import {
 } from 'lucide-react';
 
 const PLANS = {
-  '3mo':  { id: '3mo',  name: '3 Months',  months: 3,  kesPrice: 4499,  usdPrice: 29.99,  badge: 'Save 67%' },
-  '12mo': { id: '12mo', name: '12 Months', months: 12, kesPrice: 14999, usdPrice: 99.99,  badge: 'Best Value – Save 75%', popular: true },
-  '24mo': { id: '24mo', name: '24 Months', months: 24, kesPrice: 22499, usdPrice: 149.99, badge: 'Max Savings – Save 80%' },
+  '3mo': { id: '3mo', name: '3 Months', months: 3, kesPrice: 4499, usdPrice: 29.99, badge: 'Starter' },
+  '12mo': {
+    id: '12mo',
+    name: '12 Months',
+    months: 12,
+    kesPrice: 14999,
+    usdPrice: 99.99,
+    badge: 'Best Value',
+    popular: true,
+  },
+  '24mo': {
+    id: '24mo',
+    name: '24 Months',
+    months: 24,
+    kesPrice: 22499,
+    usdPrice: 149.99,
+    badge: 'Long-Term',
+  },
 } as const;
 
 type PlanId = keyof typeof PLANS;
@@ -213,8 +228,8 @@ export default function IPTVSubscribePage() {
             {/* Left: Form */}
             <div className="md:col-span-3">
               <div className="rounded-2xl border border-gray-100 bg-white p-7 shadow-sm">
-                <h1 className="mb-1 text-2xl font-black">Subscribe to IPTV</h1>
-                <p className="mb-6 text-sm text-gray-500">Enter your M-Pesa number, complete payment, and your login details will appear on this page.</p>
+                <h1 className="mb-1 text-2xl font-black">Activate your IPTV plan</h1>
+                <p className="mb-6 text-sm text-gray-500">Enter your M-Pesa number, complete payment, and your member access plus protected playlist will appear on this page.</p>
 
                 {(mpesaState.phase === 'idle' || mpesaState.phase === 'failed') && (
                   <form onSubmit={handleSubscribe} className="space-y-5">
@@ -249,7 +264,7 @@ export default function IPTVSubscribePage() {
                         <li>Click "Pay {displayPrice} with M-Pesa" below</li>
                         <li>A pop-up appears on your phone</li>
                         <li>Enter your M-Pesa PIN to confirm</li>
-                        <li>Your movie code and TV app details appear on this page</li>
+                        <li>Your member code and playlist details appear on this page</li>
                       </ol>
                     </div>
 
@@ -327,11 +342,11 @@ export default function IPTVSubscribePage() {
 
                 <ul className="mb-5 space-y-2">
                   {[
-                    '20,000+ live channels',
-                    'PPV events included',
-                    '100,000+ movies & series',
-                    'EPG + catch-up',
-                    'M-Pesa & card accepted',
+                    'M-Pesa activation flow',
+                    'Protected playlist URL',
+                    'Member login with phone + access code',
+                    'Live TV, movies, series, and sports hub',
+                    'Provider-managed playback',
                     'WhatsApp setup support',
                   ].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm">
@@ -343,7 +358,7 @@ export default function IPTVSubscribePage() {
 
                 <div className="rounded-xl border border-violet-600/40 bg-violet-800/40 p-3 text-xs text-violet-200">
                   <Tv className="mb-1 h-4 w-4 text-violet-300" />
-                  Your login details show right after payment. Works on Smart TV, Firestick, Android, iPhone, and more.
+                  Your member access and playlist show right after payment. Use the protected playlist first for the simplest setup.
                 </div>
               </div>
             </div>
@@ -393,11 +408,11 @@ export default function IPTVSubscribePage() {
               </div>
 
               <div className="mb-6">
-                <h2 className="mb-3 text-lg font-bold">Your Movie Sign-In Details</h2>
+                <h2 className="mb-3 text-lg font-bold">Your Member Sign-In Details</h2>
                 <div className="space-y-2 rounded-xl border border-red-200 bg-red-50 p-4">
                   {[
                     { label: 'Phone Number', value: member!.profileId },
-                    { label: 'Movie Code', value: member!.accessCode },
+                    { label: 'Access Code', value: member!.accessCode },
                   ].map(({ label, value }) => (
                     <div key={label} className="rounded-lg bg-white p-3">
                       <p className="mb-0.5 text-xs font-semibold text-gray-500">{label}</p>
@@ -409,18 +424,18 @@ export default function IPTVSubscribePage() {
                   ))}
                 </div>
                 <p className="mt-2 text-xs text-gray-400">
-                  You are already signed in on this device. Use these details the next time you open GameStop Movies.
+                  You are already signed in on this device. Use these details the next time you open the GameStop IPTV member hub.
                 </p>
               </div>
 
               {/* Credentials */}
               {sub!.credentials && (
                 <div className="mb-6">
-                  <h2 className="mb-3 text-lg font-bold">Your TV App Details</h2>
+                  <h2 className="mb-3 text-lg font-bold">Your Playlist and Player Details</h2>
                   <div className="space-y-2 rounded-xl border border-violet-200 bg-violet-50 p-4">
                     {[
                       { label: 'Playlist Link', value: sub!.credentials.m3uUrl },
-                      { label: 'Server', value: sub!.credentials.xtreamHost },
+                      { label: 'Portal / Host', value: sub!.credentials.xtreamHost },
                       { label: 'Username', value: sub!.credentials.xtreamUsername },
                       { label: 'Password', value: sub!.credentials.xtreamPassword },
                     ].map(({ label, value }) => (
@@ -434,7 +449,7 @@ export default function IPTVSubscribePage() {
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-gray-400">
-                    Save these details now. If you need help later, contact support with your phone number or M-Pesa receipt.
+                    Save these details now. The protected playlist URL is the quickest setup path. If you need help later, contact support with your phone number or M-Pesa receipt.
                   </p>
                 </div>
               )}
@@ -443,10 +458,10 @@ export default function IPTVSubscribePage() {
               <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
                 <p className="mb-2 font-semibold">Quick Setup:</p>
                 <ol className="list-decimal list-inside space-y-1 text-xs">
-                  <li>Download <strong>IPTV Smarters Pro</strong> or <strong>TiviMate</strong> on your device</li>
-                  <li>Select the server or Xtream login option inside the app</li>
-                  <li>Enter the server, username, and password shown above</li>
-                  <li>Or paste the playlist link into any compatible player</li>
+                  <li>Download <strong>IPTV Smarters Pro</strong>, <strong>TiviMate</strong>, <strong>VLC</strong>, or another compatible player</li>
+                  <li>Paste the protected playlist link for the fastest setup path</li>
+                  <li>If your player supports it, use the host, username, and password shown above</li>
+                  <li>Return to the member login page to open the browser-based hub any time</li>
                 </ol>
                 <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                   {DEVICE_ONBOARDING_GUIDES.map((guide) => {
@@ -478,7 +493,7 @@ export default function IPTVSubscribePage() {
                 <Link href="/movies" className="flex-1">
                   <Button className="w-full rounded-xl bg-red-600 hover:bg-red-700">
                     <PlayCircle className="mr-2 h-4 w-4" />
-                    Open My Movies
+                    Open My Hub
                   </Button>
                 </Link>
                 <a

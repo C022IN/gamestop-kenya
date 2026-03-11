@@ -22,8 +22,8 @@ export const DEVICE_ONBOARDING_GUIDES: DeviceOnboardingGuide[] = [
     summary: 'Best for Samsung, LG, Android TV, Google TV, Fire TV, and Apple TV style setups.',
     steps: [
       'Install the player on the TV or streaming stick.',
-      'Choose Xtream Codes login.',
-      'Paste the host, username, and password from the payment screen.',
+      'Use the protected playlist URL from the payment screen for the fastest setup path.',
+      'If your provider supports it, you can also use the host, username, and password shown after activation.',
     ],
   },
   {
@@ -35,7 +35,7 @@ export const DEVICE_ONBOARDING_GUIDES: DeviceOnboardingGuide[] = [
     summary: 'Useful for mobile-first customers who want the quickest setup path after payment.',
     steps: [
       'Install the mobile player.',
-      'Sign in with Xtream credentials or the M3U URL.',
+      'Paste the protected playlist URL or use the provider credentials when supported.',
       'Save favorites for daily access.',
     ],
   },
@@ -61,7 +61,7 @@ export const DEVICE_ONBOARDING_GUIDES: DeviceOnboardingGuide[] = [
     summary: 'Useful for advanced users who want manual playlists and custom playback.',
     steps: [
       'Open Kodi, VLC, or another compatible player.',
-      'Paste the M3U playlist or configure the Xtream endpoint.',
+      'Paste the protected playlist URL or configure the provider endpoint if available.',
       'Save the playlist locally after the first successful login.',
     ],
   },

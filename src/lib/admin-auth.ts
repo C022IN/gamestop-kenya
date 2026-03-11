@@ -1,4 +1,4 @@
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { normaliseMpesaPhone } from '@/lib/mpesa';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 
@@ -402,6 +402,33 @@ export async function createStaffAdmin(params: {
   return { ok: true, admin: toIdentity(record) };
 }
 
+function getTokenSecret(): string {
+  return process.env.SUPER_ADMIN_PASSWORD ?? 'dev-fallback-secret-do-not-use-in-prod';
+}
+
+function signedToken(adminId: string, expiresAt: string): string {
+  const payload = `${adminId}|${expiresAt}`;
+  const sig = createHmac('sha256', getTokenSecret()).update(payload).digest('hex');
+  return Buffer.from(`${payload}|${sig}`).toString('base64url');
+}
+
+function verifySignedToken(token: string): { adminId: string; expiresAt: string } | null {
+  try {
+    const decoded = Buffer.from(token, 'base64url').toString();
+    const parts = decoded.split('|');
+    if (parts.length < 3) return null;
+    const sig = parts[parts.length - 1];
+    const payload = parts.slice(0, -1).join('|');
+    const expectedSig = createHmac('sha256', getTokenSecret()).update(payload).digest('hex');
+    if (sig !== expectedSig) return null;
+    const [adminId, expiresAt] = payload.split('|');
+    if (!adminId || !expiresAt) return null;
+    return { adminId, expiresAt };
+  } catch {
+    return null;
+  }
+}
+
 export async function createAdminSession(
   adminId: string,
   context?: { ipAddress?: string | null; userAgent?: string | null }
@@ -411,7 +438,7 @@ export async function createAdminSession(
   expiresAt.setHours(expiresAt.getHours() + 12);
 
   const session: AdminSession = {
-    token: randomBytes(32).toString('hex'),
+    token: signedToken(adminId, expiresAt.toISOString()),
     adminId,
     createdAt: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
@@ -457,7 +484,20 @@ export async function getAdminSessionByToken(token: string): Promise<AdminSessio
       session = fromSessionRow(data as AdminSessionRow);
     }
   } else {
+    // First try the in-memory store (same process), then fall back to
+    // verifying the self-contained signed token (survives hot reloads).
     session = adminSessions.get(token) ?? null;
+    if (!session) {
+      const verified = verifySignedToken(token);
+      if (verified) {
+        session = {
+          token,
+          adminId: verified.adminId,
+          createdAt: new Date().toISOString(),
+          expiresAt: verified.expiresAt,
+        };
+      }
+    }
   }
 
   if (!session) {

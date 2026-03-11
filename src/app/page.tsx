@@ -514,13 +514,13 @@ export default function Home() {
                 NEW SERVICE
               </div>
               <h2 className="mb-4 text-4xl font-black leading-tight">
-                Premium IPTV - <span className="text-violet-400">Stream Everything in One Place</span>
+                Premium IPTV - <span className="text-violet-400">One Member Hub for Every Screen</span>
               </h2>
               <p className="mb-6 text-lg text-gray-300">
-                20,000+ live channels, sports, movies, and series in HD and 4K. Works on Smart TV, Android, iPhone, and PC.
+                Activate with M-Pesa, open your protected member hub, and manage live TV, movies, series, and sports from one clean interface.
               </p>
               <ul className="mb-8 grid grid-cols-2 gap-2 text-sm text-gray-300">
-                {['20,000+ Channels', 'Full HD and 4K', 'Sports and PPV', 'Movies and Series', 'Any Device', '24/7 Support'].map((f) => (
+                {['Protected member login', 'Playlist-ready playback', 'Live TV and VOD hub', 'Sports event slots', 'Any Device', '24/7 Support'].map((f) => (
                   <li key={f} className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-400" /> {f}
                   </li>
@@ -532,23 +532,23 @@ export default function Home() {
                     View Plans
                   </Button>
                 </Link>
-                <a href="https://www.ppvarena.com" target="_blank" rel="noopener noreferrer">
+                <Link href="/movies/login">
                   <Button
                     variant="outline"
                     className="rounded-xl border-violet-400 px-6 py-5 font-bold text-violet-300 hover:bg-violet-900"
                   >
-                    Free Trial
+                    Member Login
                   </Button>
-                </a>
+                </Link>
               </div>
             </div>
             <div className="md:w-1/2">
               <div className="lux-card rounded-3xl border border-violet-700/80 bg-violet-900/40 p-8 text-center">
                 <Tv className="mx-auto mb-4 h-20 w-20 text-violet-400" />
-                <div className="mb-1 text-5xl font-extrabold text-white">20,000+</div>
-                <div className="mb-4 text-lg text-violet-300">Live Channels Worldwide</div>
+                <div className="mb-1 text-5xl font-extrabold text-white">1</div>
+                <div className="mb-4 text-lg text-violet-300">Unified IPTV Member Hub</div>
                 <div className="grid grid-cols-3 gap-3 text-center text-xs text-gray-300">
-                  {['Sports', 'Movies', 'Series', 'Kids', 'News', 'Local'].map((c) => (
+                  {['Live TV', 'Movies', 'Series', 'Sports', 'M-Pesa', 'Support'].map((c) => (
                     <div key={c} className="rounded-lg bg-gray-800 p-2">
                       {c}
                     </div>

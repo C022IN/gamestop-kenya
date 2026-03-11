@@ -1,0 +1,6 @@
+{
+  "/movies/watch/[slug]/page": "app/movies/watch/[slug]/page.js",
+  "/iptv/page": "app/iptv/page.js",
+  "/movies/page": "app/movies/page.js",
+  "/movies/film/[id]/page": "app/movies/film/[id]/page.js"
+}

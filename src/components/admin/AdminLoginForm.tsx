@@ -38,8 +38,7 @@ export default function AdminLoginForm({ configured, loginHint }: AdminLoginForm
         return;
       }
 
-      router.push(next);
-      router.refresh();
+      window.location.href = next;
     } catch {
       setError('Network error. Please try again.');
     } finally {

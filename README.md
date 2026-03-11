@@ -36,6 +36,13 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 - Binary assets (images, fonts, archives, PDFs) are explicitly marked as binary.
 - If you add a new file type, update `.gitattributes` so format behavior stays explicit.
 
+## IPTV Provider Setup
+
+For the provider-managed IPTV flow, use:
+
+- `docs/iptv-provider-setup.md`
+- `supabase/seed_iptv_provider.template.sql`
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

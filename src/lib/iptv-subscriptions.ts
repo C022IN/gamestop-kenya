@@ -7,18 +7,23 @@ import { provisionCredentials } from '@/lib/iptv-provisioning';
 import { SUPER_ADMIN_ID } from '@/lib/admin-auth';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 
-export type PlanId = '3mo' | '12mo' | '24mo';
+export type PlanId = '1wk' | '1mo' | '3mo' | '12mo' | '24mo';
 
 export interface IptvPlan {
   id: PlanId;
   name: string;
-  months: number;
+  /** Duration in days (used for weekly/daily plans) */
+  days?: number;
+  /** Duration in months (used for monthly+ plans) */
+  months?: number;
   kesPrice: number;
   usdPrice: number;
 }
 
 export const IPTV_PLANS: Record<PlanId, IptvPlan> = {
-  '3mo': { id: '3mo', name: '3 Months', months: 3, kesPrice: 4499, usdPrice: 29.99 },
+  '1wk':  { id: '1wk',  name: '1 Week',    days: 7,   kesPrice: 500,   usdPrice: 3.99 },
+  '1mo':  { id: '1mo',  name: '1 Month',   months: 1,  kesPrice: 1499,  usdPrice: 9.99 },
+  '3mo':  { id: '3mo',  name: '3 Months',  months: 3,  kesPrice: 4499,  usdPrice: 29.99 },
   '12mo': { id: '12mo', name: '12 Months', months: 12, kesPrice: 14999, usdPrice: 99.99 },
   '24mo': { id: '24mo', name: '24 Months', months: 24, kesPrice: 22499, usdPrice: 149.99 },
 };
@@ -188,13 +193,17 @@ export async function createPendingSubscription(params: {
   const id = generateId();
   const now = new Date();
   const expiresAt = new Date(now);
-  expiresAt.setMonth(expiresAt.getMonth() + plan.months);
+  if (plan.days) {
+    expiresAt.setDate(expiresAt.getDate() + plan.days);
+  } else {
+    expiresAt.setMonth(expiresAt.getMonth() + (plan.months ?? 1));
+  }
 
   const sub: IptvSubscription = {
     id,
     planId,
     planName: plan.name,
-    months: plan.months,
+    months: plan.months ?? 0,
     amountKes: plan.kesPrice,
     customerName,
     email: email.toLowerCase().trim(),

@@ -6,7 +6,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  Copy,
   History,
+  KeyRound,
   Loader2,
   LogOut,
   RefreshCw,
@@ -161,6 +163,30 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [creatingAdmin, setCreatingAdmin] = useState(false);
   const [createAdminMsg, setCreateAdminMsg] = useState('');
+
+  // Grant access
+  const [grantPhone, setGrantPhone] = useState('');
+  const [grantName, setGrantName] = useState('');
+  const [grantPlan, setGrantPlan] = useState<'1wk' | '1mo' | '3mo' | '12mo' | '24mo'>('1mo');
+  const [granting, setGranting] = useState(false);
+  const [grantResult, setGrantResult] = useState<{ profileId: string; accessCode: string; phone: string } | null>(null);
+  const [grantError, setGrantError] = useState('');
+
+  // Impersonate
+  const [impPhone, setImpPhone] = useState('');
+  const [impersonating, setImpersonating] = useState(false);
+  const [impResult, setImpResult] = useState<{ profileId: string; accessCode: string } | null>(null);
+  const [impError, setImpError] = useState('');
+
+  // Code generator
+  const [codePlan, setCodePlan] = useState<'1wk' | '1mo' | '3mo' | '12mo' | '24mo'>('1mo');
+  const [codeQty, setCodeQty] = useState(1);
+  const [codeNote, setCodeNote] = useState('');
+  const [generatingCodes, setGeneratingCodes] = useState(false);
+  const [generatedCodes, setGeneratedCodes] = useState<Array<{ code: string; planName: string }>>([]);
+  const [codeGenError, setCodeGenError] = useState('');
+  const [allCodes, setAllCodes] = useState<Array<{ code: string; planName: string; redeemedAt: string | null; redeemedByPhone: string | null; createdAt: string }>>([]);
+  const [loadingCodes, setLoadingCodes] = useState(false);
 
   const syncDashboard = useCallback((data: {
     overview?: Overview;
@@ -331,6 +357,87 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
       setCreatingAdmin(false);
     }
   };
+
+  const handleGrant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGrantError('');
+    setGrantResult(null);
+    setGranting(true);
+    try {
+      const res = await fetch('/api/admin/iptv/grant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: grantPhone, customerName: grantName, planId: grantPlan }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Grant failed');
+      setGrantResult(data.member);
+      setGrantPhone('');
+      setGrantName('');
+      fetchDashboard(query.trim());
+    } catch (err) {
+      setGrantError(err instanceof Error ? err.message : 'Grant failed');
+    } finally {
+      setGranting(false);
+    }
+  };
+
+  const handleImpersonate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setImpError('');
+    setImpResult(null);
+    setImpersonating(true);
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: impPhone }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Impersonate failed');
+      setImpResult({ profileId: data.profileId, accessCode: data.accessCode });
+    } catch (err) {
+      setImpError(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setImpersonating(false);
+    }
+  };
+
+  const handleGenerateCodes = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCodeGenError('');
+    setGeneratedCodes([]);
+    setGeneratingCodes(true);
+    try {
+      const res = await fetch('/api/admin/codes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId: codePlan, quantity: codeQty, note: codeNote }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to generate codes');
+      setGeneratedCodes(data.codes);
+      // Refresh the list
+      const listRes = await fetch('/api/admin/codes');
+      const listData = await listRes.json();
+      setAllCodes(listData.codes ?? []);
+    } catch (err) {
+      setCodeGenError(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setGeneratingCodes(false);
+    }
+  };
+
+  const loadAllCodes = useCallback(async () => {
+    setLoadingCodes(true);
+    try {
+      const res = await fetch('/api/admin/codes');
+      const data = await res.json();
+      setAllCodes(data.codes ?? []);
+    } catch {} finally {
+      setLoadingCodes(false);
+    }
+  }, []);
 
   const visibleAdminOptions = useMemo(
     () => admins.map((teamAdmin) => ({ id: teamAdmin.id, label: `${teamAdmin.name} (${roleLabel(teamAdmin.role)})` })),
@@ -541,6 +648,113 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
           </div>
         )}
 
+        {/* ── Super-admin power tools ── */}
+        {isSuper && (
+          <div className="mb-8 grid gap-4 md:grid-cols-2">
+
+            {/* Grant Access */}
+            <div className="rounded-2xl border border-violet-800/40 bg-violet-950/20 p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-violet-400" />
+                <h2 className="font-bold text-white">Grant Access</h2>
+                <span className="ml-auto text-xs text-violet-400">No M-Pesa needed</span>
+              </div>
+              <form onSubmit={handleGrant} className="space-y-3">
+                <input
+                  type="text"
+                  required
+                  placeholder="Phone (e.g. 0712345678)"
+                  value={grantPhone}
+                  onChange={(e) => setGrantPhone(e.target.value)}
+                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  required
+                  placeholder="Customer name"
+                  value={grantName}
+                  onChange={(e) => setGrantName(e.target.value)}
+                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"
+                />
+                <select
+                  value={grantPlan}
+                  onChange={(e) => setGrantPlan(e.target.value as '1wk' | '1mo' | '3mo' | '12mo' | '24mo')}
+                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white focus:border-violet-500 focus:outline-none"
+                >
+                  <option value="1wk">1 Week — KSh 500</option>
+                  <option value="1mo">1 Month — KSh 1,499</option>
+                  <option value="3mo">3 Months — KSh 4,499</option>
+                  <option value="12mo">12 Months — KSh 14,999</option>
+                  <option value="24mo">24 Months — KSh 22,499</option>
+                </select>
+                {grantError && <p className="text-xs text-red-400">{grantError}</p>}
+                <Button type="submit" disabled={granting} className="w-full rounded-xl bg-violet-600 font-bold hover:bg-violet-700">
+                  {granting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                  <span className="ml-2">{granting ? 'Granting…' : 'Grant & Activate'}</span>
+                </Button>
+              </form>
+              {grantResult && (
+                <div className="mt-3 rounded-xl border border-emerald-700 bg-emerald-950/40 p-4 text-sm">
+                  <p className="font-bold text-emerald-300">✓ Access granted!</p>
+                  <p className="mt-1 text-gray-300">Phone: <span className="font-mono text-white">{grantResult.phone}</span></p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <p className="text-gray-300">Access Code: <span className="font-mono text-xl font-black text-emerald-300">{grantResult.accessCode}</span></p>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(grantResult.accessCode)}
+                      className="text-gray-500 hover:text-white"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    User logs in at <span className="text-violet-300">/movies/login</span> with their phone + code above.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Impersonate / Login as user */}
+            <div className="rounded-2xl border border-sky-800/40 bg-sky-950/20 p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-sky-400" />
+                <h2 className="font-bold text-white">Login as User</h2>
+                <span className="ml-auto text-xs text-sky-400">Super admin only</span>
+              </div>
+              <form onSubmit={handleImpersonate} className="space-y-3">
+                <input
+                  type="text"
+                  required
+                  placeholder="Phone (e.g. 0712345678)"
+                  value={impPhone}
+                  onChange={(e) => setImpPhone(e.target.value)}
+                  className="w-full rounded-xl border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"
+                />
+                {impError && <p className="text-xs text-red-400">{impError}</p>}
+                <Button type="submit" disabled={impersonating} className="w-full rounded-xl bg-sky-600 font-bold hover:bg-sky-700">
+                  {impersonating ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                  <span className="ml-2">{impersonating ? 'Opening session…' : 'Login as this User'}</span>
+                </Button>
+              </form>
+              {impResult && (
+                <div className="mt-3 rounded-xl border border-sky-700 bg-sky-950/40 p-4 text-sm">
+                  <p className="font-bold text-sky-300">✓ Session created!</p>
+                  <p className="mt-1 text-gray-300">Member ID: <span className="font-mono text-white">{impResult.profileId}</span></p>
+                  <p className="mt-1 text-gray-300">Access Code: <span className="font-mono font-bold text-sky-300">{impResult.accessCode}</span></p>
+                  <a
+                    href="/movies"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-bold text-white hover:bg-sky-700"
+                  >
+                    Open Member Hub as this User →
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {overview && (
           <section className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
@@ -583,6 +797,145 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
 
         {isSuper && (
           <>
+            {/* ── Code Generator ── */}
+            <section className="mb-6 rounded-2xl border border-amber-800/40 bg-amber-950/10 p-5">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-400/15 text-amber-300">
+                  <KeyRound className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-white">Access Code Generator</h2>
+                  <p className="text-sm text-gray-400">Generate voucher codes — Weekly, Monthly, or Yearly. Share the code; the user activates it themselves.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadAllCodes}
+                  className="ml-auto flex items-center gap-1.5 rounded-xl border border-gray-700 px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-800"
+                >
+                  {loadingCodes ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  View all codes
+                </button>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                {/* Generator form */}
+                <form onSubmit={handleGenerateCodes} className="space-y-3">
+                  <select
+                    value={codePlan}
+                    onChange={(e) => setCodePlan(e.target.value as typeof codePlan)}
+                    className="w-full rounded-xl border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white focus:border-amber-500 focus:outline-none"
+                  >
+                    <option value="1wk">1 Week — KSh 500</option>
+                    <option value="1mo">1 Month — KSh 1,499</option>
+                    <option value="3mo">3 Months — KSh 4,499</option>
+                    <option value="12mo">12 Months — KSh 14,999</option>
+                    <option value="24mo">24 Months — KSh 22,499</option>
+                  </select>
+                  <div className="flex gap-3">
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={codeQty}
+                      onChange={(e) => setCodeQty(Number(e.target.value))}
+                      className="w-24 rounded-xl border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white focus:border-amber-500 focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Note (optional, e.g. Promo batch 1)"
+                      value={codeNote}
+                      onChange={(e) => setCodeNote(e.target.value)}
+                      className="flex-1 rounded-xl border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  {codeGenError && <p className="text-xs text-red-400">{codeGenError}</p>}
+                  <button
+                    type="submit"
+                    disabled={generatingCodes}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-gray-950 hover:bg-amber-400 disabled:opacity-50"
+                  >
+                    {generatingCodes ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                    Generate {codeQty} Code{codeQty > 1 ? 's' : ''}
+                  </button>
+                </form>
+
+                {/* Generated results */}
+                <div>
+                  {generatedCodes.length > 0 ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-amber-300">Generated codes — share with customers:</p>
+                        <button
+                          type="button"
+                          onClick={() => navigator.clipboard.writeText(generatedCodes.map((c) => `${c.code} (${c.planName})`).join('\n'))}
+                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-white"
+                        >
+                          <Copy className="h-3.5 w-3.5" /> Copy all
+                        </button>
+                      </div>
+                      <div className="max-h-48 space-y-1.5 overflow-y-auto">
+                        {generatedCodes.map((c) => (
+                          <div key={c.code} className="flex items-center justify-between rounded-xl border border-amber-800/30 bg-amber-950/30 px-3 py-2">
+                            <span className="font-mono text-base font-black text-amber-300">{c.code}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400">{c.planName}</span>
+                              <button
+                                type="button"
+                                onClick={() => navigator.clipboard.writeText(c.code)}
+                                className="text-gray-500 hover:text-amber-300"
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-700 p-6 text-center text-sm text-gray-500">
+                      Generated codes will appear here.<br />Share them directly with subscribers.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* All codes table */}
+              {allCodes.length > 0 && (
+                <div className="mt-5 overflow-hidden rounded-xl border border-gray-800">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-900 text-gray-400">
+                      <tr>
+                        <th className="px-3 py-2 text-left">Code</th>
+                        <th className="px-3 py-2 text-left">Plan</th>
+                        <th className="px-3 py-2 text-left">Created</th>
+                        <th className="px-3 py-2 text-left">Status</th>
+                        <th className="px-3 py-2 text-left">Redeemed by</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800 bg-gray-950">
+                      {allCodes.map((c) => (
+                        <tr key={c.code}>
+                          <td className="px-3 py-2 font-mono font-bold text-amber-300">{c.code}</td>
+                          <td className="px-3 py-2 text-white">{c.planName}</td>
+                          <td className="px-3 py-2 text-gray-400">
+                            {new Date(c.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}
+                          </td>
+                          <td className="px-3 py-2">
+                            {c.redeemedAt ? (
+                              <span className="rounded-full bg-emerald-900/50 px-2 py-0.5 text-emerald-400">Redeemed</span>
+                            ) : (
+                              <span className="rounded-full bg-amber-900/50 px-2 py-0.5 text-amber-300">Available</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-gray-400">{c.redeemedByPhone ?? '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
             <section className="mb-6 rounded-2xl border border-gray-800 bg-gray-900 p-5">
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300">
