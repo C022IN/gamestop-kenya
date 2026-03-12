@@ -6,6 +6,7 @@ import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { getCartRecommendations } from '@/data/game-catalog';
 import { getCartPricing, getPromoDetails, normalizePromoCode } from '@/lib/cart-pricing';
 import {
   Minus,
@@ -19,32 +20,13 @@ import {
   Tag,
 } from 'lucide-react';
 
-const recommendedProducts = [
-  {
-    title: 'God of War Ragnarok',
-    price: 7500,
-    img: '/images/games/god-of-war-ragnarok.svg',
-    platform: 'PS5',
-  },
-  {
-    title: 'Mortal Kombat 1',
-    price: 6800,
-    img: '/images/games/mortal-kombat-1.svg',
-    platform: 'PlayStation',
-  },
-  {
-    title: 'EA FC 25',
-    price: 6500,
-    img: '/images/games/ea-fc-25.svg',
-    platform: 'PS5',
-  },
-  {
-    title: 'Resident Evil 4',
-    price: 5500,
-    img: '/images/games/resident-evil-4.svg',
-    platform: 'PlayStation',
-  },
-];
+const recommendedProducts = getCartRecommendations().map((product) => ({
+  id: product.id,
+  title: product.title,
+  price: product.price,
+  image: product.image,
+  platform: product.platform ?? 'Game',
+}));
 
 export default function CartPage() {
   const {
@@ -383,10 +365,14 @@ export default function CartPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {recommendedProducts.map((rec) => (
               <div
-                key={rec.title}
+                key={rec.id}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow"
               >
-                <img src={rec.img} alt={rec.title} className="w-full h-32 object-cover rounded-lg mb-3" />
+                <div className="mb-3 overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 p-3">
+                  <div className="mx-auto aspect-[4/5] w-[72%] overflow-hidden rounded-[1.25rem] border border-white/10 bg-black/20 shadow-[0_16px_40px_rgba(0,0,0,0.26)]">
+                    <img src={rec.image} alt={rec.title} className="h-full w-full object-cover" />
+                  </div>
+                </div>
                 <h3 className="font-semibold text-sm mb-1 line-clamp-1">{rec.title}</h3>
                 <p className="text-red-600 font-bold text-sm mb-2">{formatPrice(rec.price)}</p>
                 <Button
@@ -394,9 +380,9 @@ export default function CartPage() {
                   className="w-full bg-red-600 hover:bg-red-700 text-xs"
                   onClick={() =>
                     addItem({
-                      id: `recommended-${rec.title.toLowerCase().replace(/\s+/g, '-')}`,
+                      id: rec.id,
                       title: rec.title,
-                      image: rec.img,
+                      image: rec.image,
                       price: rec.price,
                       platform: rec.platform,
                     })

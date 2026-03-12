@@ -54,6 +54,8 @@ export default function GiftCardsPage() {
 
   const digitalCount = giftCardProducts.filter((product) => product.isDigital).length;
   const physicalCount = giftCardProducts.length - digitalCount;
+  const heroFeaturedCard = giftCardProducts[0];
+  const heroSupportCards = [giftCardProducts[2], giftCardProducts[4], giftCardProducts[6]];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -89,32 +91,67 @@ export default function GiftCardsPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-[1.75rem] border border-white/10 bg-white/8 p-6 shadow-plan-dark backdrop-blur">
-                <div className="mb-4 inline-flex rounded-full bg-emerald-400/15 p-3 text-emerald-200">
-                  <Mail className="h-5 w-5" />
+            <div className="grid gap-4">
+              <div className="relative min-h-[24rem] overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 p-5 shadow-plan-dark backdrop-blur">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(248,250,252,0.16),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(248,113,113,0.22),_transparent_28%)]" />
+                <div className="absolute right-5 top-5 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-red-100">
+                  Inspired by GameStop gift-card framing
                 </div>
-                <h2 className="text-2xl font-black">Shop Digital Gift Cards</h2>
-                <p className="mt-3 text-sm leading-6 text-gray-200">
-                  Last-minute gifting with M-Pesa-ready checkout, fast code fulfillment, and platform wallet options.
-                </p>
-                <div className="mt-6 flex items-center justify-between text-sm text-emerald-200">
-                  <span>{digitalCount} digital products</span>
-                  <span>Best for instant delivery</span>
+                <div className="relative h-full">
+                  <div className="absolute left-4 top-16 z-20 w-[62%] overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/20 p-4 shadow-[0_26px_70px_rgba(0,0,0,0.32)]">
+                    <img
+                      src={heroFeaturedCard.image}
+                      alt={heroFeaturedCard.title}
+                      className="aspect-[16/10] w-full object-contain"
+                    />
+                  </div>
+                  {heroSupportCards.map((card, index) => (
+                    <div
+                      key={card.id}
+                      className={`absolute overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/25 p-3 shadow-[0_20px_50px_rgba(0,0,0,0.28)] ${
+                        index === 0
+                          ? 'right-4 top-16 w-[34%] rotate-[6deg]'
+                          : index === 1
+                            ? 'right-10 top-[10.5rem] z-10 w-[36%] rotate-[-8deg]'
+                            : 'right-16 top-[15.5rem] w-[30%] rotate-[4deg]'
+                      }`}
+                    >
+                      <img src={card.image} alt={card.title} className="aspect-[16/10] w-full object-contain" />
+                    </div>
+                  ))}
+                  <div className="absolute bottom-5 left-5 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-100 backdrop-blur">
+                    Better fit, cleaner framing, less crop.
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-[1.75rem] border border-white/10 bg-white/8 p-6 shadow-plan-dark backdrop-blur">
-                <div className="mb-4 inline-flex rounded-full bg-amber-300/15 p-3 text-amber-200">
-                  <Package className="h-5 w-5" />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-[1.75rem] border border-white/10 bg-white/8 p-6 shadow-plan-dark backdrop-blur">
+                  <div className="mb-4 inline-flex rounded-full bg-emerald-400/15 p-3 text-emerald-200">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <h2 className="text-2xl font-black">Shop Digital Gift Cards</h2>
+                  <p className="mt-3 text-sm leading-6 text-gray-200">
+                    Last-minute gifting with M-Pesa-ready checkout, fast code fulfillment, and platform wallet options.
+                  </p>
+                  <div className="mt-6 flex items-center justify-between text-sm text-emerald-200">
+                    <span>{digitalCount} digital products</span>
+                    <span>Best for instant delivery</span>
+                  </div>
                 </div>
-                <h2 className="text-2xl font-black">Shop Physical Gift Cards</h2>
-                <p className="mt-3 text-sm leading-6 text-gray-200">
-                  Tangible store cards for gifting, bundles, and mixed checkout orders with regular delivery.
-                </p>
-                <div className="mt-6 flex items-center justify-between text-sm text-amber-100">
-                  <span>{physicalCount} physical options</span>
-                  <span>Best for hand-delivered gifts</span>
+
+                <div className="rounded-[1.75rem] border border-white/10 bg-white/8 p-6 shadow-plan-dark backdrop-blur">
+                  <div className="mb-4 inline-flex rounded-full bg-amber-300/15 p-3 text-amber-200">
+                    <Package className="h-5 w-5" />
+                  </div>
+                  <h2 className="text-2xl font-black">Shop Physical Gift Cards</h2>
+                  <p className="mt-3 text-sm leading-6 text-gray-200">
+                    Tangible store cards for gifting, bundles, and mixed checkout orders with regular delivery.
+                  </p>
+                  <div className="mt-6 flex items-center justify-between text-sm text-amber-100">
+                    <span>{physicalCount} physical options</span>
+                    <span>Best for hand-delivered gifts</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -211,16 +248,24 @@ export default function GiftCardsPage() {
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {filteredProducts.map((product) => (
-              <div key={product.id} className="space-y-3">
-                <ProductCard product={product} currency={currency} />
-                <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <div className="mb-1 flex items-center justify-between gap-3">
+                <div key={product.id} className="space-y-3">
+                  <ProductCard product={product} currency={currency} />
+                  <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                    <div className="mb-1 flex items-center justify-between gap-3">
                     <span className="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400">
                       {product.brand}
                     </span>
                     <span className="text-xs font-medium text-gray-500">{product.formatLabel}</span>
                   </div>
-                  <p className="text-sm leading-6 text-gray-600">{product.blurb}</p>
+                  <p className="text-sm leading-6 text-gray-600">
+                    {product.category === 'store'
+                      ? 'Best for general store balance, gifting, and flexible basket checkout.'
+                      : product.category === 'subscription'
+                        ? 'Best for recurring membership access, online services, and month-based plans.'
+                        : product.category === 'virtual-currency'
+                          ? 'Best for skins, in-game currency, subscriptions, and creator-support spending.'
+                          : 'Best for fast wallet top-ups before buying games, DLC, or launch-day content.'}
+                  </p>
                 </div>
               </div>
             ))}

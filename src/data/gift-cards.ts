@@ -1,13 +1,6 @@
-export interface GiftCardProduct {
-  id: string;
-  title: string;
-  image: string;
-  price: number;
-  originalPrice?: number;
-  platform: string;
-  isDigital?: boolean;
-  rating?: number;
-  inStock?: boolean;
+import type { StorefrontProduct } from '@/lib/storefront-types';
+
+export interface GiftCardProduct extends StorefrontProduct {
   brand: string;
   category: 'store' | 'wallet' | 'subscription' | 'virtual-currency';
   formatLabel: 'Digital' | 'Physical';
@@ -28,6 +21,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'store',
     formatLabel: 'Digital',
     blurb: 'Flexible store credit for consoles, accessories, games, and digital codes.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-gamestop-2500-physical',
@@ -41,6 +36,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'store',
     formatLabel: 'Physical',
     blurb: 'Physical store card ready for gifting, events, and in-store redemption.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-psn-1500',
@@ -55,6 +52,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'wallet',
     formatLabel: 'Digital',
     blurb: 'Top up PSN wallet balance for games, add-ons, and PS Plus billing.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-psn-3000',
@@ -69,6 +68,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'wallet',
     formatLabel: 'Digital',
     blurb: 'Higher-value PlayStation wallet credit for pre-orders and bigger releases.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-xbox-2500',
@@ -83,6 +84,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'wallet',
     formatLabel: 'Digital',
     blurb: 'Use on Xbox games, add-ons, apps, and Microsoft account purchases.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-gamepass-3m',
@@ -97,6 +100,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'subscription',
     formatLabel: 'Digital',
     blurb: 'Cloud gaming, online multiplayer, and a deep rotating library in one code.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-eshop-1500',
@@ -111,6 +116,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'wallet',
     formatLabel: 'Digital',
     blurb: 'Quick Nintendo wallet top-up for Switch games, DLC, and online services.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-eshop-3000',
@@ -125,6 +132,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'wallet',
     formatLabel: 'Digital',
     blurb: 'Extra eShop balance for launch-day purchases and family library top-ups.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-steam-3000',
@@ -139,6 +148,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'wallet',
     formatLabel: 'Digital',
     blurb: 'A reliable PC gaming pick for game purchases, downloadable content, and gift buys.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-steam-5000',
@@ -153,6 +164,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'wallet',
     formatLabel: 'Digital',
     blurb: 'Higher-value Steam credit for sales, bundles, or premium title drops.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-roblox-1500',
@@ -167,6 +180,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'virtual-currency',
     formatLabel: 'Digital',
     blurb: 'Perfect for Robux balance top-ups, avatar upgrades, and creator economy purchases.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-riot-2500',
@@ -181,6 +196,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'virtual-currency',
     formatLabel: 'Digital',
     blurb: 'RP credit for skins, battle passes, and cosmetics across Riot titles.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-ea-play-12m',
@@ -195,6 +212,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'subscription',
     formatLabel: 'Digital',
     blurb: 'Ongoing access to EA titles, trials, and member-only content rewards.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-meta-5000',
@@ -209,6 +228,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'wallet',
     formatLabel: 'Digital',
     blurb: 'VR-ready store balance for games, experiences, and app purchases.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
   {
     id: 'gift-twitch-1500',
@@ -223,6 +244,8 @@ export const giftCardProducts: GiftCardProduct[] = [
     category: 'virtual-currency',
     formatLabel: 'Digital',
     blurb: 'Use for subscriptions, Bits, and supporting favorite streamers instantly.',
+    imageAspect: 'card',
+    imageFit: 'contain',
   },
 ];
 

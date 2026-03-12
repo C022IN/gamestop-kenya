@@ -7,6 +7,10 @@ import Footer from '@/components/Footer';
 import HeroSlider from '@/components/HeroSlider';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
+import {
+  getFeaturedGames,
+  getFlashDeals,
+} from '@/data/game-catalog';
 import { giftCardProducts } from '@/data/gift-cards';
 import {
   ShoppingBag,
@@ -24,90 +28,8 @@ import {
   Check,
 } from 'lucide-react';
 
-const featuredProducts = [
-  {
-    id: '1',
-    title: "Marvel's Spider-Man 2 - PlayStation 5",
-    image: '/images/games/spiderman-2.svg',
-    price: 8500,
-    originalPrice: 9500,
-    platform: 'PS5',
-    rating: 4.8,
-    inStock: true,
-  },
-  {
-    id: '2',
-    title: 'Super Mario Bros. Wonder - Nintendo Switch',
-    image: '/images/games/mario-wonder.svg',
-    price: 7000,
-    platform: 'Switch',
-    rating: 4.9,
-    inStock: true,
-  },
-  {
-    id: '3',
-    title: 'Forza Horizon 5 - Xbox Series X',
-    image: '/images/games/forza-horizon-5.svg',
-    price: 6500,
-    originalPrice: 7500,
-    platform: 'Xbox',
-    rating: 4.7,
-    inStock: true,
-  },
-  {
-    id: '4',
-    title: 'Cyberpunk 2077 Ultimate Edition - PC',
-    image: '/images/games/cyberpunk-2077.svg',
-    price: 5500,
-    originalPrice: 8000,
-    platform: 'PC',
-    rating: 4.5,
-    inStock: true,
-  },
-];
-
-const flashDeals = [
-  {
-    id: 'f1',
-    title: 'God of War: Ragnarok - PS5',
-    image: '/images/games/god-of-war-ragnarok.svg',
-    price: 7200,
-    originalPrice: 9500,
-    platform: 'PS5',
-    rating: 4.9,
-    inStock: true,
-  },
-  {
-    id: 'f2',
-    title: 'Hogwarts Legacy - Xbox',
-    image: '/images/games/hogwarts-legacy.svg',
-    price: 5800,
-    originalPrice: 8500,
-    platform: 'Xbox',
-    rating: 4.6,
-    inStock: true,
-  },
-  {
-    id: 'f3',
-    title: 'Zelda: Tears of the Kingdom - Switch',
-    image: '/images/games/zelda-totk.svg',
-    price: 6800,
-    originalPrice: 8200,
-    platform: 'Switch',
-    rating: 4.9,
-    inStock: true,
-  },
-  {
-    id: 'f4',
-    title: 'EA FC 25 - PS5',
-    image: '/images/games/ea-fc-25.svg',
-    price: 6500,
-    originalPrice: 8000,
-    platform: 'PS5',
-    rating: 4.3,
-    inStock: true,
-  },
-];
+const featuredProducts = getFeaturedGames();
+const flashDeals = getFlashDeals();
 
 const digitalProducts = giftCardProducts.slice(0, 4);
 

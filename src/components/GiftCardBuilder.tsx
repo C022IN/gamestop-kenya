@@ -28,6 +28,7 @@ export default function GiftCardBuilder({ currency }: GiftCardBuilderProps) {
   const [recipientEmail, setRecipientEmail] = useState('');
   const [senderName, setSenderName] = useState('');
   const [message, setMessage] = useState('');
+  const activeDesign = cardDesigns.find((design) => design.id === selectedDesign) ?? cardDesigns[0];
 
   const activeAmount = customAmount ? Number(customAmount) : selectedAmount;
 
@@ -93,6 +94,26 @@ export default function GiftCardBuilder({ currency }: GiftCardBuilderProps) {
               <MessageSquareText className="mb-2 h-5 w-5 text-red-200" />
               <p className="text-sm font-semibold">Gift Message</p>
               <p className="mt-1 text-xs text-red-100/80">Personalize the order before it reaches the recipient.</p>
+            </div>
+          </div>
+
+          <div className="mt-8 rounded-[1.75rem] border border-white/10 bg-black/20 p-5 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-200">Live preview</p>
+            <div className={`mt-4 overflow-hidden rounded-[1.6rem] border border-white/10 bg-gradient-to-br ${activeDesign.accent} p-5 shadow-[0_22px_48px_rgba(0,0,0,0.3)]`}>
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+                <span>GameStop Kenya</span>
+                <span>{selectedFormat === 'digital' ? 'Digital' : 'Physical'}</span>
+              </div>
+              <p className="mt-8 text-3xl font-black text-white md:text-4xl">{formatPrice(activeAmount || 0)}</p>
+              <p className="mt-2 text-sm text-white/80">
+                {recipientName ? `For ${recipientName}` : 'Ready for gifting'}
+              </p>
+              <div className="mt-10 rounded-2xl border border-white/15 bg-black/20 p-4 text-sm text-white/90">
+                <p className="font-semibold">{senderName ? `From ${senderName}` : 'From GameStop Kenya customer'}</p>
+                <p className="mt-2 line-clamp-2 text-white/70">
+                  {message || 'Add a personal note and send this through the same secure checkout as the rest of the store.'}
+                </p>
+              </div>
             </div>
           </div>
         </div>

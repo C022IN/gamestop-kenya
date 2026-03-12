@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StorefrontPageShell from '@/components/StorefrontPageShell';
+import type { StorefrontShowcaseCard } from '@/lib/storefront-types';
 
 interface ActionLink {
   label: string;
@@ -32,6 +33,7 @@ export interface RoutePageContent {
   sections: ContentSection[];
   facts?: QuickFact[];
   faqs?: FaqItem[];
+  showcaseCards?: StorefrontShowcaseCard[];
   primaryAction: ActionLink;
   secondaryAction?: ActionLink;
   relatedLinks: ActionLink[];
@@ -44,33 +46,72 @@ interface RouteContentPageProps {
 export default function RouteContentPage({ content }: RouteContentPageProps) {
   return (
     <StorefrontPageShell>
-      <section className="bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 py-16 text-white">
+      <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(220,38,38,0.2),_transparent_24%),radial-gradient(circle_at_82%_18%,_rgba(59,130,246,0.14),_transparent_22%),linear-gradient(135deg,_#030712,_#111827_48%,_#1f2937_100%)] py-16 text-white">
         <div className="container mx-auto px-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-red-400">
-            {content.eyebrow}
-          </p>
-          <h1 className="mb-4 max-w-3xl text-4xl font-black md:text-5xl">
-            {content.title}
-          </h1>
-          <p className="max-w-3xl text-base text-gray-300 md:text-lg">
-            {content.intro}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild className="bg-red-600 px-6 font-bold hover:bg-red-700">
-              <Link href={content.primaryAction.href}>
-                {content.primaryAction.label}
-              </Link>
-            </Button>
-            {content.secondaryAction && (
-              <Button
-                asChild
-                variant="outline"
-                className="border-gray-500 bg-transparent px-6 text-white hover:bg-white/10"
-              >
-                <Link href={content.secondaryAction.href}>
-                  {content.secondaryAction.label}
-                </Link>
-              </Button>
+          <div className={`grid gap-10 ${content.showcaseCards?.length ? 'lg:grid-cols-[1.02fr_0.98fr] lg:items-center' : ''}`}>
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-red-400">
+                {content.eyebrow}
+              </p>
+              <h1 className="mb-4 max-w-3xl text-4xl font-black md:text-5xl">
+                {content.title}
+              </h1>
+              <p className="max-w-3xl text-base text-gray-300 md:text-lg">
+                {content.intro}
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button asChild className="bg-red-600 px-6 font-bold hover:bg-red-700">
+                  <Link href={content.primaryAction.href}>
+                    {content.primaryAction.label}
+                  </Link>
+                </Button>
+                {content.secondaryAction && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-gray-500 bg-transparent px-6 text-white hover:bg-white/10"
+                  >
+                    <Link href={content.secondaryAction.href}>
+                      {content.secondaryAction.label}
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {content.showcaseCards && content.showcaseCards.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-2">
+                {content.showcaseCards.slice(0, 4).map((card, index) => (
+                  <Link
+                    key={card.id}
+                    href={card.href}
+                    className={`group overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 shadow-[0_22px_60px_rgba(0,0,0,0.28)] backdrop-blur ${
+                      index === 0 ? 'md:col-span-2' : ''
+                    }`}
+                  >
+                    <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 p-4">
+                      <div className={`mx-auto overflow-hidden rounded-[1.35rem] border border-white/10 bg-black/20 shadow-[0_18px_42px_rgba(0,0,0,0.26)] ${
+                        card.imageAspect === 'card' ? 'aspect-[16/10] w-full' : 'aspect-[4/5] w-[72%]'
+                      }`}>
+                        <img
+                          src={card.image}
+                          alt={card.title}
+                          className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${
+                            card.imageFit === 'contain' ? 'object-contain p-4' : 'object-cover'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                    <div className="p-5">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-300">
+                        {card.label}
+                      </p>
+                      <h2 className="mt-2 text-lg font-black text-white">{card.title}</h2>
+                      <p className="mt-2 text-sm leading-6 text-gray-300">{card.blurb}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
         </div>

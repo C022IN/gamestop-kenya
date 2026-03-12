@@ -1,4 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
+import { getShowcaseCardsByIds } from '@/data/game-catalog';
 
 const pcGamingContent: RoutePageContent = {
   eyebrow: 'PC Gaming',
@@ -49,6 +50,12 @@ const pcGamingContent: RoutePageContent = {
       ],
     },
   ],
+  showcaseCards: getShowcaseCardsByIds([
+    'cyberpunk-2077-ultimate-pc',
+    'mortal-kombat-1-xbox',
+    'resident-evil-4-ps5',
+    'hogwarts-legacy-xbox',
+  ]),
   primaryAction: { label: 'Shop Accessories', href: '/accessories' },
   secondaryAction: { label: 'Browse Digital Store', href: '/digital-store' },
   relatedLinks: [

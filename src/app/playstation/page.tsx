@@ -1,4 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
+import { getShowcaseCardsByIds } from '@/data/game-catalog';
 
 const playstationContent: RoutePageContent = {
   eyebrow: 'PlayStation 5',
@@ -48,6 +49,12 @@ const playstationContent: RoutePageContent = {
       ],
     },
   ],
+  showcaseCards: getShowcaseCardsByIds([
+    'marvel-spiderman-2-ps5',
+    'god-of-war-ragnarok-ps5',
+    'resident-evil-4-ps5',
+    'ea-fc-25-ps5',
+  ]),
   primaryAction: { label: 'Browse Digital Store', href: '/digital-store' },
   secondaryAction: { label: 'View Deals', href: '/deals' },
   relatedLinks: [

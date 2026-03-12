@@ -1,4 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
+import { giftCardProducts } from '@/data/gift-cards';
 
 const digitalStoreContent: RoutePageContent = {
   eyebrow: 'Digital Store',
@@ -49,6 +50,16 @@ const digitalStoreContent: RoutePageContent = {
       ],
     },
   ],
+  showcaseCards: giftCardProducts.slice(0, 4).map((product) => ({
+    id: product.id,
+    title: product.title,
+    label: `${product.brand} · ${product.formatLabel}`,
+    image: product.image,
+    href: '/gift-cards',
+    blurb: product.blurb,
+    imageAspect: product.imageAspect,
+    imageFit: product.imageFit,
+  })),
   primaryAction: { label: 'Browse Gift Cards', href: '/gift-cards' },
   secondaryAction: { label: 'Contact Support', href: '/contact' },
   relatedLinks: [

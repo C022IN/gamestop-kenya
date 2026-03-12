@@ -1,4 +1,8 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
+import { getShowcaseCardsByIds } from '@/data/game-catalog';
+import { giftCardProducts } from '@/data/gift-cards';
+
+const nintendoGiftCards = giftCardProducts.filter((product) => product.brand === 'Nintendo');
 
 const nintendoContent: RoutePageContent = {
   eyebrow: 'Nintendo Switch',
@@ -48,6 +52,22 @@ const nintendoContent: RoutePageContent = {
         'Policy-backed path for warranty and return requests.',
       ],
     },
+  ],
+  showcaseCards: [
+    ...getShowcaseCardsByIds([
+      'super-mario-bros-wonder-switch',
+      'zelda-tears-of-the-kingdom-switch',
+    ]),
+    ...nintendoGiftCards.slice(0, 2).map((product) => ({
+      id: product.id,
+      title: product.title,
+      label: `${product.brand} · ${product.formatLabel}`,
+      image: product.image,
+      href: '/gift-cards',
+      blurb: product.blurb,
+      imageAspect: product.imageAspect,
+      imageFit: product.imageFit,
+    })),
   ],
   primaryAction: { label: 'Browse Digital Store', href: '/digital-store' },
   secondaryAction: { label: 'View Deals', href: '/deals' },
