@@ -1,5 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
-import { getMergedGameShowcaseCards } from '@/lib/storefront-media';
+import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
 const playstationContent: RoutePageContent = {
   eyebrow: 'PlayStation 5',
@@ -59,12 +59,15 @@ const playstationContent: RoutePageContent = {
 };
 
 export default async function PlayStationPage() {
-  const showcaseCards = await getMergedGameShowcaseCards([
-    'marvel-spiderman-2-ps5',
-    'god-of-war-ragnarok-ps5',
-    'resident-evil-4-ps5',
-    'ea-fc-25-ps5',
-  ]);
+  const showcaseCards = await getMergedHardwareShowcaseCards(
+    [
+      'ps5-console-slim',
+      'dualsense-wireless-controller',
+      'wireless-gaming-headset',
+      'logitech-g923-racing-wheel',
+    ],
+    (product) => (product.department === 'console' ? `/consoles#${product.id}` : `/accessories#${product.id}`)
+  );
 
   return <RouteContentPage content={{ ...playstationContent, showcaseCards }} />;
 }

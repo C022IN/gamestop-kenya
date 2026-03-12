@@ -1,5 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
-import { getMergedGameShowcaseCards } from '@/lib/storefront-media';
+import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
 const xboxContent: RoutePageContent = {
   eyebrow: 'Xbox Series X|S',
@@ -60,12 +60,15 @@ const xboxContent: RoutePageContent = {
 };
 
 export default async function XboxPage() {
-  const showcaseCards = await getMergedGameShowcaseCards([
-    'forza-horizon-5-xbox',
-    'hogwarts-legacy-xbox',
-    'mortal-kombat-1-xbox',
-    'forza-horizon-5-pre-owned-xbox',
-  ]);
+  const showcaseCards = await getMergedHardwareShowcaseCards(
+    [
+      'xbox-series-x-console',
+      'xbox-wireless-controller',
+      'wireless-gaming-headset',
+      'logitech-g923-racing-wheel',
+    ],
+    (product) => (product.department === 'console' ? `/consoles#${product.id}` : `/accessories#${product.id}`)
+  );
 
   return <RouteContentPage content={{ ...xboxContent, showcaseCards }} />;
 }

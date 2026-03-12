@@ -20,6 +20,8 @@ interface Slide {
   gradient: string;
   accentColor: string;
   image: string;
+  imageFit?: 'cover' | 'contain';
+  imagePosition?: string;
 }
 
 const heroSlides: Slide[] = [
@@ -37,7 +39,9 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/accessories',
     gradient: 'from-blue-950 via-blue-900 to-blue-800',
     accentColor: 'text-blue-300',
-    image: '/images/heroes/ps5.svg',
+    image: 'https://unsplash.com/photos/a-playstation-5-console-with-its-controller--8xeF0LeUtI/download?force=true&w=1600&q=80',
+    imageFit: 'cover',
+    imagePosition: 'center',
   },
   {
     id: '2',
@@ -54,6 +58,7 @@ const heroSlides: Slide[] = [
     gradient: 'from-slate-950 via-sky-950 to-blue-900',
     accentColor: 'text-sky-200',
     image: '/images/heroes/iptv.svg',
+    imageFit: 'contain',
   },
   {
     id: '3',
@@ -70,7 +75,9 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/digital-store',
     gradient: 'from-emerald-950 via-green-900 to-emerald-800',
     accentColor: 'text-emerald-300',
-    image: '/images/heroes/xbox-series-x.svg',
+    image: 'https://unsplash.com/photos/black-xbox-one-console-with-controller-DPOdCl4bGJU/download?force=true&w=1600&q=80',
+    imageFit: 'cover',
+    imagePosition: 'center',
   },
   {
     id: '4',
@@ -86,7 +93,9 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/games',
     gradient: 'from-red-950 via-rose-900 to-red-800',
     accentColor: 'text-red-300',
-    image: '/images/heroes/switch-oled.svg',
+    image: 'https://unsplash.com/photos/red-and-blue-nintendo-switch-jqpRECmiNEU/download?force=true&w=1600&q=80',
+    imageFit: 'cover',
+    imagePosition: 'center',
   },
   {
     id: '5',
@@ -102,7 +111,9 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/digital-store',
     gradient: 'from-slate-950 via-gray-900 to-zinc-800',
     accentColor: 'text-slate-300',
-    image: '/images/heroes/pc-gaming.svg',
+    image: 'https://unsplash.com/photos/custom-gaming-computer-with-rgb-lighting-QLQSgxQzzqg/download?force=true&w=1600&q=80',
+    imageFit: 'cover',
+    imagePosition: 'center',
   },
 ];
 
@@ -195,11 +206,14 @@ export default function HeroSlider() {
                 </div>
 
                 <div className="hidden justify-center md:flex md:w-1/2">
-                  <div className="lux-media w-full max-w-[360px] rounded-3xl border border-white/20 p-6">
+                  <div className="w-full max-w-[360px] overflow-hidden rounded-3xl border border-white/20 bg-white/10 shadow-2xl">
                     <img
                       src={slide.image}
                       alt={slide.title}
-                      className="h-[280px] w-full object-contain drop-shadow-[0_28px_24px_rgba(2,6,23,0.6)]"
+                      style={{ objectPosition: slide.imagePosition ?? 'center' }}
+                      className={`h-[300px] w-full drop-shadow-[0_28px_24px_rgba(2,6,23,0.6)] ${
+                        slide.imageFit === 'cover' ? 'object-cover' : 'object-contain p-6'
+                      }`}
                     />
                   </div>
                 </div>

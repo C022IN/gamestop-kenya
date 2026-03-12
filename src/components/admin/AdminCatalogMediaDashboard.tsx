@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import type { StorefrontKind } from '@/lib/storefront-types';
 import {
+  Boxes,
   Database,
   ExternalLink,
   Gamepad2,
@@ -19,7 +21,6 @@ import {
 } from 'lucide-react';
 
 type AdminRole = 'super_admin' | 'admin';
-type StorefrontKind = 'games' | 'gift-cards';
 type ImageAspect = 'portrait' | 'card' | 'wide';
 type ImageFit = 'cover' | 'contain';
 
@@ -90,13 +91,21 @@ function defaultFormState(): MediaFormState {
   };
 }
 
+function defaultAspectForKind(kind: StorefrontKind): ImageAspect {
+  return kind === 'games' ? 'portrait' : 'card';
+}
+
+function defaultFitForKind(kind: StorefrontKind): ImageFit {
+  return kind === 'gift-cards' ? 'contain' : 'cover';
+}
+
 function toFormState(product: CatalogMediaProduct): MediaFormState {
   return {
     primaryImageUrl: product.media.primaryImageUrl ?? '',
     galleryText: product.media.gallery.join('\n'),
     altText: product.media.altText,
-    imageAspect: product.media.imageAspect ?? (product.kind === 'gift-cards' ? 'card' : 'portrait'),
-    imageFit: product.media.imageFit ?? (product.kind === 'gift-cards' ? 'contain' : 'cover'),
+    imageAspect: product.media.imageAspect ?? defaultAspectForKind(product.kind),
+    imageFit: product.media.imageFit ?? defaultFitForKind(product.kind),
     imagePosition: product.media.imagePosition ?? 'center',
     licenseType: product.media.licenseType ?? 'official',
     sourceLabel: product.media.sourceLabel ?? '',
@@ -303,7 +312,7 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">Catalog Media Ops</p>
             <h1 className="mt-2 text-3xl font-black">Licensed product imagery</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-300">
-              Save approved game and gift-card artwork into Supabase so storefront pages stop depending on placeholders.
+              Save approved game, hardware, and gift-card artwork into Supabase so storefront pages stop depending on placeholders.
             </p>
             <p className="mt-3 text-xs text-slate-400">
               Signed in as {admin.name}
@@ -396,6 +405,7 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
                 {[
                   { id: 'all', label: 'All' },
                   { id: 'games', label: 'Games' },
+                  { id: 'hardware', label: 'Hardware' },
                   { id: 'gift-cards', label: 'Gift Cards' },
                 ].map((filter) => (
                   <button
@@ -462,9 +472,17 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
                               <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">{product.id}</p>
                             </div>
                             <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
-                              product.kind === 'games' ? 'bg-blue-500/15 text-blue-200' : 'bg-amber-500/15 text-amber-200'
+                              product.kind === 'games'
+                                ? 'bg-blue-500/15 text-blue-200'
+                                : product.kind === 'hardware'
+                                  ? 'bg-emerald-500/15 text-emerald-200'
+                                  : 'bg-amber-500/15 text-amber-200'
                             }`}>
-                              {product.kind === 'games' ? 'Game' : 'Gift Card'}
+                              {product.kind === 'games'
+                                ? 'Game'
+                                : product.kind === 'hardware'
+                                  ? 'Hardware'
+                                  : 'Gift Card'}
                             </span>
                           </div>
                           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-300">
@@ -497,7 +515,13 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
                         <h2 className="mt-2 text-2xl font-black">{selectedProduct.title}</h2>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-slate-300">
-                        {selectedProduct.kind === 'games' ? <Gamepad2 className="h-4 w-4" /> : <Gift className="h-4 w-4" />}
+                        {selectedProduct.kind === 'games' ? (
+                          <Gamepad2 className="h-4 w-4" />
+                        ) : selectedProduct.kind === 'hardware' ? (
+                          <Boxes className="h-4 w-4" />
+                        ) : (
+                          <Gift className="h-4 w-4" />
+                        )}
                         {selectedProduct.platform ?? selectedProduct.kind}
                       </div>
                     </div>

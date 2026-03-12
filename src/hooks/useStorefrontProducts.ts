@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { StorefrontProduct } from '@/lib/storefront-types';
 
 export function useStorefrontProducts<T extends StorefrontProduct>(
-  kind: 'games' | 'gift-cards',
+  kind: 'games' | 'gift-cards' | 'hardware',
   fallbackProducts: T[]
 ) {
   const [products, setProducts] = useState<T[]>(fallbackProducts);

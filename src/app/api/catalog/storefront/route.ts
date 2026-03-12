@@ -9,9 +9,9 @@ export async function GET(req: NextRequest) {
     .map((id) => id.trim())
     .filter(Boolean);
 
-  if (kind !== 'games' && kind !== 'gift-cards') {
+  if (kind !== 'games' && kind !== 'gift-cards' && kind !== 'hardware') {
     return NextResponse.json(
-      { error: 'kind must be "games" or "gift-cards"' },
+      { error: 'kind must be "games", "gift-cards", or "hardware"' },
       { status: 400 }
     );
   }

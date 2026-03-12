@@ -1,17 +1,20 @@
 import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  getHardwareShowcaseCardsByIds,
+  hardwareCatalog,
+} from '@/data/hardware-catalog';
 import { gameCatalog, getShowcaseCardsByIds } from '@/data/game-catalog';
 import { giftCardProducts } from '@/data/gift-cards';
 import type {
   StorefrontImageAspect,
   StorefrontImageFit,
+  StorefrontKind,
   StorefrontProduct,
   StorefrontShowcaseCard,
 } from '@/lib/storefront-types';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
-
-export type StorefrontKind = 'games' | 'gift-cards';
 
 interface ProductRow {
   id: string;
@@ -87,6 +90,16 @@ export function getStorefrontSeedProducts(): StorefrontSeedProduct[] {
     ...gameCatalog.map((product) => ({
       id: product.id,
       kind: 'games' as const,
+      title: product.title,
+      platform: product.platform,
+      image: product.image,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      isDigital: product.isDigital,
+    })),
+    ...hardwareCatalog.map((product) => ({
+      id: product.id,
+      kind: 'hardware' as const,
       title: product.title,
       platform: product.platform,
       image: product.image,
@@ -237,7 +250,12 @@ export function mergeShowcaseCardsWithMedia(
 }
 
 export async function getMergedStorefrontProducts(kind: StorefrontKind, ids?: string[]) {
-  const source = kind === 'games' ? gameCatalog : giftCardProducts;
+  const source =
+    kind === 'games'
+      ? gameCatalog
+      : kind === 'hardware'
+        ? hardwareCatalog
+        : giftCardProducts;
   const scoped = ids?.length ? source.filter((product) => ids.includes(product.id)) : source;
   const overrides = await getStorefrontMediaOverrides(scoped.map((product) => product.id));
   return mergeStorefrontProductsWithMedia(scoped, overrides);
@@ -245,6 +263,17 @@ export async function getMergedStorefrontProducts(kind: StorefrontKind, ids?: st
 
 export async function getMergedGameShowcaseCards(ids: readonly string[], hrefBase = '/games') {
   const cards = getShowcaseCardsByIds(ids, hrefBase);
+  const overrides = await getStorefrontMediaOverrides(cards.map((card) => card.id));
+  return mergeShowcaseCardsWithMedia(cards, overrides);
+}
+
+export async function getMergedHardwareShowcaseCards(
+  ids: readonly string[],
+  hrefBase:
+    | string
+    | ((product: (typeof hardwareCatalog)[number]) => string) = '/accessories'
+) {
+  const cards = getHardwareShowcaseCardsByIds(ids, hrefBase);
   const overrides = await getStorefrontMediaOverrides(cards.map((card) => card.id));
   return mergeShowcaseCardsWithMedia(cards, overrides);
 }

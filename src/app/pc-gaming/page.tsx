@@ -1,5 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
-import { getMergedGameShowcaseCards } from '@/lib/storefront-media';
+import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
 const pcGamingContent: RoutePageContent = {
   eyebrow: 'PC Gaming',
@@ -60,12 +60,15 @@ const pcGamingContent: RoutePageContent = {
 };
 
 export default async function PcGamingPage() {
-  const showcaseCards = await getMergedGameShowcaseCards([
-    'cyberpunk-2077-ultimate-pc',
-    'mortal-kombat-1-xbox',
-    'resident-evil-4-ps5',
-    'hogwarts-legacy-xbox',
-  ]);
+  const showcaseCards = await getMergedHardwareShowcaseCards(
+    [
+      'rgb-gaming-pc-tower',
+      'geforce-rtx-graphics-card',
+      'mechanical-gaming-keyboard',
+      'wireless-gaming-mouse',
+    ],
+    (product) => (product.department === 'console' ? `/consoles#${product.id}` : `/accessories#${product.id}`)
+  );
 
   return <RouteContentPage content={{ ...pcGamingContent, showcaseCards }} />;
 }

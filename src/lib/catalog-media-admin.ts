@@ -1,12 +1,15 @@
 import 'server-only';
 
-import type { StorefrontImageAspect, StorefrontImageFit } from '@/lib/storefront-types';
+import type {
+  StorefrontImageAspect,
+  StorefrontImageFit,
+  StorefrontKind,
+} from '@/lib/storefront-types';
 import {
   getStorefrontMediaOverrides,
   getStorefrontSeedProductById,
   getStorefrontSeedProducts,
   readMediaMetadata,
-  type StorefrontKind,
 } from '@/lib/storefront-media';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 
@@ -110,7 +113,11 @@ async function getEntryByProductId(productId: string) {
 }
 
 function defaultAspect(kind: StorefrontKind): StorefrontImageAspect {
-  return kind === 'gift-cards' ? 'card' : 'portrait';
+  if (kind === 'games') {
+    return 'portrait';
+  }
+
+  return 'card';
 }
 
 function defaultFit(kind: StorefrontKind): StorefrontImageFit {

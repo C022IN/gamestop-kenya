@@ -90,9 +90,15 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
                     }`}
                   >
                     <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 p-4">
-                      <div className={`mx-auto overflow-hidden rounded-[1.35rem] border border-white/10 bg-black/20 shadow-[0_18px_42px_rgba(0,0,0,0.26)] ${
-                        card.imageAspect === 'card' ? 'aspect-[16/10] w-full' : 'aspect-[4/5] w-[72%]'
-                      }`}>
+                      <div
+                        className={`mx-auto overflow-hidden rounded-[1.35rem] border border-white/10 bg-black/20 shadow-[0_18px_42px_rgba(0,0,0,0.26)] ${
+                          card.imageAspect === 'card'
+                            ? 'aspect-[16/10] w-full'
+                            : card.imageAspect === 'wide'
+                              ? 'aspect-[16/9] w-full'
+                              : 'aspect-[4/5] w-[72%]'
+                        }`}
+                      >
                         <img
                           src={card.image}
                           alt={card.title}

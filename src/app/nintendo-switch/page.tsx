@@ -1,8 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
-import {
-  getMergedGameShowcaseCards,
-  getMergedGiftCardShowcaseCards,
-} from '@/lib/storefront-media';
+import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
 const nintendoContent: RoutePageContent = {
   eyebrow: 'Nintendo Switch',
@@ -63,16 +60,15 @@ const nintendoContent: RoutePageContent = {
 };
 
 export default async function NintendoSwitchPage() {
-  const [gameCards, giftCards] = await Promise.all([
-    getMergedGameShowcaseCards([
-      'super-mario-bros-wonder-switch',
-      'zelda-tears-of-the-kingdom-switch',
-    ]),
-    getMergedGiftCardShowcaseCards([
-      'gift-eshop-1500',
-      'gift-eshop-3000',
-    ]),
-  ]);
+  const showcaseCards = await getMergedHardwareShowcaseCards(
+    [
+      'nintendo-switch-oled-console',
+      'switch-pro-controller',
+      'wireless-gaming-headset',
+      'logitech-g923-racing-wheel',
+    ],
+    (product) => (product.department === 'console' ? `/consoles#${product.id}` : `/accessories#${product.id}`)
+  );
 
-  return <RouteContentPage content={{ ...nintendoContent, showcaseCards: [...gameCards, ...giftCards] }} />;
+  return <RouteContentPage content={{ ...nintendoContent, showcaseCards }} />;
 }

@@ -11,7 +11,7 @@ import {
   isAdminConfigured,
   recordAdminAudit,
 } from '@/lib/admin-auth';
-import type { StorefrontKind } from '@/lib/storefront-media';
+import type { StorefrontKind } from '@/lib/storefront-types';
 
 function getRequestIp(req: NextRequest): string | null {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
@@ -36,7 +36,7 @@ async function getAuthorizedAdmin(req: NextRequest) {
 }
 
 function parseKind(value: string | null): StorefrontKind | undefined {
-  if (value === 'games' || value === 'gift-cards') {
+  if (value === 'games' || value === 'gift-cards' || value === 'hardware') {
     return value;
   }
 

@@ -1,3 +1,4 @@
+export type StorefrontKind = 'games' | 'gift-cards' | 'hardware';
 export type StorefrontImageAspect = 'portrait' | 'card' | 'wide';
 export type StorefrontImageFit = 'cover' | 'contain';
 

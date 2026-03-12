@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroSlider from '@/components/HeroSlider';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
+import { hardwareCatalog } from '@/data/hardware-catalog';
 import {
   getFeaturedGames,
   getFlashDeals,
@@ -32,12 +33,13 @@ import {
 const featuredFallbackProducts = getFeaturedGames();
 const flashDealFallbackProducts = getFlashDeals();
 const digitalFallbackProducts = giftCardProducts.slice(0, 4);
+const hardwareFallbackProducts = hardwareCatalog;
 
-const categories = [
+const categoryBlueprints = [
   {
     name: 'Video Games',
     icon: Gamepad2,
-    image: '/images/categories/video-games.svg',
+    fallbackImage: '/images/categories/video-games.svg',
     count: '500+',
     href: '/games',
     color: 'text-blue-600',
@@ -45,7 +47,8 @@ const categories = [
   {
     name: 'Consoles',
     icon: ShoppingBag,
-    image: '/images/categories/consoles.svg',
+    imageId: 'xbox-series-x-console',
+    fallbackImage: '/images/categories/consoles.svg',
     count: '50+',
     href: '/consoles',
     color: 'text-purple-600',
@@ -53,7 +56,7 @@ const categories = [
   {
     name: 'Gift Cards',
     icon: CreditCard,
-    image: '/images/categories/digital-codes.svg',
+    fallbackImage: '/images/categories/digital-codes.svg',
     count: '150+',
     href: '/gift-cards',
     color: 'text-green-600',
@@ -61,7 +64,8 @@ const categories = [
   {
     name: 'Accessories',
     icon: Truck,
-    image: '/images/categories/accessories.svg',
+    imageId: 'wireless-gaming-headset',
+    fallbackImage: '/images/categories/accessories.svg',
     count: '200+',
     href: '/accessories',
     color: 'text-red-600',
@@ -153,12 +157,42 @@ export default function Home() {
   const featuredProducts = useStorefrontProducts('games', featuredFallbackProducts);
   const flashDeals = useStorefrontProducts('games', flashDealFallbackProducts);
   const digitalProducts = useStorefrontProducts('gift-cards', digitalFallbackProducts);
+  const hardwareProducts = useStorefrontProducts('hardware', hardwareFallbackProducts);
 
   const toggleCurrency = () => {
     setCurrency((prev) =>
       prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
     );
   };
+
+  const hardwareMap = useMemo(
+    () => new Map(hardwareProducts.map((product) => [product.id, product])),
+    [hardwareProducts]
+  );
+
+  const categories = categoryBlueprints.map((category) => ({
+    ...category,
+    image:
+      category.name === 'Video Games'
+        ? featuredProducts[0]?.image ?? category.fallbackImage
+        : 'imageId' in category && category.imageId
+          ? hardwareMap.get(category.imageId)?.image ?? category.fallbackImage
+          : category.fallbackImage,
+  }));
+
+  const hardwareSpotlights = [
+    'ps5-console-slim',
+    'wireless-gaming-headset',
+    'geforce-rtx-graphics-card',
+    'logitech-g923-racing-wheel',
+  ]
+    .map((id) => hardwareMap.get(id))
+    .filter((product): product is (typeof hardwareProducts)[number] => Boolean(product));
+
+  const ps5Image = hardwareMap.get('ps5-console-slim')?.image ?? '/images/banners/ps5-banner.svg';
+  const switchImage =
+    hardwareMap.get('nintendo-switch-oled-console')?.image ?? '/images/banners/switch-banner.svg';
+  const xboxImage = hardwareMap.get('xbox-series-x-console')?.image ?? '/images/banners/xbox-banner.svg';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -264,6 +298,29 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="border-y border-gray-100 bg-white py-10">
+        <div className="container mx-auto px-4">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Hardware Spotlight</h2>
+              <p className="text-sm text-gray-500">
+                Consoles, audio, sim-racing gear, and PC parts now ship with clearer product visuals.
+              </p>
+            </div>
+            <Link href="/accessories">
+              <Button variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50">
+                View Hardware
+              </Button>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {hardwareSpotlights.map((product) => (
+              <ProductCard key={product.id} product={product} currency={currency} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="bg-gradient-to-br from-blue-900 to-blue-700 py-14 text-white">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
@@ -289,11 +346,11 @@ export default function Home() {
               </div>
             </div>
             <div className="md:w-1/2">
-              <div className="lux-media mx-auto max-w-sm rounded-3xl border border-white/20 p-6">
+              <div className="mx-auto max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white/10 shadow-2xl">
                 <img
-                  src="/images/banners/ps5-banner.svg"
+                  src={ps5Image}
                   alt="PlayStation 5"
-                  className="w-full drop-shadow-2xl"
+                  className="h-[320px] w-full object-cover"
                 />
               </div>
             </div>
@@ -328,11 +385,11 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
             <div className="order-2 md:order-1 md:w-1/2">
-              <div className="lux-media mx-auto max-w-sm rounded-3xl border border-white/20 p-6">
+              <div className="mx-auto max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white/10 shadow-2xl">
                 <img
-                  src="/images/banners/switch-banner.svg"
+                  src={switchImage}
                   alt="Nintendo Switch OLED"
-                  className="w-full drop-shadow-2xl"
+                  className="h-[320px] w-full object-cover"
                 />
               </div>
             </div>
@@ -386,8 +443,8 @@ export default function Home() {
               </div>
             </div>
             <div className="md:w-1/2">
-              <div className="lux-media mx-auto max-w-sm rounded-3xl border border-white/20 p-6">
-                <img src="/images/banners/xbox-banner.svg" alt="Xbox Series X" className="w-full drop-shadow-2xl" />
+              <div className="mx-auto max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white/10 shadow-2xl">
+                <img src={xboxImage} alt="Xbox Series X" className="h-[320px] w-full object-cover" />
               </div>
             </div>
           </div>
