@@ -29,4 +29,5 @@ export interface StorefrontShowcaseCard {
   blurb: string;
   imageAspect?: StorefrontImageAspect;
   imageFit?: StorefrontImageFit;
+  imagePosition?: string;
 }

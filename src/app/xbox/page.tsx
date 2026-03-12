@@ -1,5 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
-import { getShowcaseCardsByIds } from '@/data/game-catalog';
+import { getMergedGameShowcaseCards } from '@/lib/storefront-media';
 
 const xboxContent: RoutePageContent = {
   eyebrow: 'Xbox Series X|S',
@@ -50,12 +50,6 @@ const xboxContent: RoutePageContent = {
       ],
     },
   ],
-  showcaseCards: getShowcaseCardsByIds([
-    'forza-horizon-5-xbox',
-    'hogwarts-legacy-xbox',
-    'mortal-kombat-1-xbox',
-    'forza-horizon-5-pre-owned-xbox',
-  ]),
   primaryAction: { label: 'Browse Digital Store', href: '/digital-store' },
   secondaryAction: { label: 'View Deals', href: '/deals' },
   relatedLinks: [
@@ -65,6 +59,13 @@ const xboxContent: RoutePageContent = {
   ],
 };
 
-export default function XboxPage() {
-  return <RouteContentPage content={xboxContent} />;
+export default async function XboxPage() {
+  const showcaseCards = await getMergedGameShowcaseCards([
+    'forza-horizon-5-xbox',
+    'hogwarts-legacy-xbox',
+    'mortal-kombat-1-xbox',
+    'forza-horizon-5-pre-owned-xbox',
+  ]);
+
+  return <RouteContentPage content={{ ...xboxContent, showcaseCards }} />;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -121,7 +121,7 @@ function CopyBtn({ value }: { value: string }) {
   );
 }
 
-export default function IPTVSubscribePage() {
+function IPTVSubscribePageContent() {
   const { planId } = useParams<{ planId: string }>();
   const searchParams = useSearchParams();
   const plan = PLANS[planId as PlanId];
@@ -774,5 +774,25 @@ export default function IPTVSubscribePage() {
 
       <Footer />
     </div>
+  );
+}
+
+function IPTVSubscribePageFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-24 text-center">
+        <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-violet-600" />
+        <h1 className="text-2xl font-bold text-gray-900">Loading subscription checkout</h1>
+        <p className="mt-2 text-gray-500">Preparing your plan details.</p>
+      </div>
+    </div>
+  );
+}
+
+export default function IPTVSubscribePage() {
+  return (
+    <Suspense fallback={<IPTVSubscribePageFallback />}>
+      <IPTVSubscribePageContent />
+    </Suspense>
   );
 }

@@ -24,6 +24,7 @@ import {
   giftCardHighlights,
   giftCardProducts,
 } from '@/data/gift-cards';
+import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
 const categoryFilters = [
   { id: 'all', label: 'All Gift Cards' },
@@ -37,6 +38,7 @@ export default function GiftCardsPage() {
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
   const [selectedCategory, setSelectedCategory] = useState<(typeof categoryFilters)[number]['id']>('all');
   const [selectedBrand, setSelectedBrand] = useState<string>('All brands');
+  const products = useStorefrontProducts('gift-cards', giftCardProducts);
 
   const toggleCurrency = () => {
     setCurrency((prev) =>
@@ -46,16 +48,22 @@ export default function GiftCardsPage() {
     );
   };
 
-  const filteredProducts = giftCardProducts.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     const matchesBrand = selectedBrand === 'All brands' || product.brand === selectedBrand;
     return matchesCategory && matchesBrand;
   });
 
-  const digitalCount = giftCardProducts.filter((product) => product.isDigital).length;
-  const physicalCount = giftCardProducts.length - digitalCount;
-  const heroFeaturedCard = giftCardProducts[0];
-  const heroSupportCards = [giftCardProducts[2], giftCardProducts[4], giftCardProducts[6]];
+  const digitalCount = products.filter((product) => product.isDigital).length;
+  const physicalCount = products.length - digitalCount;
+  const heroProducts = products.length > 0 ? products : giftCardProducts;
+  const heroFeaturedCard = heroProducts[0] ?? {
+    title: 'GameStop Kenya Gift Card',
+    image: '/images/digital/gamestop-card.svg',
+  };
+  const heroSupportCards = [2, 4, 6]
+    .map((index) => heroProducts[index] ?? giftCardProducts[index])
+    .filter((card): card is (typeof giftCardProducts)[number] => Boolean(card));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -248,10 +256,10 @@ export default function GiftCardsPage() {
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {filteredProducts.map((product) => (
-                <div key={product.id} className="space-y-3">
-                  <ProductCard product={product} currency={currency} />
-                  <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
-                    <div className="mb-1 flex items-center justify-between gap-3">
+              <div key={product.id} className="space-y-3">
+                <ProductCard product={product} currency={currency} />
+                <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3">
+                  <div className="mb-1 flex items-center justify-between gap-3">
                     <span className="text-xs font-semibold uppercase tracking-[0.22em] text-gray-400">
                       {product.brand}
                     </span>

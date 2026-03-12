@@ -137,10 +137,23 @@ create table if not exists product_media (
   media_type text not null default 'image',
   url text not null,
   alt_text text,
-  sort_order integer not null default 0
+  sort_order integer not null default 0,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
 );
 
+alter table if exists product_media
+  add column if not exists metadata jsonb not null default '{}'::jsonb;
+
+alter table if exists product_media
+  add column if not exists created_at timestamptz not null default timezone('utc', now());
+
+alter table if exists product_media
+  add column if not exists updated_at timestamptz not null default timezone('utc', now());
+
 create index if not exists product_media_product_idx on product_media(product_id);
+create unique index if not exists product_media_product_sort_idx on product_media(product_id, sort_order);
 
 create table if not exists catalogue_collections (
   id text primary key,

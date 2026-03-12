@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   AlertCircle,
@@ -615,6 +616,16 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
               >
                 <RefreshCw className="h-4 w-4" /> Refresh
               </button>
+              <Button
+                asChild
+                type="button"
+                variant="outline"
+                className="rounded-xl border-sky-500/40 bg-transparent text-sky-200 hover:bg-sky-950"
+              >
+                <Link href="/admin/catalog">
+                  Catalog Media
+                </Link>
+              </Button>
               <Button
                 type="button"
                 variant="outline"

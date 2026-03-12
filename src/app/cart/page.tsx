@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { getCartRecommendations } from '@/data/game-catalog';
+import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 import { getCartPricing, getPromoDetails, normalizePromoCode } from '@/lib/cart-pricing';
 import {
   Minus,
@@ -20,13 +21,7 @@ import {
   Tag,
 } from 'lucide-react';
 
-const recommendedProducts = getCartRecommendations().map((product) => ({
-  id: product.id,
-  title: product.title,
-  price: product.price,
-  image: product.image,
-  platform: product.platform ?? 'Game',
-}));
+const recommendedFallbackProducts = getCartRecommendations();
 
 export default function CartPage() {
   const {
@@ -43,6 +38,13 @@ export default function CartPage() {
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
   const [promoInput, setPromoInput] = useState(promoCode ?? '');
   const [promoFeedback, setPromoFeedback] = useState('');
+  const recommendedProducts = useStorefrontProducts('games', recommendedFallbackProducts).map((product) => ({
+    id: product.id,
+    title: product.title,
+    price: product.price,
+    image: product.image,
+    platform: product.platform ?? 'Game',
+  }));
 
   const toggleCurrency = () =>
     setCurrency((prev) =>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
@@ -74,7 +74,7 @@ type MpesaState =
   | { phase: 'success'; receiptNumber: string; amount: number }
   | { phase: 'failed'; reason: string };
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const { items, clearCart, promoCode } = useCart();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
@@ -903,5 +903,25 @@ export default function CheckoutPage() {
       </div>
       <Footer />
     </div>
+  );
+}
+
+function CheckoutPageFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-24 text-center">
+        <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-red-600" />
+        <h1 className="text-2xl font-bold text-gray-900">Loading checkout</h1>
+        <p className="mt-2 text-gray-500">Preparing your order details.</p>
+      </div>
+    </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutPageFallback />}>
+      <CheckoutPageContent />
+    </Suspense>
   );
 }

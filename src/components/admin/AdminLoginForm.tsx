@@ -1,23 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Loader2, LockKeyhole, ShieldCheck, Smartphone } from 'lucide-react';
 
 interface AdminLoginFormProps {
   configured: boolean;
+  nextPath?: string;
 }
 
-export default function AdminLoginForm({ configured }: AdminLoginFormProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+export default function AdminLoginForm({ configured, nextPath }: AdminLoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const next = searchParams.get('next') || '/admin/iptv';
+  const next = nextPath || '/admin/iptv';
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

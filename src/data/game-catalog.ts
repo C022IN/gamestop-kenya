@@ -258,11 +258,12 @@ export function getShowcaseCardsByIds(ids: readonly string[], hrefBase = '/games
     .map((product) => ({
       id: product.id,
       title: product.title,
-      label: `${product.platform} · ${product.genre}`,
+      label: `${product.platform} | ${product.genre}`,
       image: product.image,
       href: `${hrefBase}#${product.id}`,
       blurb: product.blurb ?? `${product.genre} pick for ${product.platform}.`,
       imageAspect: product.imageAspect,
       imageFit: product.imageFit,
+      imagePosition: product.imagePosition,
     })) as StorefrontShowcaseCard[];
 }

@@ -1,0 +1,21 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getMergedStorefrontProducts } from '@/lib/storefront-media';
+
+export async function GET(req: NextRequest) {
+  const kind = req.nextUrl.searchParams.get('kind');
+  const ids = req.nextUrl.searchParams
+    .get('ids')
+    ?.split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+
+  if (kind !== 'games' && kind !== 'gift-cards') {
+    return NextResponse.json(
+      { error: 'kind must be "games" or "gift-cards"' },
+      { status: 400 }
+    );
+  }
+
+  const products = await getMergedStorefrontProducts(kind, ids?.length ? ids : undefined);
+  return NextResponse.json({ products });
+}

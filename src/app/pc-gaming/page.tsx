@@ -1,5 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
-import { getShowcaseCardsByIds } from '@/data/game-catalog';
+import { getMergedGameShowcaseCards } from '@/lib/storefront-media';
 
 const pcGamingContent: RoutePageContent = {
   eyebrow: 'PC Gaming',
@@ -50,12 +50,6 @@ const pcGamingContent: RoutePageContent = {
       ],
     },
   ],
-  showcaseCards: getShowcaseCardsByIds([
-    'cyberpunk-2077-ultimate-pc',
-    'mortal-kombat-1-xbox',
-    'resident-evil-4-ps5',
-    'hogwarts-legacy-xbox',
-  ]),
   primaryAction: { label: 'Shop Accessories', href: '/accessories' },
   secondaryAction: { label: 'Browse Digital Store', href: '/digital-store' },
   relatedLinks: [
@@ -65,6 +59,13 @@ const pcGamingContent: RoutePageContent = {
   ],
 };
 
-export default function PcGamingPage() {
-  return <RouteContentPage content={pcGamingContent} />;
+export default async function PcGamingPage() {
+  const showcaseCards = await getMergedGameShowcaseCards([
+    'cyberpunk-2077-ultimate-pc',
+    'mortal-kombat-1-xbox',
+    'resident-evil-4-ps5',
+    'hogwarts-legacy-xbox',
+  ]);
+
+  return <RouteContentPage content={{ ...pcGamingContent, showcaseCards }} />;
 }

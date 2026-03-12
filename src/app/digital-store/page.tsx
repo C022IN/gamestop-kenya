@@ -1,5 +1,5 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
-import { giftCardProducts } from '@/data/gift-cards';
+import { getMergedGiftCardShowcaseCards } from '@/lib/storefront-media';
 
 const digitalStoreContent: RoutePageContent = {
   eyebrow: 'Digital Store',
@@ -50,16 +50,6 @@ const digitalStoreContent: RoutePageContent = {
       ],
     },
   ],
-  showcaseCards: giftCardProducts.slice(0, 4).map((product) => ({
-    id: product.id,
-    title: product.title,
-    label: `${product.brand} · ${product.formatLabel}`,
-    image: product.image,
-    href: '/gift-cards',
-    blurb: product.blurb,
-    imageAspect: product.imageAspect,
-    imageFit: product.imageFit,
-  })),
   primaryAction: { label: 'Browse Gift Cards', href: '/gift-cards' },
   secondaryAction: { label: 'Contact Support', href: '/contact' },
   relatedLinks: [
@@ -70,6 +60,13 @@ const digitalStoreContent: RoutePageContent = {
   ],
 };
 
-export default function DigitalStorePage() {
-  return <RouteContentPage content={digitalStoreContent} />;
+export default async function DigitalStorePage() {
+  const showcaseCards = await getMergedGiftCardShowcaseCards([
+    'gift-gamestop-1000-digital',
+    'gift-gamestop-2500-physical',
+    'gift-psn-1500',
+    'gift-psn-3000',
+  ]);
+
+  return <RouteContentPage content={{ ...digitalStoreContent, showcaseCards }} />;
 }

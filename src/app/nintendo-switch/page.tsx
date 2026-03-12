@@ -1,8 +1,8 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
-import { getShowcaseCardsByIds } from '@/data/game-catalog';
-import { giftCardProducts } from '@/data/gift-cards';
-
-const nintendoGiftCards = giftCardProducts.filter((product) => product.brand === 'Nintendo');
+import {
+  getMergedGameShowcaseCards,
+  getMergedGiftCardShowcaseCards,
+} from '@/lib/storefront-media';
 
 const nintendoContent: RoutePageContent = {
   eyebrow: 'Nintendo Switch',
@@ -53,22 +53,6 @@ const nintendoContent: RoutePageContent = {
       ],
     },
   ],
-  showcaseCards: [
-    ...getShowcaseCardsByIds([
-      'super-mario-bros-wonder-switch',
-      'zelda-tears-of-the-kingdom-switch',
-    ]),
-    ...nintendoGiftCards.slice(0, 2).map((product) => ({
-      id: product.id,
-      title: product.title,
-      label: `${product.brand} · ${product.formatLabel}`,
-      image: product.image,
-      href: '/gift-cards',
-      blurb: product.blurb,
-      imageAspect: product.imageAspect,
-      imageFit: product.imageFit,
-    })),
-  ],
   primaryAction: { label: 'Browse Digital Store', href: '/digital-store' },
   secondaryAction: { label: 'View Deals', href: '/deals' },
   relatedLinks: [
@@ -78,6 +62,17 @@ const nintendoContent: RoutePageContent = {
   ],
 };
 
-export default function NintendoSwitchPage() {
-  return <RouteContentPage content={nintendoContent} />;
+export default async function NintendoSwitchPage() {
+  const [gameCards, giftCards] = await Promise.all([
+    getMergedGameShowcaseCards([
+      'super-mario-bros-wonder-switch',
+      'zelda-tears-of-the-kingdom-switch',
+    ]),
+    getMergedGiftCardShowcaseCards([
+      'gift-eshop-1500',
+      'gift-eshop-3000',
+    ]),
+  ]);
+
+  return <RouteContentPage content={{ ...nintendoContent, showcaseCards: [...gameCards, ...giftCards] }} />;
 }

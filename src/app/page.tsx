@@ -12,6 +12,7 @@ import {
   getFlashDeals,
 } from '@/data/game-catalog';
 import { giftCardProducts } from '@/data/gift-cards';
+import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 import {
   ShoppingBag,
   Gamepad2,
@@ -28,10 +29,9 @@ import {
   Check,
 } from 'lucide-react';
 
-const featuredProducts = getFeaturedGames();
-const flashDeals = getFlashDeals();
-
-const digitalProducts = giftCardProducts.slice(0, 4);
+const featuredFallbackProducts = getFeaturedGames();
+const flashDealFallbackProducts = getFlashDeals();
+const digitalFallbackProducts = giftCardProducts.slice(0, 4);
 
 const categories = [
   {
@@ -150,6 +150,9 @@ function CountdownTimer({ targetHours = 8 }: { targetHours?: number }) {
 
 export default function Home() {
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const featuredProducts = useStorefrontProducts('games', featuredFallbackProducts);
+  const flashDeals = useStorefrontProducts('games', flashDealFallbackProducts);
+  const digitalProducts = useStorefrontProducts('gift-cards', digitalFallbackProducts);
 
   const toggleCurrency = () => {
     setCurrency((prev) =>

@@ -96,6 +96,7 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
                         <img
                           src={card.image}
                           alt={card.title}
+                          style={{ objectPosition: card.imagePosition ?? 'center' }}
                           className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${
                             card.imageFit === 'contain' ? 'object-contain p-4' : 'object-cover'
                           }`}

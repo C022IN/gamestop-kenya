@@ -15,15 +15,15 @@ import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { gameCatalog } from '@/data/game-catalog';
+import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
 const platformFilters = ['All Platforms', 'PS5', 'Xbox', 'Switch', 'PC'] as const;
 const categoryFilters = ['all', 'story', 'sports', 'fighters', 'family', 'racing', 'pre-owned'] as const;
-
-const spotlightPicks = [
-  gameCatalog.find((product) => product.id === 'marvel-spiderman-2-ps5'),
-  gameCatalog.find((product) => product.id === 'forza-horizon-5-xbox'),
-  gameCatalog.find((product) => product.id === 'zelda-tears-of-the-kingdom-switch'),
-].filter(Boolean);
+const spotlightPickIds = [
+  'marvel-spiderman-2-ps5',
+  'forza-horizon-5-xbox',
+  'zelda-tears-of-the-kingdom-switch',
+] as const;
 
 const editorialGroups = [
   {
@@ -50,30 +50,33 @@ export default function GamesPage() {
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
   const [selectedPlatform, setSelectedPlatform] = useState<(typeof platformFilters)[number]>('All Platforms');
   const [selectedCategory, setSelectedCategory] = useState<(typeof categoryFilters)[number]>('all');
+  const mergedCatalog = useStorefrontProducts('games', gameCatalog);
 
   const toggleCurrency = () => {
     setCurrency((prev) =>
-      prev.code === 'KES'
-        ? { code: 'USD', symbol: '$' }
-        : { code: 'KES', symbol: 'KSh' }
+      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
     );
   };
 
   const filteredProducts = useMemo(() => {
-    return gameCatalog.filter((product) => {
+    return mergedCatalog.filter((product) => {
       const matchesPlatform =
         selectedPlatform === 'All Platforms' || product.platform === selectedPlatform;
       const matchesCategory =
         selectedCategory === 'all' || product.category === selectedCategory;
       return matchesPlatform && matchesCategory;
     });
-  }, [selectedCategory, selectedPlatform]);
+  }, [mergedCatalog, selectedCategory, selectedPlatform]);
+
+  const spotlightPicks = spotlightPickIds
+    .map((id) => mergedCatalog.find((product) => product.id === id))
+    .filter((product): product is (typeof mergedCatalog)[number] => Boolean(product));
 
   const editorialSelections = editorialGroups.map((group) => ({
     ...group,
     products: group.productIds
-      .map((id) => gameCatalog.find((product) => product.id === id))
-      .filter(Boolean),
+      .map((id) => mergedCatalog.find((product) => product.id === id))
+      .filter((product): product is (typeof mergedCatalog)[number] => Boolean(product)),
   }));
 
   return (
@@ -127,7 +130,7 @@ export default function GamesPage() {
               <div className="absolute inset-0 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-sm" />
               {spotlightPicks.map((product, index) => (
                 <div
-                  key={product!.id}
+                  key={product.id}
                   className={`absolute overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/25 shadow-[0_28px_80px_rgba(0,0,0,0.35)] ${
                     index === 0
                       ? 'left-4 top-6 z-20 w-[46%] rotate-[-7deg]'
@@ -136,12 +139,12 @@ export default function GamesPage() {
                         : 'bottom-6 left-1/2 z-30 w-[48%] -translate-x-1/2 rotate-[-2deg]'
                   }`}
                 >
-                  <img src={product!.image} alt={product!.title} className="h-full w-full object-cover" />
+                  <img src={product.image} alt={product.title} className="h-full w-full object-cover" />
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-200">
-                      {product!.platform}
+                      {product.platform}
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-white">{product!.title}</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{product.title}</p>
                   </div>
                 </div>
               ))}
@@ -202,19 +205,19 @@ export default function GamesPage() {
               <div className="space-y-3 p-4">
                 {group.products.map((product) => (
                   <Link
-                    key={product!.id}
-                    href={`#${product!.id}`}
+                    key={product.id}
+                    href={`#${product.id}`}
                     className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-3 transition-colors hover:border-red-200 hover:bg-red-50/40"
                   >
                     <div className="w-16 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 p-1.5">
                       <div className="overflow-hidden rounded-lg border border-white/10 bg-black/20">
-                        <img src={product!.image} alt={product!.title} className="aspect-[4/5] w-full object-cover" />
+                        <img src={product.image} alt={product.title} className="aspect-[4/5] w-full object-cover" />
                       </div>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 line-clamp-1">{product!.title}</p>
+                      <p className="line-clamp-1 text-sm font-semibold text-gray-900">{product.title}</p>
                       <p className="mt-1 text-xs uppercase tracking-[0.16em] text-gray-400">
-                        {product!.platform} · {product!.genre}
+                        {product.platform} | {product.genre}
                       </p>
                     </div>
                   </Link>
