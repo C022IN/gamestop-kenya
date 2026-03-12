@@ -63,6 +63,26 @@ export interface StorefrontMediaOverride {
   metadata?: Record<string, unknown>;
 }
 
+function storefrontKindFromMetadata(value: unknown): StorefrontKind | null {
+  return value === 'games' || value === 'gift-cards' || value === 'hardware' ? value : null;
+}
+
+function hasManagedCatalogOverride(product: ProductRow, expectedKind?: StorefrontKind) {
+  const metadata = (product.metadata ?? {}) as Record<string, unknown>;
+  const isManaged = metadata.mediaManaged === true;
+  const productKind = storefrontKindFromMetadata(metadata.storefrontKind);
+
+  if (!isManaged) {
+    return false;
+  }
+
+  if (expectedKind && productKind !== expectedKind) {
+    return false;
+  }
+
+  return true;
+}
+
 export function readMediaMetadata(metadata?: Record<string, unknown> | null): MediaMetadata {
   return {
     imageAspect:
@@ -156,7 +176,10 @@ async function getProductMediaRows(supabase: SupabaseClient, productIds?: string
   }));
 }
 
-export async function getStorefrontMediaOverrides(productIds?: string[]) {
+export async function getStorefrontMediaOverrides(
+  productIds?: string[],
+  expectedKind?: StorefrontKind
+) {
   const supabase = getSupabaseAdminClient();
   const overrides = new Map<string, StorefrontMediaOverride>();
 
@@ -188,6 +211,10 @@ export async function getStorefrontMediaOverrides(productIds?: string[]) {
   }
 
   for (const product of (productRows as ProductRow[] | null) ?? []) {
+    if (!hasManagedCatalogOverride(product, expectedKind)) {
+      continue;
+    }
+
     const media = mediaByProduct.get(product.id) ?? [];
     const primaryMedia = media[0];
     const productMeta = readMediaMetadata(product.metadata);
@@ -257,13 +284,19 @@ export async function getMergedStorefrontProducts(kind: StorefrontKind, ids?: st
         ? hardwareCatalog
         : giftCardProducts;
   const scoped = ids?.length ? source.filter((product) => ids.includes(product.id)) : source;
-  const overrides = await getStorefrontMediaOverrides(scoped.map((product) => product.id));
+  const overrides = await getStorefrontMediaOverrides(
+    scoped.map((product) => product.id),
+    kind
+  );
   return mergeStorefrontProductsWithMedia(scoped, overrides);
 }
 
 export async function getMergedGameShowcaseCards(ids: readonly string[], hrefBase = '/games') {
   const cards = getShowcaseCardsByIds(ids, hrefBase);
-  const overrides = await getStorefrontMediaOverrides(cards.map((card) => card.id));
+  const overrides = await getStorefrontMediaOverrides(
+    cards.map((card) => card.id),
+    'games'
+  );
   return mergeShowcaseCardsWithMedia(cards, overrides);
 }
 
@@ -274,7 +307,10 @@ export async function getMergedHardwareShowcaseCards(
     | ((product: (typeof hardwareCatalog)[number]) => string) = '/accessories'
 ) {
   const cards = getHardwareShowcaseCardsByIds(ids, hrefBase);
-  const overrides = await getStorefrontMediaOverrides(cards.map((card) => card.id));
+  const overrides = await getStorefrontMediaOverrides(
+    cards.map((card) => card.id),
+    'hardware'
+  );
   return mergeShowcaseCardsWithMedia(cards, overrides);
 }
 
@@ -295,6 +331,9 @@ export async function getMergedGiftCardShowcaseCards(
       imageFit: product.imageFit,
       imagePosition: product.imagePosition,
     }));
-  const overrides = await getStorefrontMediaOverrides(cards.map((card) => card.id));
+  const overrides = await getStorefrontMediaOverrides(
+    cards.map((card) => card.id),
+    'gift-cards'
+  );
   return mergeShowcaseCardsWithMedia(cards, overrides);
 }
