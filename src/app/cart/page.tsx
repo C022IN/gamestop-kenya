@@ -330,10 +330,13 @@ export default function CartPage() {
                   </p>
                 )}
                 <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-base">
-                  <span>Total</span>
+                  <span>Estimated Total</span>
                   <span className="text-red-600">{formatPrice(finalTotal)}</span>
                 </div>
               </div>
+              <p className="mb-5 text-xs text-gray-400">
+                VAT and sales tax are calculated in Stripe Checkout for card orders based on billing or shipping country.
+              </p>
 
               <div className="mb-5">
                 <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 font-semibold">
@@ -342,6 +345,7 @@ export default function CartPage() {
                 <div className="flex gap-2 flex-wrap">
                   {[
                     { icon: Smartphone, label: 'M-Pesa', color: 'text-green-600 bg-green-50' },
+                    { icon: CreditCard, label: 'Stripe', color: 'text-slate-700 bg-slate-100' },
                     { icon: CreditCard, label: 'Visa', color: 'text-blue-600 bg-blue-50' },
                     {
                       icon: CreditCard,

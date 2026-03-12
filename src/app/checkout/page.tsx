@@ -2,11 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { getCartPricing } from '@/lib/cart-pricing';
+import {
+  CHECKOUT_COUNTRIES,
+  getCheckoutCountryLabel,
+  isStateRequiredForCheckout,
+} from '@/lib/checkout-countries';
 import {
   AlertCircle,
   ArrowLeft,
@@ -33,6 +39,8 @@ interface CustomerInfo {
 interface ShippingInfo {
   address: string;
   city: string;
+  state: string;
+  country: string;
   postalCode: string;
   instructions: string;
 }
@@ -40,6 +48,23 @@ interface ShippingInfo {
 interface DeliveryInfo {
   channel: 'email' | 'whatsapp';
   note: string;
+}
+
+interface StoreOrderSummary {
+  id: string;
+  orderNumber: string;
+  customerInfo: CustomerInfo;
+  shippingInfo?: ShippingInfo;
+  deliveryInfo?: DeliveryInfo;
+  subtotalKes: number;
+  discountKes: number;
+  shippingKes: number;
+  taxKes: number;
+  totalKes: number;
+  digitalOnly: boolean;
+  paymentProvider: 'stripe' | 'mpesa' | 'free';
+  paymentStatus: 'pending' | 'paid' | 'free';
+  paidAt?: string;
 }
 
 type MpesaState =
@@ -51,6 +76,7 @@ type MpesaState =
 
 export default function CheckoutPage() {
   const { items, clearCart, promoCode } = useCart();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
@@ -62,6 +88,8 @@ export default function CheckoutPage() {
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     address: '',
     city: 'Nairobi',
+    state: '',
+    country: 'KE',
     postalCode: '',
     instructions: '',
   });
@@ -69,9 +97,16 @@ export default function CheckoutPage() {
     channel: 'email',
     note: '',
   });
-  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
+  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'stripe'>('mpesa');
   const [mpesaPhone, setMpesaPhone] = useState('');
   const [mpesaState, setMpesaState] = useState<MpesaState>({ phase: 'idle' });
+  const [stripeState, setStripeState] = useState<
+    | { phase: 'idle' }
+    | { phase: 'redirecting' }
+    | { phase: 'verifying' }
+    | { phase: 'failed'; reason: string }
+  >({ phase: 'idle' });
+  const [stripeOrder, setStripeOrder] = useState<StoreOrderSummary | null>(null);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -80,6 +115,9 @@ export default function CheckoutPage() {
     items,
     promoCode
   );
+  const canUseMpesa = digitalOnly || shippingInfo.country === 'KE';
+  const shippingCountryLabel = getCheckoutCountryLabel(shippingInfo.country);
+  const requiresShippingState = isStateRequiredForCheckout(shippingInfo.country);
 
   const steps = [
     { number: 1, title: 'Customer Info', icon: User },
@@ -99,6 +137,35 @@ export default function CheckoutPage() {
   };
 
   const deliveryTarget = deliveryInfo.channel === 'email' ? customerInfo.email : customerInfo.phone;
+  const confirmationOrder = stripeOrder;
+  const confirmationDigitalOnly = confirmationOrder?.digitalOnly ?? digitalOnly;
+  const confirmationCustomer = confirmationOrder?.customerInfo ?? customerInfo;
+  const confirmationShipping = confirmationOrder?.shippingInfo ?? shippingInfo;
+  const confirmationDelivery = confirmationOrder?.deliveryInfo ?? deliveryInfo;
+  const confirmationTarget =
+    confirmationDigitalOnly
+      ? confirmationDelivery.channel === 'email'
+        ? confirmationCustomer.email
+        : confirmationCustomer.phone
+      : confirmationCustomer.phone;
+  const confirmationTax = confirmationOrder?.taxKes ?? 0;
+  const confirmationTotal = confirmationOrder?.totalKes ?? finalTotal;
+  const confirmationDiscount = confirmationOrder?.discountKes ?? discount;
+  const confirmationPaymentLabel =
+    confirmationOrder?.paymentProvider === 'free'
+      ? 'Free Checkout'
+      : confirmationOrder?.paymentProvider === 'mpesa' || paymentMethod === 'mpesa'
+        ? 'M-Pesa'
+        : 'Stripe';
+  const stripeSessionId = searchParams.get('session_id');
+  const stripeCanceled = searchParams.get('canceled');
+
+  useEffect(() => {
+    if (!canUseMpesa && paymentMethod === 'mpesa') {
+      setPaymentMethod('stripe');
+      setMpesaState({ phase: 'idle' });
+    }
+  }, [canUseMpesa, paymentMethod]);
 
   useEffect(() => {
     return () => {
@@ -106,7 +173,43 @@ export default function CheckoutPage() {
     };
   }, []);
 
-  const startPolling = (checkoutRequestId: string, orderNum: string) => {
+  useEffect(() => {
+    if (!stripeSessionId || stripeOrder || orderPlaced) return;
+
+    let cancelled = false;
+    setStripeState({ phase: 'verifying' });
+
+    fetch(`/api/stripe/store/session?sessionId=${encodeURIComponent(stripeSessionId)}`)
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || data.error) {
+          throw new Error(data.error ?? 'Could not verify Stripe checkout.');
+        }
+
+        if (cancelled) return;
+
+        setStripeOrder(data.order);
+        setOrderNumber(data.order.orderNumber);
+        setPaymentMethod(data.order.paymentProvider === 'mpesa' ? 'mpesa' : 'stripe');
+        setOrderPlaced(true);
+        setCurrentStep(4);
+        setStripeState({ phase: 'idle' });
+        setTimeout(() => clearCart(), 1000);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setStripeState({
+          phase: 'failed',
+          reason: error instanceof Error ? error.message : 'Could not verify Stripe checkout.',
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clearCart, orderPlaced, stripeOrder, stripeSessionId]);
+
+  const startPolling = (checkoutRequestId: string) => {
     let attempts = 0;
     pollRef.current = setInterval(async () => {
       attempts += 1;
@@ -116,14 +219,31 @@ export default function CheckoutPage() {
 
         if (data.status === 'success') {
           clearInterval(pollRef.current!);
+          const confirmResponse = await fetch('/api/store/mpesa/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkoutRequestId }),
+          });
+          const confirmData = await confirmResponse.json();
+
+          if (!confirmResponse.ok || confirmData.error) {
+            setMpesaState({
+              phase: 'failed',
+              reason: confirmData.error ?? 'Payment was received, but the order could not be confirmed.',
+            });
+            return;
+          }
+
           setMpesaState({
             phase: 'success',
-            receiptNumber: data.mpesaReceiptNumber ?? '',
-            amount: data.amount ?? finalTotal,
+            receiptNumber: confirmData.receiptNumber ?? data.mpesaReceiptNumber ?? '',
+            amount: confirmData.amount ?? data.amount ?? finalTotal,
           });
-          setOrderNumber(orderNum);
+          setStripeOrder(confirmData.order);
+          setOrderNumber(confirmData.order.orderNumber);
           setOrderPlaced(true);
           setCurrentStep(4);
+          setPaymentMethod('mpesa');
           setTimeout(() => clearCart(), 1000);
         } else if (data.status === 'failed') {
           clearInterval(pollRef.current!);
@@ -150,17 +270,16 @@ export default function CheckoutPage() {
 
     setMpesaState({ phase: 'sending' });
     try {
-      const orderNum = `GS${Date.now().toString().slice(-6)}`;
-      const response = await fetch('/api/mpesa/stk-push', {
+      const response = await fetch('/api/store/mpesa/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          items,
+          customerInfo,
+          shippingInfo,
+          deliveryInfo,
+          promoCode,
           phone,
-          amount: finalTotal,
-          orderId: orderNum,
-          description: digitalOnly
-            ? `GameStop Kenya digital gift card order ${orderNum}`
-            : `GameStop Kenya order ${orderNum}`,
         }),
       });
       const data = await response.json();
@@ -173,12 +292,23 @@ export default function CheckoutPage() {
         return;
       }
 
+      if (data.kind === 'free' && data.order) {
+        setStripeOrder(data.order);
+        setOrderNumber(data.order.orderNumber);
+        setOrderPlaced(true);
+        setCurrentStep(4);
+        setMpesaState({ phase: 'idle' });
+        setTimeout(() => clearCart(), 1000);
+        return;
+      }
+
       setMpesaState({
         phase: 'waiting',
         checkoutRequestId: data.checkoutRequestId,
         customerMessage: data.customerMessage ?? 'Check your phone for the M-Pesa prompt.',
       });
-      startPolling(data.checkoutRequestId, orderNum);
+      setOrderNumber(data.orderNumber ?? '');
+      startPolling(data.checkoutRequestId);
     } catch {
       setMpesaState({
         phase: 'failed',
@@ -187,13 +317,57 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleCardPayment = (event: React.FormEvent) => {
-    event.preventDefault();
-    const orderNum = `GS${Date.now().toString().slice(-6)}`;
-    setOrderNumber(orderNum);
-    setOrderPlaced(true);
-    setCurrentStep(4);
-    setTimeout(() => clearCart(), 1000);
+  const handleStripePayment = async () => {
+    setStripeState({ phase: 'redirecting' });
+
+    try {
+      const response = await fetch('/api/stripe/store/create-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          customerInfo,
+          shippingInfo,
+          deliveryInfo,
+          promoCode,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        setStripeState({
+          phase: 'failed',
+          reason: data.error ?? 'Could not start Stripe checkout.',
+        });
+        return;
+      }
+
+      if (data.kind === 'free' && data.order) {
+        setStripeOrder(data.order);
+        setOrderNumber(data.order.orderNumber);
+        setPaymentMethod(data.order.paymentProvider === 'mpesa' ? 'mpesa' : 'stripe');
+        setOrderPlaced(true);
+        setCurrentStep(4);
+        setStripeState({ phase: 'idle' });
+        setTimeout(() => clearCart(), 1000);
+        return;
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      setStripeState({
+        phase: 'failed',
+        reason: 'Stripe checkout did not return a redirect URL.',
+      });
+    } catch (error) {
+      setStripeState({
+        phase: 'failed',
+        reason: error instanceof Error ? error.message : 'Could not start Stripe checkout.',
+      });
+    }
   };
 
   if (items.length === 0 && !orderPlaced) {
@@ -206,6 +380,20 @@ export default function CheckoutPage() {
           <Link href="/">
             <Button className="bg-red-600 hover:bg-red-700">Continue Shopping</Button>
           </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (stripeSessionId && stripeState.phase === 'verifying' && !stripeOrder) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header currency={currency} onCurrencyToggle={toggleCurrency} />
+        <div className="container mx-auto px-4 py-24 text-center">
+          <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-900">Verifying your Stripe checkout</h1>
+          <p className="mt-2 text-gray-500">Please wait while we confirm your order.</p>
         </div>
         <Footer />
       </div>
@@ -317,7 +505,15 @@ export default function CheckoutPage() {
                 <form
                   onSubmit={(event) => {
                     event.preventDefault();
-                    if (shippingInfo.address && shippingInfo.city) setCurrentStep(3);
+                    if (
+                      shippingInfo.address &&
+                      shippingInfo.city &&
+                      shippingInfo.country &&
+                      shippingInfo.postalCode &&
+                      (!requiresShippingState || shippingInfo.state)
+                    ) {
+                      setCurrentStep(3);
+                    }
                   }}
                   className="space-y-5"
                 >
@@ -333,32 +529,71 @@ export default function CheckoutPage() {
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-red-500 text-sm"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
                       <select
                         required
-                        value={shippingInfo.city}
-                        onChange={(event) => setShippingInfo({ ...shippingInfo, city: event.target.value })}
+                        value={shippingInfo.country}
+                        onChange={(event) =>
+                          setShippingInfo({ ...shippingInfo, country: event.target.value })
+                        }
                         className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-red-500 text-sm"
                       >
-                        <option value="Nairobi">Nairobi</option>
-                        <option value="Mombasa">Mombasa</option>
-                        <option value="Kisumu">Kisumu</option>
-                        <option value="Nakuru">Nakuru</option>
-                        <option value="Eldoret">Eldoret</option>
+                        {CHECKOUT_COUNTRIES.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
                       <input
                         type="text"
-                        placeholder="00100"
-                        value={shippingInfo.postalCode}
-                        onChange={(event) => setShippingInfo({ ...shippingInfo, postalCode: event.target.value })}
+                        required
+                        placeholder="Nairobi"
+                        value={shippingInfo.city}
+                        onChange={(event) =>
+                          setShippingInfo({ ...shippingInfo, city: event.target.value })
+                        }
                         className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-red-500 text-sm"
                       />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        State / Province / Region
+                        {requiresShippingState ? ' *' : ''}
+                      </label>
+                      <input
+                        type="text"
+                        required={requiresShippingState}
+                        placeholder={shippingInfo.country === 'US' ? 'California' : 'County / Region'}
+                        value={shippingInfo.state}
+                        onChange={(event) =>
+                          setShippingInfo({ ...shippingInfo, state: event.target.value })
+                        }
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-red-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="00100"
+                        value={shippingInfo.postalCode}
+                        onChange={(event) =>
+                          setShippingInfo({ ...shippingInfo, postalCode: event.target.value })
+                        }
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-red-500 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                    Stripe uses this destination plus the billing address you confirm later to calculate VAT and sales tax for supported countries, especially US and Europe.
                   </div>
                   <textarea
                     rows={2}
@@ -433,20 +668,38 @@ export default function CheckoutPage() {
                   <h2 className="text-xl font-bold">Payment Method</h2>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { id: 'mpesa', label: 'M-Pesa', icon: Smartphone, active: 'border-green-500 bg-green-50 text-green-700' },
-                      { id: 'card', label: 'Debit / Credit Card', icon: CreditCard, active: 'border-blue-500 bg-blue-50 text-blue-700' },
-                    ].map(({ id, label, icon: Icon, active }) => (
+                      {
+                        id: 'mpesa',
+                        label: 'M-Pesa',
+                        icon: Smartphone,
+                        active: 'border-green-500 bg-green-50 text-green-700',
+                        disabled: !canUseMpesa,
+                      },
+                      { id: 'stripe', label: 'Stripe / Cards', icon: CreditCard, active: 'border-blue-500 bg-blue-50 text-blue-700' },
+                    ].map(({ id, label, icon: Icon, active, disabled }) => (
                       <button
                         key={id}
                         type="button"
                         onClick={() => {
-                          setPaymentMethod(id as 'mpesa' | 'card');
+                          if (disabled) return;
+                          setPaymentMethod(id as 'mpesa' | 'stripe');
                           setMpesaState({ phase: 'idle' });
+                          setStripeState({ phase: 'idle' });
                         }}
-                        className={`flex items-center gap-3 p-4 border-2 rounded-xl text-left ${paymentMethod === id ? active : 'border-gray-200 text-gray-700'}`}
+                        disabled={disabled}
+                        className={`flex items-center gap-3 p-4 border-2 rounded-xl text-left ${
+                          disabled
+                            ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400'
+                            : paymentMethod === id
+                              ? active
+                              : 'border-gray-200 text-gray-700'
+                        }`}
                       >
                         <Icon className="h-5 w-5" />
-                        <span className="font-semibold text-sm">{label}</span>
+                        <span className="font-semibold text-sm">
+                          {label}
+                          {disabled ? ' (Kenya only)' : ''}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -456,6 +709,12 @@ export default function CheckoutPage() {
                       ? `After payment, your gift cards will be sent via ${deliveryInfo.channel === 'email' ? 'email' : 'WhatsApp'} to ${deliveryTarget}.`
                       : 'After payment, your order moves into delivery confirmation and dispatch.'}
                   </div>
+
+                  {!canUseMpesa && !digitalOnly && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                      International physical orders use Stripe Checkout so destination-based VAT and sales tax can be calculated correctly.
+                    </div>
+                  )}
 
                   {paymentMethod === 'mpesa' && (
                     <div className="space-y-4">
@@ -517,27 +776,48 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  {paymentMethod === 'card' && (
-                    <form onSubmit={handleCardPayment} className="space-y-4">
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                        <span>Card checkout shares the same order confirmation flow.</span>
+                  {paymentMethod === 'stripe' && (
+                    <div className="space-y-4">
+                      {(stripeCanceled || stripeState.phase === 'failed') && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                          <span>
+                            {stripeState.phase === 'failed'
+                              ? stripeState.reason
+                              : 'Stripe checkout was canceled before payment completed.'}
+                          </span>
+                        </div>
+                      )}
+                      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                        Stripe hosts the card checkout for this order. Visa, Mastercard, Link, VAT ID capture, and jurisdiction-based tax calculation all run inside the same hosted flow.
                       </div>
-                      <input type="text" placeholder="Card Number" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 text-sm font-mono" />
-                      <div className="grid grid-cols-2 gap-3">
-                        <input type="text" placeholder="MM / YY" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 text-sm" />
-                        <input type="text" placeholder="CVV" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 text-sm" />
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+                        Taxes and VAT are calculated at checkout from the billing and shipping details you confirm there, so the final charged amount can be slightly higher than the pre-tax cart total shown here.
                       </div>
                       <div className="flex gap-3">
                         <Button type="button" variant="outline" onClick={() => setCurrentStep(2)} className="flex-1 rounded-xl">
                           <ArrowLeft className="h-4 w-4 mr-2" /> Back
                         </Button>
-                        <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold py-5 rounded-xl">
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          Pay {formatPrice(finalTotal)}
+                        <Button
+                          type="button"
+                          onClick={handleStripePayment}
+                          disabled={stripeState.phase === 'redirecting' || stripeState.phase === 'verifying'}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold py-5 rounded-xl"
+                        >
+                          {stripeState.phase === 'redirecting' || stripeState.phase === 'verifying' ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Preparing Stripe Checkout
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              Pay {formatPrice(finalTotal)} with Stripe
+                            </>
+                          )}
                         </Button>
                       </div>
-                    </form>
+                    </div>
                   )}
 
                   <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -554,15 +834,16 @@ export default function CheckoutPage() {
                   </div>
                   <h2 className="text-3xl font-black text-gray-900 mb-2">Order Confirmed</h2>
                   <p className="text-gray-500 mb-6">
-                    {digitalOnly
-                      ? `Your gift cards will be delivered via ${deliveryInfo.channel === 'email' ? 'email' : 'WhatsApp'} to ${deliveryTarget}.`
-                      : `We will contact you on ${customerInfo.phone} to confirm delivery.`}
+                    {confirmationDigitalOnly
+                      ? `Your gift cards will be delivered via ${confirmationDelivery.channel === 'email' ? 'email' : 'WhatsApp'} to ${confirmationTarget}.`
+                      : `We will contact you on ${confirmationCustomer.phone} to confirm delivery.`}
                   </p>
                   <div className="bg-gray-50 rounded-2xl p-5 mb-6 text-left space-y-2">
-                    <div className="flex justify-between text-sm"><span className="text-gray-500">Order Number</span><span className="font-mono font-bold">{orderNumber}</span></div>
-                    <div className="flex justify-between text-sm"><span className="text-gray-500">Amount Paid</span><span className="font-bold text-green-600">{formatPrice(finalTotal)}</span></div>
-                    {discount > 0 && <div className="flex justify-between text-sm"><span className="text-gray-500">Promo Savings</span><span className="font-medium text-green-700">{formatPrice(discount)}</span></div>}
-                    <div className="flex justify-between text-sm"><span className="text-gray-500">Payment Method</span><span className="font-medium">{paymentMethod === 'mpesa' ? 'M-Pesa' : 'Card'}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-gray-500">Order Number</span><span className="font-mono font-bold">{confirmationOrder?.orderNumber ?? orderNumber}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-gray-500">Amount Paid</span><span className="font-bold text-green-600">{formatPrice(confirmationTotal)}</span></div>
+                    {confirmationDiscount > 0 && <div className="flex justify-between text-sm"><span className="text-gray-500">Promo Savings</span><span className="font-medium text-green-700">{formatPrice(confirmationDiscount)}</span></div>}
+                    {confirmationTax > 0 && <div className="flex justify-between text-sm"><span className="text-gray-500">Tax / VAT</span><span className="font-medium text-gray-900">{formatPrice(confirmationTax)}</span></div>}
+                    <div className="flex justify-between text-sm"><span className="text-gray-500">Payment Method</span><span className="font-medium">{confirmationPaymentLabel}</span></div>
                     {paymentMethod === 'mpesa' && mpesaState.phase === 'success' && mpesaState.receiptNumber && <div className="flex justify-between text-sm"><span className="text-gray-500">M-Pesa Receipt</span><span className="font-mono font-bold text-green-700">{mpesaState.receiptNumber}</span></div>}
                   </div>
                   <div className="space-y-3">
@@ -594,14 +875,24 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-gray-500"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
                 {discount > 0 && appliedPromo && <div className="flex justify-between text-green-600"><span>{appliedPromo.code}</span><span>- {formatPrice(discount)}</span></div>}
                 <div className="flex justify-between text-gray-500"><span>{digitalOnly ? 'Digital Delivery' : 'Shipping'}</span><span>{shippingCost === 0 ? <span className="text-green-600 font-medium">FREE</span> : formatPrice(shippingCost)}</span></div>
-                <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-2"><span>Total</span><span className="text-red-600">{formatPrice(finalTotal)}</span></div>
+                <div className="flex justify-between text-gray-500">
+                  <span>Taxes / VAT</span>
+                  <span className="text-right text-xs font-medium text-blue-600">
+                    Calculated at secure checkout
+                  </span>
+                </div>
+                <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-2"><span>Estimated Total</span><span className="text-red-600">{formatPrice(finalTotal)}</span></div>
               </div>
+              <p className="mt-3 text-xs text-gray-400">
+                Final tax depends on billing or shipping country. US and European VAT or sales-tax rules are applied in Stripe Checkout when you pay by card.
+              </p>
               {customerInfo.firstName && (
                 <div className="border-t border-gray-100 mt-4 pt-4 text-xs text-gray-500 space-y-1">
                   <p className="font-semibold text-gray-700">{digitalOnly ? 'Sending to:' : 'Delivering to:'}</p>
                   <p>{customerInfo.firstName} {customerInfo.lastName}</p>
                   {digitalOnly ? <p>{deliveryTarget}</p> : <>
                     {shippingInfo.address && <p>{shippingInfo.address}, {shippingInfo.city}</p>}
+                    <p>{shippingCountryLabel}</p>
                     <p>{customerInfo.phone}</p>
                   </>}
                 </div>

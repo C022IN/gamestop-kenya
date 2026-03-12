@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -12,6 +12,7 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  CreditCard,
   Loader2,
   Monitor,
   Smartphone,
@@ -72,6 +73,19 @@ interface MemberCredentials {
   accessCode: string;
 }
 
+interface BillingSummary {
+  currency: string;
+  taxKes: number;
+  chargedKes: number;
+}
+
+interface ActivationState {
+  subscription: ActivatedSubscription;
+  member: MemberCredentials;
+  billing: BillingSummary;
+  paymentLabel: 'M-Pesa' | 'Stripe' | 'Free Checkout';
+}
+
 const deviceIcons = {
   tv: Tv,
   mobile: Smartphone,
@@ -84,7 +98,12 @@ type MpesaPhase =
   | { phase: 'sending' }
   | { phase: 'waiting'; checkoutRequestId: string; subscriptionId: string; msg: string }
   | { phase: 'confirming' }
-  | { phase: 'success'; subscription: ActivatedSubscription; member: MemberCredentials }
+  | { phase: 'failed'; reason: string };
+
+type StripePhase =
+  | { phase: 'idle' }
+  | { phase: 'redirecting' }
+  | { phase: 'verifying' }
   | { phase: 'failed'; reason: string };
 
 function CopyBtn({ value }: { value: string }) {
@@ -104,17 +123,60 @@ function CopyBtn({ value }: { value: string }) {
 
 export default function IPTVSubscribePage() {
   const { planId } = useParams<{ planId: string }>();
+  const searchParams = useSearchParams();
   const plan = PLANS[planId as PlanId];
 
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
   const toggleCurrency = () =>
     setCurrency((p) => (p.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }));
 
+  const [customerName, setCustomerName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'stripe'>('mpesa');
   const [mpesaState, setMpesaState] = useState<MpesaPhase>({ phase: 'idle' });
+  const [stripeState, setStripeState] = useState<StripePhase>({ phase: 'idle' });
+  const [activationState, setActivationState] = useState<ActivationState | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stripeSessionId = searchParams.get('session_id');
+  const stripeCanceled = searchParams.get('canceled');
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+  useEffect(() => {
+    if (!stripeSessionId || activationState) return;
+
+    let cancelled = false;
+    setStripeState({ phase: 'verifying' });
+
+    fetch(`/api/stripe/iptv/session?sessionId=${encodeURIComponent(stripeSessionId)}`)
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok || data.error) {
+          throw new Error(data.error ?? 'Could not verify Stripe subscription.');
+        }
+
+        if (cancelled) return;
+
+        setActivationState({
+          subscription: data.subscription,
+          member: data.member,
+          billing: data.billing,
+          paymentLabel: 'Stripe',
+        });
+        setStripeState({ phase: 'idle' });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setStripeState({
+          phase: 'failed',
+          reason: error instanceof Error ? error.message : 'Could not verify Stripe subscription.',
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activationState, stripeSessionId]);
 
   if (!plan) {
     return (
@@ -123,6 +185,20 @@ export default function IPTVSubscribePage() {
           <p className="text-xl font-bold mb-4">Invalid plan selected.</p>
           <Link href="/iptv"><Button>Back to IPTV Plans</Button></Link>
         </div>
+      </div>
+    );
+  }
+
+  if (stripeSessionId && stripeState.phase === 'verifying' && !activationState) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header currency={currency} onCurrencyToggle={toggleCurrency} />
+        <div className="container mx-auto px-4 py-24 text-center">
+          <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-violet-600" />
+          <h1 className="text-2xl font-bold text-gray-900">Verifying your Stripe subscription</h1>
+          <p className="mt-2 text-gray-500">Please wait while we prepare your access.</p>
+        </div>
+        <Footer />
       </div>
     );
   }
@@ -158,11 +234,17 @@ export default function IPTVSubscribePage() {
             return;
           }
 
-          setMpesaState({
-            phase: 'success',
+          setActivationState({
             subscription: confData.subscription,
             member: confData.member,
+            billing: {
+              currency: 'KES',
+              taxKes: 0,
+              chargedKes: confData.subscription.amountKes,
+            },
+            paymentLabel: 'M-Pesa',
           });
+          setMpesaState({ phase: 'idle' });
         } else if (data.status === 'failed') {
           clearInterval(pollRef.current!);
           setMpesaState({ phase: 'failed', reason: data.resultDesc ?? 'Payment was not completed.' });
@@ -178,7 +260,7 @@ export default function IPTVSubscribePage() {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone) return;
+    if (!phone || !customerName || !email) return;
 
     setMpesaState({ phase: 'sending' });
 
@@ -186,7 +268,7 @@ export default function IPTVSubscribePage() {
       const res = await fetch('/api/iptv/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: plan.id, phone }),
+        body: JSON.stringify({ planId: plan.id, customerName, email, phone }),
       });
       const data = await res.json();
 
@@ -208,9 +290,68 @@ export default function IPTVSubscribePage() {
     }
   };
 
-  const isSuccess = mpesaState.phase === 'success';
-  const sub = isSuccess ? mpesaState.subscription : null;
-  const member = isSuccess ? mpesaState.member : null;
+  const handleStripeSubscribe = async () => {
+    if (!phone || !customerName || !email) return;
+
+    setStripeState({ phase: 'redirecting' });
+
+    try {
+      const response = await fetch('/api/stripe/iptv/create-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId: plan.id,
+          customerName,
+          email,
+          phone,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        setStripeState({
+          phase: 'failed',
+          reason: data.error ?? 'Failed to start Stripe subscription checkout.',
+        });
+        return;
+      }
+
+      if (data.kind === 'free' && data.subscription && data.member) {
+        setActivationState({
+          subscription: data.subscription,
+          member: data.member,
+          billing: {
+            currency: 'KES',
+            taxKes: 0,
+            chargedKes: data.subscription.amountKes,
+          },
+          paymentLabel: 'Free Checkout',
+        });
+        setStripeState({ phase: 'idle' });
+        return;
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      setStripeState({
+        phase: 'failed',
+        reason: 'Stripe subscription checkout did not return a redirect URL.',
+      });
+    } catch {
+      setStripeState({
+        phase: 'failed',
+        reason: 'Network error. Please check your connection.',
+      });
+    }
+  };
+
+  const isSuccess = Boolean(activationState);
+  const sub = activationState?.subscription ?? null;
+  const member = activationState?.member ?? null;
+  const billing = activationState?.billing ?? null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -229,19 +370,63 @@ export default function IPTVSubscribePage() {
             <div className="md:col-span-3">
               <div className="rounded-2xl border border-gray-100 bg-white p-7 shadow-sm">
                 <h1 className="mb-1 text-2xl font-black">Activate your IPTV plan</h1>
-                <p className="mb-6 text-sm text-gray-500">Enter your M-Pesa number, complete payment, and your member access plus protected playlist will appear on this page.</p>
+                <p className="mb-6 text-sm text-gray-500">Enter your account details, pay with M-Pesa or Stripe, and your member access plus protected playlist will appear on this page.</p>
 
                 {(mpesaState.phase === 'idle' || mpesaState.phase === 'failed') && (
-                  <form onSubmit={handleSubscribe} className="space-y-5">
-                    {mpesaState.phase === 'failed' && (
+                  <form
+                    onSubmit={(event) => {
+                      if (paymentMethod === 'mpesa') {
+                        void handleSubscribe(event);
+                        return;
+                      }
+
+                      event.preventDefault();
+                      void handleStripeSubscribe();
+                    }}
+                    className="space-y-5"
+                  >
+                    {(mpesaState.phase === 'failed' || stripeState.phase === 'failed' || stripeCanceled) && (
                       <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
                         <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                         <div>
-                          <p className="text-sm font-semibold text-red-800">Payment failed</p>
-                          <p className="mt-0.5 text-xs text-red-700">{mpesaState.reason}</p>
+                          <p className="text-sm font-semibold text-red-800">
+                            {stripeCanceled ? 'Stripe checkout canceled' : 'Payment failed'}
+                          </p>
+                          <p className="mt-0.5 text-xs text-red-700">
+                            {mpesaState.phase === 'failed'
+                              ? mpesaState.reason
+                              : stripeState.phase === 'failed'
+                                ? stripeState.reason
+                                : 'Stripe checkout was canceled before payment completed.'}
+                          </p>
                         </div>
                       </div>
                     )}
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700">Full Name *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="John Kamau"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-violet-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700">Email Address *</label>
+                        <input
+                          type="email"
+                          required
+                          placeholder="john@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-violet-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
 
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -258,26 +443,84 @@ export default function IPTVSubscribePage() {
                       <p className="mt-1 text-xs text-gray-400">Use the same number you will use later to sign in.</p>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { id: 'mpesa', label: 'M-Pesa', active: 'border-green-500 bg-green-50 text-green-700', icon: Smartphone },
+                        { id: 'stripe', label: 'Stripe / Cards', active: 'border-violet-500 bg-violet-50 text-violet-700', icon: CreditCard },
+                      ].map(({ id, label, active, icon: Icon }) => (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => {
+                            setPaymentMethod(id as 'mpesa' | 'stripe');
+                            setMpesaState({ phase: 'idle' });
+                            setStripeState({ phase: 'idle' });
+                          }}
+                          className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left ${paymentMethod === id ? active : 'border-gray-200 text-gray-700'}`}
+                        >
+                          <Icon className="h-5 w-5" />
+                          <span className="text-sm font-semibold">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+
                     <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
                       <p className="mb-1 font-semibold">How payment works:</p>
                       <ol className="list-decimal list-inside space-y-1 text-xs">
-                        <li>Click "Pay {displayPrice} with M-Pesa" below</li>
-                        <li>A pop-up appears on your phone</li>
-                        <li>Enter your M-Pesa PIN to confirm</li>
-                        <li>Your member code and playlist details appear on this page</li>
+                        {paymentMethod === 'mpesa' ? (
+                          <>
+                            <li>Click "Pay {displayPrice} with M-Pesa" below</li>
+                            <li>A pop-up appears on your phone</li>
+                            <li>Enter your M-Pesa PIN to confirm</li>
+                            <li>Your member code and playlist details appear on this page</li>
+                          </>
+                        ) : (
+                          <>
+                            <li>Click "Continue with Stripe" below</li>
+                            <li>Stripe opens a secure hosted subscription checkout</li>
+                            <li>Complete the first payment with your card</li>
+                            <li>Your member code and playlist details appear on this page after redirect</li>
+                          </>
+                        )}
                       </ol>
                     </div>
 
-                    <Button
-                      type="submit"
-                      className="w-full rounded-xl bg-violet-600 py-6 text-base font-bold hover:bg-violet-700"
-                    >
-                      <Smartphone className="mr-2 h-5 w-5" />
-                      Pay {displayPrice} with M-Pesa
-                    </Button>
+                    {paymentMethod === 'stripe' && (
+                      <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900">
+                        Stripe calculates VAT and sales tax from the billing details entered in checkout and collects VAT IDs when the country supports them.
+                      </div>
+                    )}
+
+                    {paymentMethod === 'mpesa' ? (
+                      <Button
+                        type="submit"
+                        className="w-full rounded-xl bg-violet-600 py-6 text-base font-bold hover:bg-violet-700"
+                      >
+                        <Smartphone className="mr-2 h-5 w-5" />
+                        Pay {displayPrice} with M-Pesa
+                      </Button>
+                    ) : (
+                      <Button
+                        type="submit"
+                        disabled={stripeState.phase === 'redirecting' || stripeState.phase === 'verifying'}
+                        className="w-full rounded-xl bg-slate-900 py-6 text-base font-bold hover:bg-slate-800"
+                      >
+                        {stripeState.phase === 'redirecting' || stripeState.phase === 'verifying' ? (
+                          <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Preparing Stripe Checkout
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="mr-2 h-5 w-5" />
+                            Continue with Stripe
+                          </>
+                        )}
+                      </Button>
+                    )}
 
                     <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-                      <Shield className="h-3.5 w-3.5" /> Secure payment via Safaricom Daraja
+                      <Shield className="h-3.5 w-3.5" /> Secure payment via {paymentMethod === 'mpesa' ? 'Safaricom Daraja' : 'Stripe Checkout'}
                     </div>
                   </form>
                 )}
@@ -342,7 +585,7 @@ export default function IPTVSubscribePage() {
 
                 <ul className="mb-5 space-y-2">
                   {[
-                    'M-Pesa activation flow',
+                    'M-Pesa or Stripe activation flow',
                     'Protected playlist URL',
                     'Member login with phone + access code',
                     'Live TV, movies, series, and sports hub',
@@ -392,13 +635,25 @@ export default function IPTVSubscribePage() {
                   <span className="font-semibold">{sub!.planName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Amount Paid</span>
-                  <span className="font-bold text-emerald-600">KSh {sub!.amountKes.toLocaleString()}</span>
+                  <span className="text-gray-500">Payment Method</span>
+                  <span className="font-semibold">{activationState!.paymentLabel}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Charged Today</span>
+                  <span className="font-bold text-emerald-600">
+                    KSh {(billing?.chargedKes ?? sub!.amountKes).toLocaleString()}
+                  </span>
                 </div>
                 {sub!.mpesaReceipt && (
                   <div className="flex justify-between">
                     <span className="text-gray-500">M-Pesa Receipt</span>
                     <span className="font-mono font-bold text-emerald-700">{sub!.mpesaReceipt}</span>
+                  </div>
+                )}
+                {(billing?.taxKes ?? 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Tax / VAT</span>
+                    <span className="font-semibold">KSh {billing!.taxKes.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -449,7 +704,7 @@ export default function IPTVSubscribePage() {
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-gray-400">
-                    Save these details now. The protected playlist URL is the quickest setup path. If you need help later, contact support with your phone number or M-Pesa receipt.
+                    Save these details now. The protected playlist URL is the quickest setup path. If you need help later, contact support with your phone number or payment reference.
                   </p>
                 </div>
               )}

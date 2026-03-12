@@ -95,6 +95,17 @@ function generateId(): string {
   return 'IPTV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
+function addPlanDuration(baseDate: Date, plan: IptvPlan) {
+  const next = new Date(baseDate);
+  if (plan.days) {
+    next.setDate(next.getDate() + plan.days);
+    return next;
+  }
+
+  next.setMonth(next.getMonth() + (plan.months ?? 1));
+  return next;
+}
+
 function fromCredentialsRow(row: CredentialsRow): IptvCredentials {
   return {
     m3uUrl: row.m3u_url,
@@ -192,12 +203,7 @@ export async function createPendingSubscription(params: {
 
   const id = generateId();
   const now = new Date();
-  const expiresAt = new Date(now);
-  if (plan.days) {
-    expiresAt.setDate(expiresAt.getDate() + plan.days);
-  } else {
-    expiresAt.setMonth(expiresAt.getMonth() + (plan.months ?? 1));
-  }
+  const expiresAt = addPlanDuration(now, plan);
 
   const sub: IptvSubscription = {
     id,
@@ -367,6 +373,44 @@ export async function activateByCheckoutId(
   const sub = await getSubscriptionByCheckout(checkoutRequestId);
   if (!sub) return null;
   return await activateSubscription(sub.id, mpesaReceipt, options);
+}
+
+export async function extendSubscription(
+  subscriptionId: string,
+  paymentReference?: string
+): Promise<IptvSubscription | null> {
+  const existing = await getSubscription(subscriptionId);
+  if (!existing) return null;
+
+  const plan = IPTV_PLANS[existing.planId];
+  const baseDate =
+    new Date(existing.expiresAt).getTime() > Date.now()
+      ? new Date(existing.expiresAt)
+      : new Date();
+  const nextExpiresAt = addPlanDuration(baseDate, plan).toISOString();
+  const updated: IptvSubscription = {
+    ...existing,
+    status: 'active',
+    expiresAt: nextExpiresAt,
+    mpesaReceipt: paymentReference ?? existing.mpesaReceipt,
+    activatedAt: existing.activatedAt ?? new Date().toISOString(),
+  };
+
+  const supabase = getSupabaseAdminClient();
+  if (supabase) {
+    await supabase
+      .from('iptv_subscriptions')
+      .update({
+        status: updated.status,
+        expires_at: updated.expiresAt,
+        mpesa_receipt: updated.mpesaReceipt ?? null,
+        activated_at: updated.activatedAt ?? null,
+      })
+      .eq('id', subscriptionId);
+  }
+
+  indexSubscription(updated);
+  return updated;
 }
 
 export async function getAllSubscriptions(): Promise<IptvSubscription[]> {

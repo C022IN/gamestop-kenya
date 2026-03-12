@@ -267,6 +267,7 @@ create table if not exists orders (
   currency_code text not null default 'KES',
   subtotal_kes numeric(12,2) not null default 0,
   shipping_kes numeric(12,2) not null default 0,
+  tax_kes numeric(12,2) not null default 0,
   total_kes numeric(12,2) not null default 0,
   payment_status text not null default 'pending',
   payment_method text,
@@ -278,6 +279,9 @@ create table if not exists orders (
 create index if not exists orders_customer_idx on orders(customer_id);
 create index if not exists orders_status_idx on orders(status);
 create index if not exists orders_created_idx on orders(created_at desc);
+
+alter table if exists orders
+  add column if not exists tax_kes numeric(12,2) not null default 0;
 
 create table if not exists order_items (
   id uuid primary key default gen_random_uuid(),
@@ -309,6 +313,22 @@ create table if not exists payments (
 
 create index if not exists payments_order_idx on payments(order_id);
 create index if not exists payments_provider_reference_idx on payments(provider_reference);
+
+create table if not exists billing_links (
+  id text primary key,
+  kind text not null check (kind in ('store_order', 'iptv_subscription')),
+  record_id text not null,
+  stripe_session_id text unique,
+  stripe_customer_id text,
+  stripe_subscription_id text unique,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists billing_links_kind_idx on billing_links(kind);
+create index if not exists billing_links_record_idx on billing_links(record_id);
+create index if not exists billing_links_customer_idx on billing_links(stripe_customer_id);
 
 create table if not exists mpesa_transactions (
   checkout_request_id text primary key,

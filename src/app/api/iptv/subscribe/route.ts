@@ -4,11 +4,11 @@ import { initiateStkPush, normaliseMpesaPhone } from '@/lib/mpesa';
 
 export async function POST(req: NextRequest) {
   try {
-    const { planId, phone } = await req.json();
+    const { planId, customerName, email, phone } = await req.json();
 
-    if (!planId || !phone) {
+    if (!planId || !customerName || !email || !phone) {
       return NextResponse.json(
-        { error: 'planId and phone are required' },
+        { error: 'planId, customerName, email, and phone are required' },
         { status: 400 }
       );
     }
@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
     // Create a pending subscription record
     const subscription = await createPendingSubscription({
       planId: planId as PlanId,
-      customerName: `Customer ${normalisedPhone.slice(-4)}`,
-      email: `${normalisedPhone}@profile.gamestop.local`,
+      customerName,
+      email,
       phone: normalisedPhone,
       checkoutRequestId: result.checkoutRequestId,
     });
