@@ -15,14 +15,14 @@ export interface HardwareCatalogProduct extends StorefrontProduct {
   compatibility: string[];
 }
 
-const unsplash = (slug: string, width = 1600) =>
-  `https://unsplash.com/photos/${slug}/download?force=true&w=${width}&q=80`;
+const commonsFile = (filename: string) =>
+  `https://commons.wikimedia.org/wiki/Special:Redirect/file/${encodeURIComponent(filename)}`;
 
 export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'ps5-console-slim',
     title: 'PlayStation 5 Slim Console',
-    image: unsplash('a-playstation-5-console-with-its-controller--8xeF0LeUtI'),
+    image: commonsFile('PlayStation 5 and DualSense.jpg'),
     price: 76000,
     originalPrice: 82000,
     platform: 'PlayStation',
@@ -40,7 +40,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'xbox-series-x-console',
     title: 'Xbox Series X Console',
-    image: unsplash('black-xbox-one-console-with-controller-DPOdCl4bGJU'),
+    image: commonsFile('Xbox Series (X).jpg'),
     price: 72000,
     originalPrice: 78000,
     platform: 'Xbox',
@@ -58,7 +58,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'nintendo-switch-oled-console',
     title: 'Nintendo Switch OLED',
-    image: unsplash('red-and-blue-nintendo-switch-jqpRECmiNEU'),
+    image: commonsFile('Nintendo Switch OLED.JPG'),
     price: 45500,
     originalPrice: 49000,
     platform: 'Nintendo',
@@ -76,7 +76,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'rgb-gaming-pc-tower',
     title: 'Custom RGB Gaming PC',
-    image: unsplash('custom-gaming-computer-with-rgb-lighting-QLQSgxQzzqg'),
+    image: commonsFile('PC-Gehäuse Kolink Observatory RGB Midi-Tower 20201120 DSC6134.jpg'),
     price: 168000,
     originalPrice: 182000,
     platform: 'PC',
@@ -94,7 +94,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'dualsense-wireless-controller',
     title: 'DualSense Wireless Controller',
-    image: unsplash('a-white-playstation-5-controller-sitting-on-top-of-a-red-table-cloth-VM6uuM6-0mA'),
+    image: commonsFile('DualSense Edge Controller.jpg'),
     price: 11900,
     originalPrice: 13500,
     platform: 'PlayStation',
@@ -112,7 +112,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'xbox-wireless-controller',
     title: 'Xbox Wireless Controller',
-    image: unsplash('shallow-focus-photo-of-white-microsoft-xbox-wireless-game-controller-P5cIVQm6r3U'),
+    image: commonsFile('Black Xbox Controller.jpg'),
     price: 9800,
     originalPrice: 11200,
     platform: 'Xbox',
@@ -130,7 +130,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'switch-pro-controller',
     title: 'Nintendo Switch Pro Controller',
-    image: unsplash('nintendo-switch-controller-DBFxpmpaocw'),
+    image: commonsFile('Nintendo Switch Pro Controller Zelda.jpg'),
     price: 9200,
     originalPrice: 10200,
     platform: 'Nintendo',
@@ -148,7 +148,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'wireless-gaming-headset',
     title: 'Wireless Gaming Headset',
-    image: unsplash('black-corded-gaming-headset-beside-black-flat-screen-computer-monitor-turned-on-uwL_JvIhtLM'),
+    image: commonsFile('Sound BlasterX H5 Gaming Headset.jpg'),
     price: 14800,
     originalPrice: 16900,
     platform: 'Universal',
@@ -166,7 +166,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'logitech-g923-racing-wheel',
     title: 'Racing Wheel And Pedals',
-    image: unsplash('logitech-g-racing-wheel-and-pedals-in-box-C0LBG0JHB_8'),
+    image: commonsFile('Logitech G923 with Driving Force Shifter.jpg'),
     price: 49800,
     originalPrice: 54500,
     platform: 'Universal',
@@ -184,7 +184,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'geforce-rtx-graphics-card',
     title: 'GeForce RTX Graphics Card',
-    image: unsplash('a-high-performance-graphics-card-with-three-fans-bXSC9GGir_A'),
+    image: commonsFile('Graphic card.jpg'),
     price: 96500,
     originalPrice: 102000,
     platform: 'PC',
@@ -202,7 +202,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'mechanical-gaming-keyboard',
     title: 'Mechanical Gaming Keyboard',
-    image: unsplash('close-up-of-a-backlit-mechanical-keyboard-with-colorful-keys-OPeU3k7VwpY'),
+    image: commonsFile('Mechanical Keyboard.jpg'),
     price: 8200,
     originalPrice: 9400,
     platform: 'PC',
@@ -220,7 +220,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'wireless-gaming-mouse',
     title: 'Wireless Gaming Mouse',
-    image: unsplash('a-black-computer-mouse-ePGW9e_gcz8'),
+    image: commonsFile('Gamers Mouse.jpg'),
     price: 5600,
     originalPrice: 6500,
     platform: 'PC',

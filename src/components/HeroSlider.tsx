@@ -24,6 +24,9 @@ interface Slide {
   imagePosition?: string;
 }
 
+const commonsFile = (filename: string) =>
+  `https://commons.wikimedia.org/wiki/Special:Redirect/file/${encodeURIComponent(filename)}`;
+
 const heroSlides: Slide[] = [
   {
     id: '1',
@@ -39,7 +42,7 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/accessories',
     gradient: 'from-blue-950 via-blue-900 to-blue-800',
     accentColor: 'text-blue-300',
-    image: 'https://unsplash.com/photos/a-playstation-5-console-with-its-controller--8xeF0LeUtI/download?force=true&w=1600&q=80',
+    image: commonsFile('PlayStation 5 and DualSense.jpg'),
     imageFit: 'cover',
     imagePosition: 'center',
   },
@@ -75,7 +78,7 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/digital-store',
     gradient: 'from-emerald-950 via-green-900 to-emerald-800',
     accentColor: 'text-emerald-300',
-    image: 'https://unsplash.com/photos/black-xbox-one-console-with-controller-DPOdCl4bGJU/download?force=true&w=1600&q=80',
+    image: commonsFile('Xbox Series (X).jpg'),
     imageFit: 'cover',
     imagePosition: 'center',
   },
@@ -93,7 +96,7 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/games',
     gradient: 'from-red-950 via-rose-900 to-red-800',
     accentColor: 'text-red-300',
-    image: 'https://unsplash.com/photos/red-and-blue-nintendo-switch-jqpRECmiNEU/download?force=true&w=1600&q=80',
+    image: commonsFile('Nintendo Switch OLED.JPG'),
     imageFit: 'cover',
     imagePosition: 'center',
   },
@@ -111,7 +114,7 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/digital-store',
     gradient: 'from-slate-950 via-gray-900 to-zinc-800',
     accentColor: 'text-slate-300',
-    image: 'https://unsplash.com/photos/custom-gaming-computer-with-rgb-lighting-QLQSgxQzzqg/download?force=true&w=1600&q=80',
+    image: commonsFile('PC-Gehäuse Kolink Observatory RGB Midi-Tower 20201120 DSC6134.jpg'),
     imageFit: 'cover',
     imagePosition: 'center',
   },
