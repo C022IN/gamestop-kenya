@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   getHardwareShowcaseCardsByIds,
   hardwareCatalog,
+  lockedHardwareMediaIds,
 } from '@/data/hardware-catalog';
 import { gameCatalog, getShowcaseCardsByIds } from '@/data/game-catalog';
 import { giftCardProducts } from '@/data/gift-cards';
@@ -41,6 +42,8 @@ type MediaMetadata = {
   notes?: string;
   lastSyncedAt?: string;
 };
+
+const lockedStorefrontMediaIds = new Set<string>(lockedHardwareMediaIds);
 
 export interface StorefrontSeedProduct {
   id: string;
@@ -211,6 +214,10 @@ export async function getStorefrontMediaOverrides(
   }
 
   for (const product of (productRows as ProductRow[] | null) ?? []) {
+    if (lockedStorefrontMediaIds.has(product.id)) {
+      continue;
+    }
+
     if (!hasManagedCatalogOverride(product, expectedKind)) {
       continue;
     }

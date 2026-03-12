@@ -11,17 +11,17 @@ export interface HardwareCatalogProduct extends StorefrontProduct {
 
 const productShot = {
   ps5Slim:
-    'https://static.bhphoto.com/images/images1000x1000/sony_1000041394_playstation_5_slim_console_1701964748_1796115.jpg',
+    'https://commons.wikimedia.org/wiki/Special:FilePath/PlayStation%205%20and%20DualSense.jpg',
   xboxSeriesX:
-    'https://cms-assets.xboxservices.com/assets/39/b9/39b9babd-d930-49c3-abb5-b840f0c6f744.png?n=020171-Hero-Gallery-0-1083x1222.png',
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Xbox%20series%20X%20(50648118708).jpg',
   switchOled:
-    'https://static.bhphoto.com/images/images1000x1000/nintendo_hegskabda_switch_oled_model_with_1624458553_1641720.jpg',
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Nintendo%20Switch%20-%20OLED.jpg',
   dualSense:
-    'https://static.bhphoto.com/images/images1000x1000/sony_1000039944_dualsense_wireless_controller_1727123839_1851953.jpg',
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Playstation%20Dualsense%20controller.jpg',
   xboxController:
-    'https://cms-assets.xboxservices.com/assets/1d/7f/1d7f4ed6-38f1-4fa8-93c7-63e74a3ad8b8.png?n=111042-Hero-1083_1222.png',
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Xbox%20wireless%20Controller%20-%204.jpg',
   switchProController:
-    'https://static.bhphoto.com/images/images1000x1000/nintendo_hacafsska_switch_pro_controller_1495148807_1342608.jpg',
+    'https://commons.wikimedia.org/wiki/Special:FilePath/Nintendo-Switch-Pro-Controller-FL.jpg',
   razerHeadset:
     'https://static.bhphoto.com/images/images1000x1000/razer_rz04_04530100_r3u1_blackshark_v2_pro_wireless_1694084651_1785960.jpg',
   logitechG923:
@@ -320,3 +320,12 @@ export function getHardwareShowcaseCardsByIds(
     imagePosition: product.imagePosition,
   }));
 }
+
+export const lockedHardwareMediaIds = [
+  'ps5-console-slim',
+  'xbox-series-x-console',
+  'nintendo-switch-oled-console',
+  'dualsense-wireless-controller',
+  'xbox-wireless-controller',
+  'switch-pro-controller',
+] as const;
