@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StorefrontPageShell from '@/components/StorefrontPageShell';
-import type { StorefrontShowcaseCard } from '@/lib/storefront-types';
+import type { StorefrontImageFit, StorefrontShowcaseCard } from '@/lib/storefront-types';
 
 interface ActionLink {
   label: string;
@@ -29,6 +29,10 @@ export interface RoutePageContent {
   eyebrow: string;
   title: string;
   intro: string;
+  heroImage?: string;
+  heroImageAlt?: string;
+  heroImageFit?: StorefrontImageFit;
+  heroImagePosition?: string;
   highlights: string[];
   sections: ContentSection[];
   facts?: QuickFact[];
@@ -48,7 +52,13 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
     <StorefrontPageShell>
       <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(220,38,38,0.2),_transparent_24%),radial-gradient(circle_at_82%_18%,_rgba(59,130,246,0.14),_transparent_22%),linear-gradient(135deg,_#030712,_#111827_48%,_#1f2937_100%)] py-16 text-white">
         <div className="container mx-auto px-4">
-          <div className={`grid gap-10 ${content.showcaseCards?.length ? 'lg:grid-cols-[1.02fr_0.98fr] lg:items-center' : ''}`}>
+          <div
+            className={`grid gap-10 ${
+              content.heroImage || content.showcaseCards?.length
+                ? 'lg:grid-cols-[1.02fr_0.98fr] lg:items-center'
+                : ''
+            }`}
+          >
             <div>
               <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-red-400">
                 {content.eyebrow}
@@ -79,56 +89,60 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
               </div>
             </div>
 
-            {content.showcaseCards && content.showcaseCards.length > 0 && (
-              <div className="grid gap-4 md:grid-cols-2">
-                {content.showcaseCards.slice(0, 4).map((card, index) => (
-                  <Link
-                    key={card.id}
-                    href={card.href}
-                    className={`group overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 shadow-[0_22px_60px_rgba(0,0,0,0.28)] backdrop-blur ${
-                      index === 0 ? 'md:col-span-2' : ''
-                    }`}
-                  >
-                    <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 p-4">
-                      {(() => {
-                        const isProductShot = card.imageAspect === 'card' && card.imageFit === 'contain';
-
-                        return (
-                      <div
-                        className={`mx-auto overflow-hidden rounded-[1.35rem] border border-white/10 bg-black/20 shadow-[0_18px_42px_rgba(0,0,0,0.26)] ${
-                          isProductShot ? 'border-slate-200/80 bg-white' : 'border-white/10 bg-black/20'
-                        } ${
-                          card.imageAspect === 'card'
-                            ? 'aspect-[16/10] w-full'
-                            : card.imageAspect === 'wide'
-                              ? 'aspect-[16/9] w-full'
-                              : 'aspect-[4/5] w-[72%]'
-                        }`}
-                      >
-                        <img
-                          src={card.image}
-                          alt={card.title}
-                          style={{ objectPosition: card.imagePosition ?? 'center' }}
-                          className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${
-                            card.imageFit === 'contain'
-                              ? `${isProductShot ? 'object-contain p-3' : 'object-contain p-4'}`
-                              : 'object-cover'
-                          }`}
-                        />
-                      </div>
-                        );
-                      })()}
-                    </div>
-                    <div className="p-5">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-300">
-                        {card.label}
-                      </p>
-                      <h2 className="mt-2 text-lg font-black text-white">{card.title}</h2>
-                      <p className="mt-2 text-sm leading-6 text-gray-300">{card.blurb}</p>
-                    </div>
-                  </Link>
-                ))}
+            {content.heroImage ? (
+              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-[0_28px_80px_rgba(0,0,0,0.28)]">
+                <img
+                  src={content.heroImage}
+                  alt={content.heroImageAlt ?? content.title}
+                  style={{ objectPosition: content.heroImagePosition ?? 'center' }}
+                  className={`aspect-[4/3] w-full ${
+                    content.heroImageFit === 'contain' ? 'object-contain p-6' : 'object-cover'
+                  }`}
+                />
               </div>
+            ) : (
+              content.showcaseCards &&
+              content.showcaseCards.length > 0 && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {content.showcaseCards.slice(0, 4).map((card, index) => (
+                    <Link
+                      key={card.id}
+                      href={card.href}
+                      className={`group overflow-hidden rounded-[1.75rem] border border-white/10 bg-white shadow-[0_18px_48px_rgba(0,0,0,0.22)] ${
+                        index === 0 ? 'md:col-span-2' : ''
+                      }`}
+                    >
+                      <div className="p-4">
+                        <div
+                          className={`mx-auto overflow-hidden rounded-[1.35rem] border border-slate-200 bg-slate-50 ${
+                            card.imageAspect === 'card'
+                              ? 'aspect-[4/3] w-full'
+                              : card.imageAspect === 'wide'
+                                ? 'aspect-[16/9] w-full'
+                                : 'aspect-[4/5] w-[72%]'
+                          }`}
+                        >
+                          <img
+                            src={card.image}
+                            alt={card.title}
+                            style={{ objectPosition: card.imagePosition ?? 'center' }}
+                            className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${
+                              card.imageFit === 'contain' ? 'object-contain p-4' : 'object-cover'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                      <div className="border-t border-slate-100 p-5">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-500">
+                          {card.label}
+                        </p>
+                        <h2 className="mt-2 text-lg font-black text-slate-900">{card.title}</h2>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">{card.blurb}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )
             )}
           </div>
         </div>
@@ -149,9 +163,63 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
         </section>
       )}
 
+      {content.heroImage && content.showcaseCards && content.showcaseCards.length > 0 && (
+        <section className="bg-white py-14">
+          <div className="container mx-auto px-4">
+            <div className="mb-8 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
+                  Featured Picks
+                </p>
+                <h2 className="mt-2 text-3xl font-black text-slate-900">
+                  Gear and add-ons for this platform
+                </h2>
+              </div>
+            </div>
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              {content.showcaseCards.slice(0, 4).map((card) => (
+                <Link
+                  key={card.id}
+                  href={card.href}
+                  className="group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-[0_18px_38px_rgba(15,23,42,0.12)]"
+                >
+                  <div className="p-4">
+                    <div
+                      className={`overflow-hidden rounded-[1.35rem] border border-slate-200 bg-slate-50 ${
+                        card.imageAspect === 'card'
+                          ? 'aspect-[4/3] w-full'
+                          : card.imageAspect === 'wide'
+                            ? 'aspect-[16/9] w-full'
+                            : 'aspect-[4/5] w-[78%] mx-auto'
+                      }`}
+                    >
+                      <img
+                        src={card.image}
+                        alt={card.title}
+                        style={{ objectPosition: card.imagePosition ?? 'center' }}
+                        className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${
+                          card.imageFit === 'contain' ? 'object-contain p-4' : 'object-cover'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  <div className="border-t border-slate-100 p-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-500">
+                      {card.label}
+                    </p>
+                    <h3 className="mt-2 text-lg font-black text-slate-900">{card.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{card.blurb}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="py-14">
         <div className="container mx-auto px-4">
-          <h2 className="mb-6 text-2xl font-bold text-gray-900">Why This Matters</h2>
+          <h2 className="mb-6 text-2xl font-bold text-gray-900">Why Shop Here</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {content.highlights.map((item) => (
               <div
@@ -168,7 +236,7 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
 
       <section className="bg-white py-12">
         <div className="container mx-auto px-4">
-          <h3 className="mb-6 text-2xl font-bold text-gray-900">What To Expect</h3>
+          <h3 className="mb-6 text-2xl font-bold text-gray-900">Buying Guide</h3>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {content.sections.map((section) => (
               <article

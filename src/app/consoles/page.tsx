@@ -14,6 +14,7 @@ import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
+import { gamingVisuals } from '@/data/gaming-visuals';
 import { hardwareCatalog } from '@/data/hardware-catalog';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
@@ -78,10 +79,10 @@ export default function ConsolesPage() {
                 Consoles
               </div>
               <h1 className="max-w-3xl text-4xl font-black leading-tight md:text-6xl">
-                PlayStation, Xbox, and Nintendo consoles.
+                PlayStation, Xbox, and Nintendo consoles in one shelf.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 md:text-lg">
-                Shop current console stock with clean product cards, pricing in KES, and add-on controllers ready in the same basket.
+                Compare PS5, Xbox, and Nintendo hardware with KES pricing, clear product photos, and the right add-ons ready in the same basket.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
@@ -112,34 +113,28 @@ export default function ConsolesPage() {
               </div>
             </div>
 
-            <div className="relative min-h-[29rem]">
-              <div className="absolute inset-0 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-sm" />
-              {heroProducts.map((product, index) => (
-                <div
-                  key={product.id}
-                  className={`absolute overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/25 shadow-[0_28px_80px_rgba(0,0,0,0.35)] ${
-                    index === 0
-                      ? 'left-4 top-6 z-20 w-[48%] rotate-[-7deg]'
-                      : index === 1
-                        ? 'right-6 top-8 z-10 w-[44%] rotate-[7deg]'
-                        : 'bottom-5 left-1/2 z-30 w-[52%] -translate-x-1/2 rotate-[-2deg]'
-                  }`}
-                >
-                  <div className="overflow-hidden rounded-[1.35rem] border border-slate-200/80 bg-white">
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      className="aspect-[16/10] w-full object-contain p-3"
-                    />
-                  </div>
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+            <div className="grid gap-4">
+              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-[0_28px_80px_rgba(0,0,0,0.28)]">
+                <img
+                  src={gamingVisuals.playstationConsole.src}
+                  alt={gamingVisuals.playstationConsole.alt}
+                  className="aspect-[4/3] w-full object-cover"
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                {heroProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur"
+                  >
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-200">
                       {product.platform}
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-white">{product.title}</p>
+                    <h2 className="mt-2 text-base font-black text-white">{product.title}</h2>
+                    <p className="mt-2 text-sm text-slate-200">KSh {product.price.toLocaleString()}</p>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -167,12 +162,12 @@ export default function ConsolesPage() {
 
       <section className="container mx-auto px-4 py-12 md:py-14">
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
-              Console Catalog
-            </p>
-            <h2 className="mt-2 text-3xl font-black text-gray-900">Choose the system that matches how you play</h2>
-          </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
+                Console Catalog
+              </p>
+              <h2 className="mt-2 text-3xl font-black text-gray-900">Choose the system that matches how you play</h2>
+            </div>
 
           <div className="flex flex-wrap gap-2">
             {platformFilters.map((platform) => (

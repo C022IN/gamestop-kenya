@@ -1,11 +1,14 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
+import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedGiftCardShowcaseCards } from '@/lib/storefront-media';
 
 const digitalStoreContent: RoutePageContent = {
   eyebrow: 'Digital Store',
   title: 'Fast Digital Codes For PlayStation, Xbox, Nintendo, And PC',
+  heroImage: gamingVisuals.gamingLounge.src,
+  heroImageAlt: gamingVisuals.gamingLounge.alt,
   intro:
-    'Buy wallet top-ups and digital gaming products with secure payment and fast fulfillment workflows. Ideal when you need immediate access without physical delivery wait times.',
+    'Buy wallet top-ups and digital gaming products when you want fast access without waiting for physical delivery.',
   facts: [
     { label: 'Delivery Model', value: 'Digital Fulfillment' },
     { label: 'Platforms', value: 'PS / Xbox / Nintendo / PC' },
@@ -13,10 +16,10 @@ const digitalStoreContent: RoutePageContent = {
     { label: 'Support', value: 'Activation Help' },
   ],
   highlights: [
-    'Digital purchases reduce waiting time for game access.',
-    'Coverage spans major gaming ecosystems and wallet formats.',
-    'Support available for delivery confirmation and activation guidance.',
-    'Works well with bundle planning for full setup purchases.',
+    'Digital codes are the fastest way to top up or complete a game purchase.',
+    'Coverage spans major gaming ecosystems and wallet denominations.',
+    'Support stays available for delivery confirmation and activation questions.',
+    'Digital products fit naturally beside console and accessory orders.',
   ],
   sections: [
     {
@@ -42,7 +45,7 @@ const digitalStoreContent: RoutePageContent = {
     {
       title: 'Best Use Cases',
       description:
-        'Digital products are especially useful for fast-access and gifting workflows.',
+        'Digital products are especially useful for fast access and gifting.',
       points: [
         'Quick wallet top-ups before game launches.',
         'Gift purchases without physical shipping dependencies.',

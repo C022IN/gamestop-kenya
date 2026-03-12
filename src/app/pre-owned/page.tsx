@@ -1,11 +1,14 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
+import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedGameShowcaseCards } from '@/lib/storefront-media';
 
 const preOwnedContent: RoutePageContent = {
   eyebrow: 'Pre-Owned Games',
   title: 'Value-Focused Gaming With Verified Condition Checks',
+  heroImage: gamingVisuals.gamesHero.src,
+  heroImageAlt: gamingVisuals.gamesHero.alt,
   intro:
-    'Pre-owned category helps players access more titles at lower price points. Inventory rotates frequently and each listing follows condition and compatibility checks before sale.',
+    'Pre-owned games help players stretch a budget further while still buying major titles with condition checks before sale.',
   facts: [
     { label: 'Price Position', value: 'Value Tier' },
     { label: 'Inventory Style', value: 'Rotating' },
@@ -13,10 +16,10 @@ const preOwnedContent: RoutePageContent = {
     { label: 'Support', value: 'Purchase Guidance' },
   ],
   highlights: [
-    'Lower-cost access to popular games and catalog expansion.',
-    'Condition checks applied before listing availability.',
-    'Useful for budget-sensitive players building larger libraries.',
-    'Support team helps verify compatibility before checkout.',
+    'Pre-owned titles lower the cost of building a broader game library.',
+    'Condition checks are applied before stock goes live on the store.',
+    'This page works well for buyers mixing one new title with cheaper extras.',
+    'Support can help verify platform compatibility before checkout.',
   ],
   sections: [
     {

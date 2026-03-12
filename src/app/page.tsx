@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import HeroSlider from '@/components/HeroSlider';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
+import { gamingVisuals } from '@/data/gaming-visuals';
 import { hardwareCatalog } from '@/data/hardware-catalog';
 import {
   getFeaturedGames,
@@ -39,6 +40,7 @@ const categoryBlueprints = [
   {
     name: 'Video Games',
     icon: Gamepad2,
+    featuredImage: gamingVisuals.gamesHero.src,
     fallbackImage: '/images/categories/video-games.svg',
     count: '500+',
     href: '/games',
@@ -47,7 +49,7 @@ const categoryBlueprints = [
   {
     name: 'Consoles',
     icon: ShoppingBag,
-    imageId: 'xbox-series-x-console',
+    featuredImage: gamingVisuals.playstationConsole.src,
     fallbackImage: '/images/categories/consoles.svg',
     count: '50+',
     href: '/consoles',
@@ -64,7 +66,7 @@ const categoryBlueprints = [
   {
     name: 'Accessories',
     icon: Truck,
-    imageId: 'razer-blackshark-v2-pro-2023',
+    featuredImage: gamingVisuals.headsetDock.src,
     fallbackImage: '/images/categories/accessories.svg',
     count: '200+',
     href: '/accessories',
@@ -173,10 +175,10 @@ export default function Home() {
   const categories = categoryBlueprints.map((category) => ({
     ...category,
     image:
-      category.name === 'Video Games'
-        ? featuredProducts[0]?.image ?? category.fallbackImage
-        : 'imageId' in category && category.imageId
-          ? hardwareMap.get(category.imageId)?.image ?? category.fallbackImage
+      'featuredImage' in category && category.featuredImage
+        ? category.featuredImage
+        : category.name === 'Video Games'
+          ? featuredProducts[0]?.image ?? category.fallbackImage
           : category.fallbackImage,
   }));
 

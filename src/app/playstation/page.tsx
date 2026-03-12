@@ -1,51 +1,52 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
+import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
 const playstationContent: RoutePageContent = {
   eyebrow: 'PlayStation 5',
   title: 'PS5 Consoles, Games, Accessories, And Wallet Codes',
+  heroImage: gamingVisuals.playstationConsole.src,
+  heroImageAlt: gamingVisuals.playstationConsole.alt,
   intro:
-    'Explore the PlayStation lineup with console options, top titles, DualSense accessories, and PSN digital support. Built for players who want performance and premium game experiences.',
+    'Shop PS5 hardware, flagship games, DualSense controllers, and PSN-ready digital support in one PlayStation shelf.',
   facts: [
-    { label: 'Platform', value: 'PlayStation 5' },
-    { label: 'Add-Ons', value: 'Controllers + PSN' },
-    { label: 'Catalog', value: 'Top Titles' },
-    { label: 'Support', value: 'Local Guidance' },
+    { label: 'Console Stock', value: 'PS5 Slim' },
+    { label: 'Add-Ons', value: 'DualSense + Audio' },
+    { label: 'Digital', value: 'PSN Support' },
+    { label: 'Delivery', value: 'Kenya-Wide' },
   ],
   highlights: [
-    'PS5-focused product guidance for new and upgrading players.',
-    'Strong title coverage for action, sports, and competitive play.',
-    'Accessory ecosystem support for multiplayer and setup expansion.',
-    'Digital wallet top-up options for quick content purchase.',
+    'PS5 hardware and add-ons are grouped together for faster basket building.',
+    'Top PlayStation genres stay easy to shop without leaving the main store.',
+    'DualSense, headset, and sim-racing upgrades are available on the same checkout.',
+    'PSN top-ups are ready when you want digital purchases after the console order.',
   ],
   sections: [
     {
-      title: 'Hardware Path',
-      description: 'Choose console and accessories based on your play goals.',
+      title: 'Build The Console Basket',
+      description: 'Start with the PS5, then add the pieces most buyers need immediately.',
       points: [
-        'Select console variant that matches usage and storage needs.',
-        'Add extra controller for local multiplayer.',
-        'Plan for headset and charging accessories early.',
+        'Choose the PS5 console first, then add a second DualSense for local play.',
+        'Add a headset early if the setup is for shooters, sports nights, or party chat.',
+        'Use the same store flow for console, accessories, and digital top-up cards.',
       ],
     },
     {
-      title: 'Content And Games',
-      description:
-        'Build a strong starter library using core genres and flagship titles.',
+      title: 'Pick The Right Games',
+      description: 'Balance prestige exclusives, competitive titles, and local multiplayer picks.',
       points: [
-        'Combine story-driven and multiplayer titles for balance.',
-        'Use deals and bundles where available.',
-        'Check digital store for compatible wallet options.',
+        'Combine a story-driven game with a football, fighter, or racing title.',
+        'Check deal pages before checkout if you are building a first library.',
+        'Use PSN wallet top-ups for add-on content and digital purchases later.',
       ],
     },
     {
-      title: 'Post-Purchase Readiness',
-      description:
-        'Support is available for setup and order-related questions after checkout.',
+      title: 'After You Order',
+      description: 'Track delivery, ask setup questions, and keep a clean path for support.',
       points: [
-        'Track deliveries through the order page.',
-        'Use support for setup and troubleshooting questions.',
-        'Review policy pages for returns and warranty flow.',
+        'Track the order through the store order pages after payment.',
+        'Reach support if you need help with setup, pairing, or account steps.',
+        'Warranty and returns stay available through the usual policy pages.',
       ],
     },
   ],

@@ -1,11 +1,14 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
+import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
 const pcGamingContent: RoutePageContent = {
   eyebrow: 'PC Gaming',
   title: 'Graphics Cards, Headsets, And Digital Support For PC Players',
+  heroImage: gamingVisuals.pcBuild.src,
+  heroImageAlt: gamingVisuals.pcBuild.alt,
   intro:
-    'Build or upgrade your PC setup with current GeForce and Radeon cards, premium audio, and digital wallet support for PC libraries.',
+    'Build or upgrade a gaming PC with named GeForce and Radeon cards, premium headset options, and digital support for your game library.',
   facts: [
     { label: 'Graphics Stock', value: 'GeForce + Radeon' },
     { label: 'Use Cases', value: '1080p / 1440p / 4K' },
@@ -13,40 +16,37 @@ const pcGamingContent: RoutePageContent = {
     { label: 'Support Model', value: 'Guided' },
   ],
   highlights: [
-    'Current GeForce and Radeon cards with clear price bands.',
-    'Premium headset option for chat, shooters, and long sessions.',
-    'Digital store links for wallet top-ups and software access.',
-    'Strong fit for both first-time and experienced PC players.',
+    'Named ASUS GeForce and Radeon cards show clear price bands instead of generic GPU labels.',
+    'Headset options are ready for shooters, voice chat, and longer sessions.',
+    'Digital store links help complete the setup after hardware checkout.',
+    'The page covers both upgrade buyers and first-time PC gaming builds.',
   ],
   sections: [
     {
-      title: 'Choosing A GPU Tier',
-      description:
-        'Pick the graphics card around the resolution and game settings you actually want to run.',
+      title: 'Choose The GPU Tier',
+      description: 'Pick the card around your target resolution and the games you actually play.',
       points: [
-        'RTX 4060 suits 1080p-first builds and esports setups.',
-        'RTX 5070 Ti targets premium 1440p and stronger ray tracing.',
-        'Radeon RX 7800 XT and RX 9070 XT cover value 1440p through entry-4K builds.',
+        'RTX 4060 suits 1080p-first builds and esports-focused setups.',
+        'RTX 5070 Ti targets premium 1440p performance and stronger ray tracing.',
+        'RX 7800 XT and RX 9070 XT cover value 1440p through entry-4K builds.',
       ],
     },
     {
-      title: 'Audio And Session Comfort',
-      description:
-        'Once the GPU is right, audio is usually the next upgrade that buyers feel immediately.',
+      title: 'Audio And Daily Use',
+      description: 'After the GPU, headset comfort is usually the upgrade buyers notice fastest.',
       points: [
-        'Wireless headset coverage helps for shooters, sports nights, and Discord sessions.',
-        'Choose gear that fits long sessions without adding desk clutter.',
-        'Pair graphics upgrades with cooling and PSU checks before checkout.',
+        'Choose a headset that works for shooters, sports nights, and Discord sessions.',
+        'Keep comfort and microphone quality in mind for longer evening use.',
+        'Check power and cooling headroom before buying the final graphics tier.',
       ],
     },
     {
-      title: 'Digital Workflow',
-      description:
-        'Pair hardware purchases with digital options for a complete setup path.',
+      title: 'Complete The Setup',
+      description: 'Use the store for hardware first, then finish the rest of the setup cleanly.',
       points: [
-        'Use digital codes for faster game access.',
-        'Track order and support details in one place.',
-        'Reach support for compatibility questions before checkout.',
+        'Use digital codes for quicker access to games after the hardware order.',
+        'Track orders and payment status from the same account flow.',
+        'Reach support if you want a compatibility check before checkout.',
       ],
     },
   ],

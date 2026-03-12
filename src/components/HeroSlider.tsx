@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { gamingVisuals } from '@/data/gaming-visuals';
 
 interface Slide {
   id: string;
@@ -28,20 +29,19 @@ const heroSlides: Slide[] = [
   {
     id: '1',
     badge: 'TOP SELLER',
-    title: 'PlayStation 5',
+    title: 'PlayStation 5 Slim',
     subtitle:
-      'Next-gen performance, haptic feedback, and lightning-fast load times. Fully stocked with local support in Nairobi.',
-    highlight: 'From KSh 65,000',
-    price: 'KSh 65,000',
+      'PS5 Slim stock with fast SSD load times, DualSense support, and local delivery options for Kenyan buyers.',
+    highlight: 'From KSh 75,900',
+    price: 'KSh 75,900',
     buttonText: 'Shop PS5',
     buttonLink: '/playstation',
     secondaryButtonText: 'View Accessories',
     secondaryButtonLink: '/accessories',
     gradient: 'from-blue-950 via-blue-900 to-blue-800',
     accentColor: 'text-blue-300',
-    image:
-      'https://static.bhphoto.com/images/images1000x1000/sony_1000041394_playstation_5_slim_console_1701964748_1796115.jpg',
-    imageFit: 'contain',
+    image: gamingVisuals.playstationConsole.src,
+    imageFit: 'cover',
     imagePosition: 'center',
   },
   {
@@ -66,19 +66,17 @@ const heroSlides: Slide[] = [
     badge: 'FLASH DEAL - 40% OFF',
     title: 'Xbox Series X',
     subtitle:
-      'The most powerful Xbox built for true 4K gaming and high frame rates. Includes same-day delivery options in Nairobi.',
-    highlight: 'KSh 56,000',
-    price: 'KSh 56,000',
-    originalPrice: 'KSh 72,000',
+      'Xbox performance for 4K gaming, sports nights, and Game Pass-ready setups with local support.',
+    highlight: 'KSh 71,900',
+    price: 'KSh 71,900',
     buttonText: 'Shop Xbox',
     buttonLink: '/xbox',
     secondaryButtonText: 'Xbox Game Pass',
     secondaryButtonLink: '/digital-store',
     gradient: 'from-emerald-950 via-green-900 to-emerald-800',
     accentColor: 'text-emerald-300',
-    image:
-      'https://cms-assets.xboxservices.com/assets/39/b9/39b9babd-d930-49c3-abb5-b840f0c6f744.png?n=020171-Hero-Gallery-0-1083x1222.png',
-    imageFit: 'contain',
+    image: gamingVisuals.gamingLounge.src,
+    imageFit: 'cover',
     imagePosition: 'center',
   },
   {
@@ -86,18 +84,17 @@ const heroSlides: Slide[] = [
     badge: 'FAMILY FAVORITE',
     title: 'Nintendo Switch OLED',
     subtitle:
-      'Flexible handheld and docked play on a vibrant OLED display. Great for family gaming, parties, and travel.',
-    highlight: 'KSh 45,000',
-    price: 'KSh 45,000',
+      'Flexible handheld and docked play for shared family gaming, travel, and Nintendo exclusives.',
+    highlight: 'KSh 45,500',
+    price: 'KSh 45,500',
     buttonText: 'Shop Nintendo',
     buttonLink: '/nintendo-switch',
     secondaryButtonText: 'Browse Games',
     secondaryButtonLink: '/games',
     gradient: 'from-red-950 via-rose-900 to-red-800',
     accentColor: 'text-red-300',
-    image:
-      'https://static.bhphoto.com/images/images1000x1000/nintendo_hegskabda_switch_oled_model_with_1624458553_1641720.jpg',
-    imageFit: 'contain',
+    image: gamingVisuals.nintendoSwitch.src,
+    imageFit: 'cover',
     imagePosition: 'center',
   },
   {
@@ -105,7 +102,7 @@ const heroSlides: Slide[] = [
     badge: 'PC PARTS',
     title: 'GeForce And Radeon GPUs',
     subtitle:
-      'Current ASUS GeForce and Radeon cards for 1080p, 1440p, and entry-4K gaming builds.',
+      'Named GeForce and Radeon cards for 1080p, 1440p, and entry-4K builds with clearer price ranges.',
     highlight: 'From KSh 68,900',
     price: 'From KSh 68,900',
     buttonText: 'Shop PC Gaming',
@@ -114,9 +111,8 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/accessories',
     gradient: 'from-slate-950 via-gray-900 to-zinc-800',
     accentColor: 'text-slate-300',
-    image:
-      'https://dlcdnwebimgs.asus.com/files/media/a5c1666a-903c-4856-b5ac-52e41477674c/v1/img/flow/pd.png',
-    imageFit: 'contain',
+    image: gamingVisuals.pcDesk.src,
+    imageFit: 'cover',
     imagePosition: 'center',
   },
 ];
@@ -208,7 +204,11 @@ export default function HeroSlider() {
                 </div>
 
                 <div className="hidden justify-center md:flex md:w-1/2">
-                  <div className="w-full max-w-[360px] overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl">
+                  <div
+                    className={`w-full max-w-[360px] overflow-hidden rounded-3xl border border-white/20 shadow-2xl ${
+                      slide.imageFit === 'cover' ? 'bg-black/20' : 'bg-white'
+                    }`}
+                  >
                     <img
                       src={slide.image}
                       alt={slide.title}

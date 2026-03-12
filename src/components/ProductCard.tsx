@@ -68,6 +68,9 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
   const mediaAspect = product.imageAspect ?? (product.isDigital ? 'card' : 'portrait');
   const mediaFit = product.imageFit ?? (mediaAspect === 'card' ? 'contain' : 'cover');
   const isHardwareCard = mediaAspect === 'card' && !product.isDigital;
+  const mediaSurfaceClass = isHardwareCard
+    ? 'border-b border-slate-100 bg-slate-50'
+    : `bg-gradient-to-br ${getPlatformSurface(product)}`;
 
   const handleAddToCart = () => {
     addItem({
@@ -89,13 +92,17 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
 
   return (
     <article className="lux-card group flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-white/60 bg-white shadow-[0_14px_45px_rgba(15,23,42,0.08)]">
-      <div className={`relative overflow-hidden bg-gradient-to-br ${getPlatformSurface(product)}`}>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(248,250,252,0.12),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(248,113,113,0.2),_transparent_34%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/40 to-transparent" />
+      <div className={`relative overflow-hidden ${mediaSurfaceClass}`}>
+        {!isHardwareCard && (
+          <>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(248,250,252,0.12),_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(248,113,113,0.2),_transparent_34%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/40 to-transparent" />
+          </>
+        )}
 
         {product.platform && (
           <div
-            className={`absolute left-3 top-3 z-20 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ${getPlatformColor(product.platform)}`}
+            className={`absolute left-3 top-3 z-20 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white ring-1 shadow-sm ${getPlatformColor(product.platform)}`}
           >
             {product.platform}
           </div>
@@ -117,11 +124,13 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
           <div
             className={`mx-auto overflow-hidden rounded-[1.5rem] border shadow-[0_20px_48px_rgba(0,0,0,0.28)] transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-[1.02] ${
               isHardwareCard
-                ? 'border-slate-200/80 bg-white/95'
+                ? 'border-slate-200 bg-white shadow-[0_12px_26px_rgba(15,23,42,0.08)]'
                 : 'border-white/10 bg-black/20 backdrop-blur-sm'
             } ${
               mediaAspect === 'card'
-                ? 'aspect-[16/10] w-full'
+                ? isHardwareCard
+                  ? 'aspect-[4/3] w-full'
+                  : 'aspect-[16/10] w-full'
                 : mediaAspect === 'wide'
                   ? 'aspect-[16/9] w-full'
                   : 'aspect-[4/5] w-[78%]'
@@ -139,7 +148,7 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
                 style={{ objectPosition: product.imagePosition ?? 'center' }}
                 className={`h-full w-full transition-transform duration-700 ${
                   mediaFit === 'contain'
-                    ? `${isHardwareCard ? 'object-contain p-3' : 'object-contain p-4'} group-hover:scale-105`
+                    ? `${isHardwareCard ? 'object-contain p-5' : 'object-contain p-4'} group-hover:scale-105`
                     : 'object-cover group-hover:scale-110'
                 }`}
               />
@@ -147,13 +156,15 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
           </div>
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-white/85 text-gray-700 opacity-0 transition-opacity hover:bg-white group-hover:opacity-100"
-        >
-          <Heart className="h-4 w-4" />
-        </Button>
+        {!isHardwareCard && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute bottom-3 right-3 z-20 h-9 w-9 rounded-full bg-white/85 text-gray-700 opacity-0 transition-opacity hover:bg-white group-hover:opacity-100"
+          >
+            <Heart className="h-4 w-4" />
+          </Button>
+        )}
 
         {!isInStock && (
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50">

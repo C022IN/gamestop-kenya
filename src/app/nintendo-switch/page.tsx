@@ -1,52 +1,52 @@
 import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
+import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
 const nintendoContent: RoutePageContent = {
   eyebrow: 'Nintendo Switch',
   title: 'Nintendo Switch Consoles And Family-Friendly Gaming Picks',
+  heroImage: gamingVisuals.nintendoSwitch.src,
+  heroImageAlt: gamingVisuals.nintendoSwitch.alt,
   intro:
-    'Find Nintendo Switch hardware, accessories, and game options built for flexible play at home or on the go. Great for solo users, shared households, and multiplayer groups.',
+    'Find Nintendo Switch OLED hardware, controllers, and game picks for family play, travel, and flexible docked sessions at home.',
   facts: [
     { label: 'Play Style', value: 'Home + Portable' },
-    { label: 'Audience', value: 'Family + Casual + Core' },
-    { label: 'Digital Add-Ons', value: 'eShop Ready' },
+    { label: 'Console Stock', value: 'Switch OLED' },
+    { label: 'Digital', value: 'eShop Ready' },
     { label: 'Support', value: 'Local Team' },
   ],
   highlights: [
-    'Strong category fit for shared and family gaming use cases.',
-    'Easy accessory pairing for travel and docked play.',
-    'Popular Nintendo title support with digital top-up options.',
-    'Reliable support for setup and purchase questions.',
+    'Switch gear is grouped for buyers who want home and portable play in one device.',
+    'Controllers and accessories stay easy to pair for travel or docked setups.',
+    'Nintendo-first titles and eShop top-ups fit naturally into the same store flow.',
+    'Support stays available for setup, delivery, and compatibility questions.',
   ],
   sections: [
     {
-      title: 'Hardware And Usage Fit',
-      description:
-        'Switch category is ideal for players who need portability without losing quality.',
+      title: 'Start With The Console',
+      description: 'The Switch OLED fits buyers who want one system for sofa play and travel.',
       points: [
-        'Portable and docked modes support flexible routines.',
-        'Good option for mixed age groups in one household.',
-        'Accessories can be added based on travel vs home usage.',
+        'Handheld and docked modes make it easy to share one system across routines.',
+        'It works well for mixed age groups and multiplayer households.',
+        'Add controllers based on whether the setup is mostly docked or mostly portable.',
       ],
     },
     {
-      title: 'Game Library Planning',
-      description:
-        'Balance flagship Nintendo titles with multiplayer and long-session games.',
+      title: 'Build The Library',
+      description: 'Mix flagship Nintendo games with party and long-session titles.',
       points: [
-        'Start with one flagship and one shared multiplayer title.',
-        'Check deals for discounted bundles and accessories.',
-        'Use digital store for eShop-compatible code support.',
+        'Start with one flagship adventure and one shared multiplayer game.',
+        'Check deals if you want to bundle games with extra controllers.',
+        'Use eShop-ready top-ups if you prefer digital purchases later.',
       ],
     },
     {
-      title: 'After Purchase Support',
-      description:
-        'Our team helps with order updates, delivery concerns, and policy guidance.',
+      title: 'After Purchase',
+      description: 'Keep delivery, setup, and support simple once the order is placed.',
       points: [
-        'Order tracking and delivery update support.',
-        'Guidance for compatibility and account setup concerns.',
-        'Policy-backed path for warranty and return requests.',
+        'Track delivery updates through the normal order pages.',
+        'Use support for pairing, account, or accessory compatibility questions.',
+        'Warranty and returns stay covered through the usual policy path.',
       ],
     },
   ],

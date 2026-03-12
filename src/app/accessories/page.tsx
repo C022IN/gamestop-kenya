@@ -13,6 +13,7 @@ import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
+import { gamingVisuals } from '@/data/gaming-visuals';
 import { hardwareCatalog } from '@/data/hardware-catalog';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
@@ -23,11 +24,6 @@ const departmentFilters = [
   { id: 'audio', label: 'Headsets' },
   { id: 'sim-racing', label: 'Racing Wheels' },
   { id: 'pc-part', label: 'Graphics Cards' },
-] as const;
-const heroIds = [
-  'dualsense-wireless-controller',
-  'razer-blackshark-v2-pro-2023',
-  'logitech-g923-racing-wheel',
 ] as const;
 const controllerIds = [
   'dualsense-wireless-controller',
@@ -74,10 +70,6 @@ export default function AccessoriesPage() {
     });
   }, [accessoryProducts, selectedDepartment, selectedFamily]);
 
-  const heroProducts = heroIds
-    .map((id) => productMap.get(id))
-    .filter((product): product is (typeof mergedHardware)[number] => Boolean(product));
-
   const controllerProducts = controllerIds
     .map((id) => productMap.get(id))
     .filter((product): product is (typeof mergedHardware)[number] => Boolean(product));
@@ -102,7 +94,7 @@ export default function AccessoriesPage() {
                 Controllers, headsets, racing wheels, and graphics cards.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 md:text-lg">
-                Shop official pads, premium wireless audio, Logitech sim-racing gear, and current GeForce and Radeon GPUs.
+                Shop official console controllers, premium audio, sim-racing gear, and named GeForce and Radeon cards with visible price ranges.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
@@ -136,31 +128,29 @@ export default function AccessoriesPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              {heroProducts.map((product, index) => (
-                <article
-                  key={product.id}
-                  className={`overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5 shadow-[0_22px_60px_rgba(0,0,0,0.28)] backdrop-blur ${
-                    index === 0 ? 'md:col-span-2' : ''
-                  }`}
-                >
-                  <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 p-4">
-                    <div className="overflow-hidden rounded-[1.35rem] border border-slate-200/80 bg-white">
-                      <img
-                        src={product.image}
-                        alt={product.title}
-                        className="aspect-[16/10] w-full object-contain p-3"
-                      />
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                      {product.platform}
-                    </p>
-                    <h2 className="mt-2 text-lg font-black text-white">{product.title}</h2>
-                    <p className="mt-2 text-sm leading-6 text-gray-300">{product.blurb}</p>
-                  </div>
-                </article>
-              ))}
+              <article className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white shadow-[0_22px_60px_rgba(0,0,0,0.28)] md:row-span-2">
+                <img
+                  src={gamingVisuals.headsetDock.src}
+                  alt={gamingVisuals.headsetDock.alt}
+                  className="aspect-[4/5] w-full object-cover"
+                />
+              </article>
+              <article className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white shadow-[0_22px_60px_rgba(0,0,0,0.28)]">
+                <img
+                  src={gamingVisuals.racingSimulator.src}
+                  alt={gamingVisuals.racingSimulator.alt}
+                  className="aspect-[16/10] w-full object-cover"
+                />
+              </article>
+              <article className="rounded-[1.75rem] border border-white/10 bg-white/10 p-6 text-white backdrop-blur">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-200">
+                  Graphics Cards
+                </p>
+                <h2 className="mt-2 text-2xl font-black">GeForce and Radeon stock</h2>
+                <p className="mt-3 text-sm leading-6 text-slate-200">
+                  RTX 4060, RTX 5070 Ti, RX 7800 XT, and RX 9070 XT are listed with clearer price ranges for faster comparison.
+                </p>
+              </article>
             </div>
           </div>
         </div>

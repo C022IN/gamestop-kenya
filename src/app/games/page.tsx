@@ -14,6 +14,7 @@ import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
+import { gamingVisuals } from '@/data/gaming-visuals';
 import { gameCatalog } from '@/data/game-catalog';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
@@ -92,10 +93,10 @@ export default function GamesPage() {
                 Video Games
               </div>
               <h1 className="max-w-3xl text-4xl font-black leading-tight md:text-6xl">
-                Gaming built for Kenyan players who want great art, clear choices, and fast checkout.
+                Shop PS5, Xbox, Switch, and PC games in one shelf.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 md:text-lg">
-                Browse a cleaner cross-platform catalog with stronger cover art, smarter filters, and a storefront that feels closer to a real gaming retailer instead of a placeholder grid.
+                Browse new releases, pre-owned value picks, sports titles, fighters, and story-driven games with KES pricing and fast checkout.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
@@ -113,8 +114,8 @@ export default function GamesPage() {
               </div>
               <div className="mt-10 grid gap-4 sm:grid-cols-3">
                 {[
-                  { icon: Sparkles, label: 'Curated', value: 'Genre + Platform Filters' },
-                  { icon: BadgePercent, label: 'Deals', value: 'Discounted + Pre-Owned Picks' },
+                  { icon: Sparkles, label: 'Browse', value: 'PS5, Xbox, Switch, PC' },
+                  { icon: BadgePercent, label: 'Deals', value: 'New + Pre-Owned Picks' },
                   { icon: ShieldCheck, label: 'Checkout', value: 'M-Pesa + Stripe Ready' },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
@@ -126,30 +127,27 @@ export default function GamesPage() {
               </div>
             </div>
 
-            <div className="relative min-h-[28rem]">
-              <div className="absolute inset-0 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-sm" />
-              {spotlightPicks.map((product, index) => (
-                <div
-                  key={product.id}
-                  className={`absolute overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/25 shadow-[0_28px_80px_rgba(0,0,0,0.35)] ${
-                    index === 0
-                      ? 'left-4 top-6 z-20 w-[46%] rotate-[-7deg]'
-                      : index === 1
-                        ? 'right-8 top-10 z-10 w-[42%] rotate-[8deg]'
-                        : 'bottom-6 left-1/2 z-30 w-[48%] -translate-x-1/2 rotate-[-2deg]'
-                  }`}
-                >
-                  <img src={product.image} alt={product.title} className="h-full w-full object-cover" />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-4">
+            <div className="grid gap-4">
+              <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-[0_28px_80px_rgba(0,0,0,0.28)]">
+                <img
+                  src={gamingVisuals.gamesHero.src}
+                  alt={gamingVisuals.gamesHero.alt}
+                  className="aspect-[4/3] w-full object-cover"
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                {spotlightPicks.map((product) => (
+                  <div
+                    key={product.id}
+                    className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur"
+                  >
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-200">
                       {product.platform}
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-white">{product.title}</p>
+                    <h2 className="mt-2 text-base font-black text-white">{product.title}</h2>
+                    <p className="mt-2 text-sm text-slate-200">KSh {product.price.toLocaleString()}</p>
                   </div>
-                </div>
-              ))}
-              <div className="absolute bottom-5 right-5 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-100 backdrop-blur">
-                Nairobi gamers need less guessing and better visuals.
+                ))}
               </div>
             </div>
           </div>
@@ -180,11 +178,11 @@ export default function GamesPage() {
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
-              Editorial Rails
+              Curated Picks
             </p>
-            <h2 className="mt-2 text-3xl font-black text-gray-900">Shop by how people actually play</h2>
+            <h2 className="mt-2 text-3xl font-black text-gray-900">Shop by how you want to play</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-              The storefront now groups titles by real buying intent, not just generic platform labels.
+              Start with story-heavy games, competitive favorites, or lower-cost library builders.
             </p>
           </div>
         </div>
@@ -235,7 +233,7 @@ export default function GamesPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">Full Catalog</p>
               <h2 className="mt-2 text-3xl font-black text-gray-900">Browse all major gaming picks</h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-                Covers stay framed consistently, filters stay obvious, and every tile now gives enough context for faster buying decisions.
+                Filter by platform or genre to narrow the shelf quickly.
               </p>
             </div>
 
@@ -297,18 +295,18 @@ export default function GamesPage() {
         <div className="container mx-auto px-4">
           <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-200">Kenya-first storefront quality</p>
-              <h2 className="mt-2 text-3xl font-black">The catalog now explains itself faster.</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-200">Why players shop here</p>
+              <h2 className="mt-2 text-3xl font-black">Everything stays in one basket.</h2>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
-                Better product framing, cleaner visual hierarchy, and stronger genre cues reduce the back-and-forth a buyer needs before trusting the basket.
+                Buy games, gift cards, and hardware from the same store without bouncing between separate pages or payment flows.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {[
-                'Gift cards and games now use different artwork framing so card designs do not get cropped like box art.',
-                'Category pages can now be extended with image-driven showcases instead of staying text-only.',
-                'The same product visuals feed home, cart recommendations, and catalog browsing more consistently.',
-                'Filters and shelf groupings match how many Kenyan shoppers browse: by platform, price pressure, and quick-play intent.',
+                'KES pricing is visible first, with a quick USD toggle when needed.',
+                'Gift cards, subscriptions, and games can be checked out together where the cart allows it.',
+                'Pre-owned and discounted titles stay easy to spot when the budget matters.',
+                'M-Pesa and card payments stay available across the different checkout paths.',
               ].map((item) => (
                 <div key={item} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-slate-200">
                   <Zap className="mb-3 h-5 w-5 text-red-300" />
