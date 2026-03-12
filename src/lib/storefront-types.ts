@@ -7,6 +7,7 @@ export interface StorefrontProduct {
   title: string;
   image: string;
   price: number;
+  priceNote?: string;
   originalPrice?: number;
   platform?: string;
   isDigital?: boolean;

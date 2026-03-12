@@ -64,7 +64,7 @@ export default async function NintendoSwitchPage() {
     [
       'nintendo-switch-oled-console',
       'switch-pro-controller',
-      'wireless-gaming-headset',
+      'razer-blackshark-v2-pro-2023',
       'logitech-g923-racing-wheel',
     ],
     (product) => (product.department === 'console' ? `/consoles#${product.id}` : `/accessories#${product.id}`)

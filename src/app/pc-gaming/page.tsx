@@ -3,40 +3,40 @@ import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
 const pcGamingContent: RoutePageContent = {
   eyebrow: 'PC Gaming',
-  title: 'Peripherals, Accessories, And Digital Support For PC Players',
+  title: 'Graphics Cards, Headsets, And Digital Support For PC Players',
   intro:
-    'Build or upgrade your PC gaming setup with practical gear choices, digital wallet options, and support built for local buyers who want reliable performance and value.',
+    'Build or upgrade your PC setup with current GeForce and Radeon cards, premium audio, and digital wallet support for PC libraries.',
   facts: [
-    { label: 'Category Focus', value: 'Gear + Digital' },
-    { label: 'Use Cases', value: 'Competitive + Casual' },
-    { label: 'Upgrade Path', value: 'Modular' },
+    { label: 'Graphics Stock', value: 'GeForce + Radeon' },
+    { label: 'Use Cases', value: '1080p / 1440p / 4K' },
+    { label: 'Audio', value: 'Premium Wireless' },
     { label: 'Support Model', value: 'Guided' },
   ],
   highlights: [
-    'PC setup support centered on practical upgrade priorities.',
-    'Accessory options for control, communication, and comfort.',
+    'Current GeForce and Radeon cards with clear price bands.',
+    'Premium headset option for chat, shooters, and long sessions.',
     'Digital store links for wallet top-ups and software access.',
     'Strong fit for both first-time and experienced PC players.',
   ],
   sections: [
     {
-      title: 'Starting With Essentials',
+      title: 'Choosing A GPU Tier',
       description:
-        'Prioritize the components that most impact your daily play quality first.',
+        'Pick the graphics card around the resolution and game settings you actually want to run.',
       points: [
-        'Reliable mouse and keyboard for control accuracy.',
-        'Headset choice based on comfort and communication needs.',
-        'Desk setup choices that support long sessions.',
+        'RTX 4060 suits 1080p-first builds and esports setups.',
+        'RTX 5070 Ti targets premium 1440p and stronger ray tracing.',
+        'Radeon RX 7800 XT and RX 9070 XT cover value 1440p through entry-4K builds.',
       ],
     },
     {
-      title: 'Upgrade Strategy',
+      title: 'Audio And Session Comfort',
       description:
-        'A phased approach keeps spending efficient while improving outcomes quickly.',
+        'Once the GPU is right, audio is usually the next upgrade that buyers feel immediately.',
       points: [
-        'Upgrade one bottleneck at a time.',
-        'Use deals category to reduce accessory spend.',
-        'Match purchases to the games and genres you play most.',
+        'Wireless headset coverage helps for shooters, sports nights, and Discord sessions.',
+        'Choose gear that fits long sessions without adding desk clutter.',
+        'Pair graphics upgrades with cooling and PSU checks before checkout.',
       ],
     },
     {
@@ -62,12 +62,12 @@ const pcGamingContent: RoutePageContent = {
 export default async function PcGamingPage() {
   const showcaseCards = await getMergedHardwareShowcaseCards(
     [
-      'rgb-gaming-pc-tower',
-      'geforce-rtx-graphics-card',
-      'mechanical-gaming-keyboard',
-      'wireless-gaming-mouse',
+      'asus-dual-geforce-rtx-4060-oc-8gb',
+      'asus-proart-geforce-rtx-5070-ti-16gb',
+      'asus-prime-radeon-rx-9070-xt-16gb',
+      'razer-blackshark-v2-pro-2023',
     ],
-    (product) => (product.department === 'console' ? `/consoles#${product.id}` : `/accessories#${product.id}`)
+    (product) => `/accessories#${product.id}`
   );
 
   return <RouteContentPage content={{ ...pcGamingContent, showcaseCards }} />;

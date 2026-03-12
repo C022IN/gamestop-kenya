@@ -63,7 +63,7 @@ export default async function PlayStationPage() {
     [
       'ps5-console-slim',
       'dualsense-wireless-controller',
-      'wireless-gaming-headset',
+      'razer-blackshark-v2-pro-2023',
       'logitech-g923-racing-wheel',
     ],
     (product) => (product.department === 'console' ? `/consoles#${product.id}` : `/accessories#${product.id}`)

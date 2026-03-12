@@ -17,6 +17,7 @@ export function useStorefrontProducts<T extends StorefrontProduct>(
         product.id,
         product.image,
         product.price,
+        product.priceNote ?? '',
         product.originalPrice ?? '',
         product.platform ?? '',
         product.isDigital ? '1' : '0',

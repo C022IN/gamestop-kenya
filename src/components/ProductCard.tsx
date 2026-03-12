@@ -13,7 +13,7 @@ interface ProductCardProps {
 function getPlatformSurface(product: StorefrontProduct) {
   const platform = product.platform?.toLowerCase();
 
-  if (product.imageAspect === 'card' || product.isDigital) {
+  if (product.isDigital) {
     return 'from-slate-950 via-slate-900 to-gray-950';
   }
 
@@ -67,6 +67,7 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
     : 0;
   const mediaAspect = product.imageAspect ?? (product.isDigital ? 'card' : 'portrait');
   const mediaFit = product.imageFit ?? (mediaAspect === 'card' ? 'contain' : 'cover');
+  const isHardwareCard = mediaAspect === 'card' && !product.isDigital;
 
   const handleAddToCart = () => {
     addItem({
@@ -114,7 +115,11 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
 
         <div className={`relative z-10 ${mediaAspect === 'card' ? 'p-5' : 'p-4'}`}>
           <div
-            className={`mx-auto overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/20 shadow-[0_20px_48px_rgba(0,0,0,0.28)] backdrop-blur-sm transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-[1.02] ${
+            className={`mx-auto overflow-hidden rounded-[1.5rem] border shadow-[0_20px_48px_rgba(0,0,0,0.28)] transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-[1.02] ${
+              isHardwareCard
+                ? 'border-slate-200/80 bg-white/95'
+                : 'border-white/10 bg-black/20 backdrop-blur-sm'
+            } ${
               mediaAspect === 'card'
                 ? 'aspect-[16/10] w-full'
                 : mediaAspect === 'wide'
@@ -122,7 +127,11 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
                   : 'aspect-[4/5] w-[78%]'
             }`}
           >
-            <div className="relative h-full w-full overflow-hidden rounded-[1.35rem] bg-white/5">
+            <div
+              className={`relative h-full w-full overflow-hidden rounded-[1.35rem] ${
+                isHardwareCard ? 'bg-white' : 'bg-white/5'
+              }`}
+            >
               <img
                 src={product.image}
                 alt={product.title}
@@ -130,7 +139,7 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
                 style={{ objectPosition: product.imagePosition ?? 'center' }}
                 className={`h-full w-full transition-transform duration-700 ${
                   mediaFit === 'contain'
-                    ? 'object-contain p-4 group-hover:scale-105'
+                    ? `${isHardwareCard ? 'object-contain p-3' : 'object-contain p-4'} group-hover:scale-105`
                     : 'object-cover group-hover:scale-110'
                 }`}
               />
@@ -183,6 +192,9 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
             <span className="text-xl font-black tracking-tight text-red-600">
               {formatPrice(product.price)}
             </span>
+            {product.priceNote && (
+              <span className="text-xs font-medium text-gray-500">{product.priceNote}</span>
+            )}
             {hasDiscount && (
               <span className="text-sm text-gray-500 line-through">
                 {formatPrice(product.originalPrice!)}

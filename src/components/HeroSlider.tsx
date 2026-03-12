@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
 interface Slide {
   id: string;
@@ -24,9 +24,6 @@ interface Slide {
   imagePosition?: string;
 }
 
-const commonsFile = (filename: string) =>
-  `https://commons.wikimedia.org/wiki/Special:Redirect/file/${encodeURIComponent(filename)}`;
-
 const heroSlides: Slide[] = [
   {
     id: '1',
@@ -42,8 +39,9 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/accessories',
     gradient: 'from-blue-950 via-blue-900 to-blue-800',
     accentColor: 'text-blue-300',
-    image: commonsFile('PlayStation 5 and DualSense.jpg'),
-    imageFit: 'cover',
+    image:
+      'https://static.bhphoto.com/images/images1000x1000/sony_1000041394_playstation_5_slim_console_1701964748_1796115.jpg',
+    imageFit: 'contain',
     imagePosition: 'center',
   },
   {
@@ -78,8 +76,9 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/digital-store',
     gradient: 'from-emerald-950 via-green-900 to-emerald-800',
     accentColor: 'text-emerald-300',
-    image: commonsFile('Xbox Series (X).jpg'),
-    imageFit: 'cover',
+    image:
+      'https://cms-assets.xboxservices.com/assets/39/b9/39b9babd-d930-49c3-abb5-b840f0c6f744.png?n=020171-Hero-Gallery-0-1083x1222.png',
+    imageFit: 'contain',
     imagePosition: 'center',
   },
   {
@@ -96,26 +95,28 @@ const heroSlides: Slide[] = [
     secondaryButtonLink: '/games',
     gradient: 'from-red-950 via-rose-900 to-red-800',
     accentColor: 'text-red-300',
-    image: commonsFile('Nintendo Switch OLED.JPG'),
-    imageFit: 'cover',
+    image:
+      'https://static.bhphoto.com/images/images1000x1000/nintendo_hegskabda_switch_oled_model_with_1624458553_1641720.jpg',
+    imageFit: 'contain',
     imagePosition: 'center',
   },
   {
     id: '5',
-    badge: 'SETUP UPGRADE',
-    title: 'PC Gaming Gear',
+    badge: 'PC PARTS',
+    title: 'GeForce And Radeon GPUs',
     subtitle:
-      'Mechanical keyboards, high-refresh monitors, and precision mice to build a complete premium setup.',
-    highlight: 'Starting at KSh 3,500',
-    price: 'From KSh 3,500',
+      'Current ASUS GeForce and Radeon cards for 1080p, 1440p, and entry-4K gaming builds.',
+    highlight: 'From KSh 68,900',
+    price: 'From KSh 68,900',
     buttonText: 'Shop PC Gaming',
     buttonLink: '/pc-gaming',
-    secondaryButtonText: 'Steam Codes',
-    secondaryButtonLink: '/digital-store',
+    secondaryButtonText: 'View Accessories',
+    secondaryButtonLink: '/accessories',
     gradient: 'from-slate-950 via-gray-900 to-zinc-800',
     accentColor: 'text-slate-300',
-    image: commonsFile('PC-Gehäuse Kolink Observatory RGB Midi-Tower 20201120 DSC6134.jpg'),
-    imageFit: 'cover',
+    image:
+      'https://dlcdnwebimgs.asus.com/files/media/a5c1666a-903c-4856-b5ac-52e41477674c/v1/img/flow/pd.png',
+    imageFit: 'contain',
     imagePosition: 'center',
   },
 ];
@@ -158,7 +159,7 @@ export default function HeroSlider() {
               <div className="absolute bottom-0 left-0 h-72 w-72 -translate-x-1/4 translate-y-1/3 rounded-full bg-black/30 blur-2xl" />
 
               <div className="container relative z-10 mx-auto flex flex-col items-center gap-8 px-6 md:flex-row md:px-10">
-                <div className="md:w-1/2 text-white">
+                <div className="text-white md:w-1/2">
                   {slide.badge && (
                     <span
                       className={`mb-4 inline-flex rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold tracking-wide ${slide.accentColor}`}
@@ -182,9 +183,7 @@ export default function HeroSlider() {
                   )}
                   <div className="flex flex-wrap gap-3">
                     <Button asChild className="rounded-xl bg-white px-6 py-5 font-bold text-gray-900 hover:bg-gray-100">
-                      <Link href={slide.buttonLink}>
-                        {slide.buttonText}
-                      </Link>
+                      <Link href={slide.buttonLink}>{slide.buttonText}</Link>
                     </Button>
                     {slide.secondaryButtonText && (
                       <Button
@@ -209,12 +208,12 @@ export default function HeroSlider() {
                 </div>
 
                 <div className="hidden justify-center md:flex md:w-1/2">
-                  <div className="w-full max-w-[360px] overflow-hidden rounded-3xl border border-white/20 bg-white/10 shadow-2xl">
+                  <div className="w-full max-w-[360px] overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl">
                     <img
                       src={slide.image}
                       alt={slide.title}
                       style={{ objectPosition: slide.imagePosition ?? 'center' }}
-                      className={`h-[300px] w-full drop-shadow-[0_28px_24px_rgba(2,6,23,0.6)] ${
+                      className={`h-[300px] w-full ${
                         slide.imageFit === 'cover' ? 'object-cover' : 'object-contain p-6'
                       }`}
                     />

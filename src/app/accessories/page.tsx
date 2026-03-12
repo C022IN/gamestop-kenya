@@ -8,7 +8,6 @@ import {
   Gauge,
   Headphones,
   SlidersHorizontal,
-  Sparkles,
 } from 'lucide-react';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
@@ -22,13 +21,12 @@ const departmentFilters = [
   { id: 'all', label: 'All Gear' },
   { id: 'controller', label: 'Controllers' },
   { id: 'audio', label: 'Headsets' },
-  { id: 'sim-racing', label: 'Sim Racing' },
-  { id: 'pc-part', label: 'PC Parts' },
-  { id: 'peripheral', label: 'Keyboards + Mice' },
+  { id: 'sim-racing', label: 'Racing Wheels' },
+  { id: 'pc-part', label: 'Graphics Cards' },
 ] as const;
 const heroIds = [
   'dualsense-wireless-controller',
-  'wireless-gaming-headset',
+  'razer-blackshark-v2-pro-2023',
   'logitech-g923-racing-wheel',
 ] as const;
 const controllerIds = [
@@ -36,16 +34,18 @@ const controllerIds = [
   'xbox-wireless-controller',
   'switch-pro-controller',
 ] as const;
-const pcSetupIds = [
-  'geforce-rtx-graphics-card',
-  'mechanical-gaming-keyboard',
-  'wireless-gaming-mouse',
+const graphicsCardIds = [
+  'asus-dual-geforce-rtx-4060-oc-8gb',
+  'asus-proart-geforce-rtx-5070-ti-16gb',
+  'asus-tuf-radeon-rx-7800-xt-16gb',
+  'asus-prime-radeon-rx-9070-xt-16gb',
 ] as const;
 
 export default function AccessoriesPage() {
   const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
   const [selectedFamily, setSelectedFamily] = useState<(typeof familyFilters)[number]>('All');
-  const [selectedDepartment, setSelectedDepartment] = useState<(typeof departmentFilters)[number]['id']>('all');
+  const [selectedDepartment, setSelectedDepartment] =
+    useState<(typeof departmentFilters)[number]['id']>('all');
   const mergedHardware = useStorefrontProducts('hardware', hardwareCatalog);
 
   const toggleCurrency = () => {
@@ -82,29 +82,27 @@ export default function AccessoriesPage() {
     .map((id) => productMap.get(id))
     .filter((product): product is (typeof mergedHardware)[number] => Boolean(product));
 
-  const pcSetupProducts = pcSetupIds
+  const graphicsCardProducts = graphicsCardIds
     .map((id) => productMap.get(id))
     .filter((product): product is (typeof mergedHardware)[number] => Boolean(product));
-
-  const heroLead = heroProducts[0];
 
   return (
     <div className="min-h-screen bg-[#f4f5f8]">
       <Header currency={currency} onCurrencyToggle={toggleCurrency} />
 
-      <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.22),_transparent_26%),radial-gradient(circle_at_82%_14%,_rgba(239,68,68,0.18),_transparent_24%),linear-gradient(135deg,_#03131a,_#111827_46%,_#1f2937_100%)] text-white">
+      <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),_transparent_26%),radial-gradient(circle_at_82%_14%,_rgba(239,68,68,0.16),_transparent_24%),linear-gradient(135deg,_#03131a,_#111827_46%,_#1f2937_100%)] text-white">
         <div className="container mx-auto px-4 py-16 md:py-20">
           <div className="grid gap-12 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-100">
                 <SlidersHorizontal className="h-3.5 w-3.5" />
-                Gaming Accessories
+                Accessories
               </div>
               <h1 className="max-w-3xl text-4xl font-black leading-tight md:text-6xl">
-                Controllers, headsets, PC parts, and sim gear with visuals that sell the setup properly.
+                Controllers, headsets, racing wheels, and graphics cards.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 md:text-lg">
-                The accessory catalog now covers platform pads, audio, racing gear, keyboards, mice, and graphics hardware with cleaner product photography across the storefront.
+                Shop official pads, premium wireless audio, Logitech sim-racing gear, and current GeForce and Radeon GPUs.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
@@ -117,19 +115,21 @@ export default function AccessoriesPage() {
                   variant="outline"
                   className="rounded-xl border-white/20 bg-transparent px-6 text-white hover:bg-white/10"
                 >
-                  <Link href="/pc-gaming">Explore PC Gaming</Link>
+                  <Link href="/pc-gaming">Shop PC Gaming</Link>
                 </Button>
               </div>
               <div className="mt-10 grid gap-4 sm:grid-cols-3">
                 {[
-                  { icon: Sparkles, label: 'Visual quality', value: 'Clearer product framing' },
-                  { icon: Headphones, label: 'Use cases', value: 'Controllers, audio, racing, PC gear' },
-                  { icon: Cpu, label: 'Upgrade path', value: 'Small add-on or full desk rebuild' },
+                  { icon: Headphones, label: 'Audio', value: 'Razer wireless headset' },
+                  { icon: Gauge, label: 'Racing', value: 'Logitech G923 wheel + pedals' },
+                  { icon: Cpu, label: 'Graphics', value: 'GeForce and Radeon stock' },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                     <Icon className="mb-3 h-5 w-5 text-emerald-200" />
                     <div className="text-sm font-black text-white">{value}</div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-300">{label}</div>
+                    <div className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-300">
+                      {label}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -144,22 +144,23 @@ export default function AccessoriesPage() {
                   }`}
                 >
                   <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 p-4">
-                    <img src={product.image} alt={product.title} className="aspect-[16/10] w-full rounded-[1.35rem] object-cover" />
+                    <div className="overflow-hidden rounded-[1.35rem] border border-slate-200/80 bg-white">
+                      <img
+                        src={product.image}
+                        alt={product.title}
+                        className="aspect-[16/10] w-full object-contain p-3"
+                      />
+                    </div>
                   </div>
                   <div className="p-5">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
-                      {product.platform} | {product.department.replace('-', ' ')}
+                      {product.platform}
                     </p>
                     <h2 className="mt-2 text-lg font-black text-white">{product.title}</h2>
                     <p className="mt-2 text-sm leading-6 text-gray-300">{product.blurb}</p>
                   </div>
                 </article>
               ))}
-              {heroLead && (
-                <div className="rounded-[1.75rem] border border-emerald-300/20 bg-emerald-400/10 p-5 text-sm leading-6 text-emerald-50 md:col-span-2">
-                  Strong accessory photos matter because buyers need to understand comfort, controls, and desktop footprint before they trust the cart.
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -169,10 +170,10 @@ export default function AccessoriesPage() {
         <div className="container mx-auto px-4">
           <div className="grid gap-4 md:grid-cols-4">
             {[
-              { label: 'Supported ecosystems', value: 'PlayStation, Xbox, Nintendo, PC' },
-              { label: 'Core categories', value: 'Controllers, audio, PC parts, sim gear' },
-              { label: 'Shopping flow', value: 'Shared cart with consoles, games, and gift cards' },
-              { label: 'Media system', value: 'Fallback photos plus DB-managed overrides' },
+              { label: 'Platforms', value: 'PlayStation, Xbox, Nintendo, PC' },
+              { label: 'Controllers', value: 'DualSense, Xbox, Switch Pro' },
+              { label: 'Audio', value: 'Razer BlackShark V2 Pro' },
+              { label: 'PC cards', value: 'RTX 4060, RTX 5070 Ti, RX 7800 XT, RX 9070 XT' },
             ].map((fact) => (
               <div key={fact.label} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gray-400">
@@ -188,12 +189,9 @@ export default function AccessoriesPage() {
       <section className="container mx-auto px-4 py-12 md:py-14">
         <div className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
-            Controllers First
+            Controllers
           </p>
-          <h2 className="mt-2 text-3xl font-black text-gray-900">Pads for every major platform</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-            PlayStation, Xbox, and Nintendo buyers can now compare controller choices with much cleaner presentation instead of guessing from placeholder art.
-          </p>
+          <h2 className="mt-2 text-3xl font-black text-gray-900">Official pads for each console</h2>
         </div>
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
@@ -207,20 +205,15 @@ export default function AccessoriesPage() {
 
       <section className="bg-white py-14">
         <div className="container mx-auto px-4">
-          <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
-                PC Desk Build
-              </p>
-              <h2 className="mt-2 text-3xl font-black text-gray-900">PC parts and peripherals with stronger visual clarity</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-                GPU, keyboard, and mouse picks now sit in the same accessory catalog instead of being implied by text-only PC pages.
-              </p>
-            </div>
+          <div className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
+              Graphics Cards
+            </p>
+            <h2 className="mt-2 text-3xl font-black text-gray-900">GeForce and Radeon options with clear price bands</h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            {pcSetupProducts.map((product) => (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {graphicsCardProducts.map((product) => (
               <div key={product.id} id={product.id}>
                 <ProductCard product={product} currency={currency} />
               </div>
@@ -234,16 +227,13 @@ export default function AccessoriesPage() {
           <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
-                Full Accessory Catalog
+                Full Catalog
               </p>
-              <h2 className="mt-2 text-3xl font-black text-gray-900">Filter by platform and hardware type</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-                The catalog now covers everything from sim-racing wheels to headsets and core PC parts in one view.
-              </p>
+              <h2 className="mt-2 text-3xl font-black text-gray-900">Filter by platform and product type</h2>
             </div>
 
             <Button asChild variant="outline" className="rounded-xl border-red-200 text-red-600 hover:bg-red-50">
-              <Link href="/consoles">Shop Consoles Too</Link>
+              <Link href="/consoles">Shop Consoles</Link>
             </Button>
           </div>
 
@@ -291,41 +281,12 @@ export default function AccessoriesPage() {
 
           {filteredProducts.length === 0 && (
             <div className="rounded-[2rem] border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center">
-              <p className="text-lg font-semibold text-gray-900">No accessories match that filter yet.</p>
+              <p className="text-lg font-semibold text-gray-900">No accessories match that filter.</p>
               <p className="mt-2 text-sm text-gray-500">
-                Switch platform or accessory type to reopen the full gear catalog.
+                Change the platform or product type to see more stock.
               </p>
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="bg-[#050816] py-14 text-white">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            {[
-              {
-                icon: Headphones,
-                text: 'Audio gear now reads like a real product lineup instead of a generic accessories bucket.',
-              },
-              {
-                icon: Gauge,
-                text: 'Sim-racing hardware is visible on the storefront, which matters for Forza, Gran Turismo, and F1 buyers.',
-              },
-              {
-                icon: Cpu,
-                text: 'PC parts are now represented with the same visual quality as console products, which lifts the overall site standard.',
-              },
-            ].map(({ icon: Icon, text }) => (
-              <div
-                key={text}
-                className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm leading-6 text-slate-200"
-              >
-                <Icon className="mb-3 h-5 w-5 text-red-300" />
-                {text}
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

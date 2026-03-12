@@ -90,8 +90,14 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
                     }`}
                   >
                     <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-zinc-900 p-4">
+                      {(() => {
+                        const isProductShot = card.imageAspect === 'card' && card.imageFit === 'contain';
+
+                        return (
                       <div
                         className={`mx-auto overflow-hidden rounded-[1.35rem] border border-white/10 bg-black/20 shadow-[0_18px_42px_rgba(0,0,0,0.26)] ${
+                          isProductShot ? 'border-slate-200/80 bg-white' : 'border-white/10 bg-black/20'
+                        } ${
                           card.imageAspect === 'card'
                             ? 'aspect-[16/10] w-full'
                             : card.imageAspect === 'wide'
@@ -104,10 +110,14 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
                           alt={card.title}
                           style={{ objectPosition: card.imagePosition ?? 'center' }}
                           className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${
-                            card.imageFit === 'contain' ? 'object-contain p-4' : 'object-cover'
+                            card.imageFit === 'contain'
+                              ? `${isProductShot ? 'object-contain p-3' : 'object-contain p-4'}`
+                              : 'object-cover'
                           }`}
                         />
                       </div>
+                        );
+                      })()}
                     </div>
                     <div className="p-5">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-300">

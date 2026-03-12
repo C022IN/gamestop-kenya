@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { hardwareCatalog } from '@/data/hardware-catalog';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
-const platformFilters = ['All', 'PlayStation', 'Xbox', 'Nintendo', 'PC'] as const;
+const platformFilters = ['All', 'PlayStation', 'Xbox', 'Nintendo'] as const;
 const heroIds = [
   'ps5-console-slim',
   'xbox-series-x-console',
@@ -27,7 +27,7 @@ const starterAddonIds = [
   'dualsense-wireless-controller',
   'xbox-wireless-controller',
   'switch-pro-controller',
-  'wireless-gaming-headset',
+  'razer-blackshark-v2-pro-2023',
 ] as const;
 
 export default function ConsolesPage() {
@@ -75,13 +75,13 @@ export default function ConsolesPage() {
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-red-100">
                 <Boxes className="h-3.5 w-3.5" />
-                Consoles And Core Hardware
+                Consoles
               </div>
               <h1 className="max-w-3xl text-4xl font-black leading-tight md:text-6xl">
-                Real console photos, clearer product context, and fewer questions before checkout.
+                PlayStation, Xbox, and Nintendo consoles.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 md:text-lg">
-                Compare PlayStation, Xbox, Nintendo, and PC-ready hardware with imagery that actually helps a buyer understand what they are getting.
+                Shop current console stock with clean product cards, pricing in KES, and add-on controllers ready in the same basket.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
@@ -99,9 +99,9 @@ export default function ConsolesPage() {
               </div>
               <div className="mt-10 grid gap-4 sm:grid-cols-3">
                 {[
-                  { icon: Gamepad2, label: 'Platform-ready', value: 'PlayStation, Xbox, Nintendo, PC' },
+                  { icon: Gamepad2, label: 'Platforms', value: 'PlayStation, Xbox, Nintendo' },
                   { icon: Truck, label: 'Delivery', value: 'Nairobi dispatch and national shipping' },
-                  { icon: ShieldCheck, label: 'Checkout', value: 'M-Pesa, Stripe, and tracked orders' },
+                  { icon: ShieldCheck, label: 'Payments', value: 'M-Pesa, Stripe, and tracked orders' },
                 ].map(({ icon: Icon, label, value }) => (
                   <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                     <Icon className="mb-3 h-5 w-5 text-red-200" />
@@ -125,7 +125,13 @@ export default function ConsolesPage() {
                         : 'bottom-5 left-1/2 z-30 w-[52%] -translate-x-1/2 rotate-[-2deg]'
                   }`}
                 >
-                  <img src={product.image} alt={product.title} className="aspect-[16/10] w-full object-cover" />
+                  <div className="overflow-hidden rounded-[1.35rem] border border-slate-200/80 bg-white">
+                    <img
+                      src={product.image}
+                      alt={product.title}
+                      className="aspect-[16/10] w-full object-contain p-3"
+                    />
+                  </div>
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-200">
                       {product.platform}
@@ -134,9 +140,6 @@ export default function ConsolesPage() {
                   </div>
                 </div>
               ))}
-              <div className="absolute bottom-5 right-5 rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-100 backdrop-blur">
-                Clear visuals reduce hesitation at checkout.
-              </div>
             </div>
           </div>
         </div>
@@ -146,10 +149,10 @@ export default function ConsolesPage() {
         <div className="container mx-auto px-4">
           <div className="grid gap-4 md:grid-cols-4">
             {[
-              { label: 'Live platforms', value: '4 major gaming ecosystems' },
-              { label: 'Catalog framing', value: 'Card-style imagery with cleaner crops' },
+              { label: 'Console stock', value: 'PlayStation, Xbox, Nintendo' },
               { label: 'Price display', value: 'KES first with quick USD toggle' },
-              { label: 'Sales support', value: 'Compatibility guidance before and after purchase' },
+              { label: 'Add-ons', value: 'Controllers and headsets on the same store' },
+              { label: 'Support', value: 'Compatibility help before and after purchase' },
             ].map((fact) => (
               <div key={fact.label} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-gray-400">
@@ -169,9 +172,6 @@ export default function ConsolesPage() {
               Console Catalog
             </p>
             <h2 className="mt-2 text-3xl font-black text-gray-900">Choose the system that matches how you play</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-              Every console tile now carries stronger product photography and enough context to tell performance-first buyers from family-focused buyers.
-            </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -209,9 +209,6 @@ export default function ConsolesPage() {
                 Starter Add-Ons
               </p>
               <h2 className="mt-2 text-3xl font-black text-gray-900">Pair the console with the gear buyers usually need next</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-                Extra controllers and audio gear belong near the hardware, not hidden on a separate page with no visual continuity.
-              </p>
             </div>
             <Button asChild variant="outline" className="rounded-xl border-red-200 text-red-600 hover:bg-red-50">
               <Link href="/accessories">See All Accessories</Link>
@@ -232,9 +229,9 @@ export default function ConsolesPage() {
         <div className="container mx-auto px-4">
           <div className="grid gap-4 md:grid-cols-3">
             {[
-              'PlayStation remains the premium single-player and controller-feature choice for buyers chasing prestige exclusives.',
-              'Xbox fits value-focused players who want Game Pass and strong performance without overspending on add-ons.',
-              'Nintendo keeps winning for portable sessions, family multiplayer, and buyers who need a flexible travel-friendly system.',
+              'PlayStation fits buyers chasing premium single-player releases and DualSense features.',
+              'Xbox fits buyers who want Game Pass, strong performance, and flexible digital libraries.',
+              'Nintendo fits families, travel setups, and multiplayer sessions around Switch exclusives.',
             ].map((item) => (
               <div
                 key={item}

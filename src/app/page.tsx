@@ -64,7 +64,7 @@ const categoryBlueprints = [
   {
     name: 'Accessories',
     icon: Truck,
-    imageId: 'wireless-gaming-headset',
+    imageId: 'razer-blackshark-v2-pro-2023',
     fallbackImage: '/images/categories/accessories.svg',
     count: '200+',
     href: '/accessories',
@@ -182,9 +182,9 @@ export default function Home() {
 
   const hardwareSpotlights = [
     'ps5-console-slim',
-    'wireless-gaming-headset',
-    'geforce-rtx-graphics-card',
-    'logitech-g923-racing-wheel',
+    'razer-blackshark-v2-pro-2023',
+    'asus-proart-geforce-rtx-5070-ti-16gb',
+    'asus-prime-radeon-rx-9070-xt-16gb',
   ]
     .map((id) => hardwareMap.get(id))
     .filter((product): product is (typeof hardwareProducts)[number] => Boolean(product));
@@ -302,10 +302,8 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold">Hardware Spotlight</h2>
-              <p className="text-sm text-gray-500">
-                Consoles, audio, sim-racing gear, and PC parts now ship with clearer product visuals.
-              </p>
+              <h2 className="text-2xl font-bold">Featured Hardware</h2>
+              <p className="text-sm text-gray-500">PS5, premium audio, and current GeForce and Radeon cards.</p>
             </div>
             <Link href="/accessories">
               <Button variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50">
@@ -350,7 +348,7 @@ export default function Home() {
                 <img
                   src={ps5Image}
                   alt="PlayStation 5"
-                  className="h-[320px] w-full object-cover"
+                  className="h-[320px] w-full object-contain bg-white p-6"
                 />
               </div>
             </div>
@@ -389,7 +387,7 @@ export default function Home() {
                 <img
                   src={switchImage}
                   alt="Nintendo Switch OLED"
-                  className="h-[320px] w-full object-cover"
+                  className="h-[320px] w-full object-contain bg-white p-6"
                 />
               </div>
             </div>
@@ -444,7 +442,7 @@ export default function Home() {
             </div>
             <div className="md:w-1/2">
               <div className="mx-auto max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white/10 shadow-2xl">
-                <img src={xboxImage} alt="Xbox Series X" className="h-[320px] w-full object-cover" />
+                <img src={xboxImage} alt="Xbox Series X" className="h-[320px] w-full object-contain bg-white p-6" />
               </div>
             </div>
           </div>
