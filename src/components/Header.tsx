@@ -18,6 +18,7 @@ interface HeaderProps {
 
 const announcements = [
   'Free delivery in Nairobi for orders above KSh 5,000.',
+  'Gift cards are live: store credit, PSN, Xbox, Nintendo, Steam, and more.',
   'NEW: Premium IPTV - member login, protected playlists, and M-Pesa activation.',
   'Flash deal: up to 40% off selected PS5 and Xbox games today only.',
   'Pay with M-Pesa, Visa, Mastercard, or Airtel Money.',
@@ -46,6 +47,7 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
     { label: 'Pre-Owned', href: '/pre-owned' },
     { label: 'Blog', href: '/blog' },
     { label: 'Digital Store', href: '/digital-store' },
+    { label: 'Gift Cards', href: '/gift-cards', badge: 'NEW' },
     { label: 'Movies', href: '/movies/login', badge: 'NEW' },
     { label: 'IPTV', href: '/iptv', badge: 'NEW' },
   ];
@@ -87,7 +89,7 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search games, consoles, accessories..."
+                placeholder="Search games, gift cards, consoles..."
                 className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 pr-12 text-sm transition-colors focus:border-red-500 focus:outline-none"
               />
               <button
@@ -133,7 +135,7 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search games, consoles and more..."
+              placeholder="Search games, gift cards and more..."
               className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 pr-12 text-sm transition-colors focus:border-red-500 focus:outline-none"
             />
             <button

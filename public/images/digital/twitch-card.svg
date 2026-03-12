@@ -1,0 +1,15 @@
+<svg width="640" height="420" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="420" rx="36" fill="#2E1065"/>
+  <rect x="24" y="24" width="592" height="372" rx="28" fill="url(#paint0_linear)"/>
+  <path d="M408 118h128v92l-36 36h-46l-20 20h-34v-20h-40V118Z" fill="white" fill-opacity="0.9"/>
+  <path d="M444 146h20v56h-20zM488 146h20v56h-20z" fill="#6D28D9"/>
+  <text x="64" y="128" fill="#C4B5FD" font-family="Arial, sans-serif" font-size="30" font-weight="700">TWITCH</text>
+  <text x="64" y="192" fill="white" font-family="Arial, sans-serif" font-size="56" font-weight="800">GIFT CARD</text>
+  <text x="64" y="246" fill="#EDE9FE" font-family="Arial, sans-serif" font-size="22">For subscriptions, Bits, and streamer support</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="24" y1="24" x2="616" y2="396" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4C1D95"/>
+      <stop offset="1" stop-color="#6D28D9"/>
+    </linearGradient>
+  </defs>
+</svg>

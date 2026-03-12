@@ -10,12 +10,15 @@ export interface CartItem {
   platform: string;
   quantity: number;
   isDigital?: boolean;
+  variant?: string;
+  details?: string[];
 }
 
 interface CartState {
   items: CartItem[];
   total: number;
   itemCount: number;
+  promoCode: string | null;
 }
 
 type CartAction =
@@ -23,13 +26,17 @@ type CartAction =
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_CART' }
-  | { type: 'LOAD_CART'; payload: CartItem[] };
+  | { type: 'LOAD_CART'; payload: { items: CartItem[]; promoCode: string | null } }
+  | { type: 'APPLY_PROMO'; payload: string }
+  | { type: 'CLEAR_PROMO' };
 
 interface CartContextType extends CartState {
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  applyPromo: (code: string) => void;
+  clearPromo: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -48,14 +55,14 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         const total = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const itemCount = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
 
-        return { items: updatedItems, total, itemCount };
+        return { ...state, items: updatedItems, total, itemCount };
       }
 
       const newItems = [...state.items, { ...action.payload, quantity: 1 }];
       const total = newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const itemCount = newItems.reduce((sum, item) => sum + item.quantity, 0);
 
-      return { items: newItems, total, itemCount };
+      return { ...state, items: newItems, total, itemCount };
     }
 
     case 'REMOVE_ITEM': {
@@ -63,7 +70,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       const total = filteredItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const itemCount = filteredItems.reduce((sum, item) => sum + item.quantity, 0);
 
-      return { items: filteredItems, total, itemCount };
+      return { ...state, items: filteredItems, total, itemCount };
     }
 
     case 'UPDATE_QUANTITY': {
@@ -79,18 +86,29 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       const total = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       const itemCount = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
 
-      return { items: updatedItems, total, itemCount };
+      return { ...state, items: updatedItems, total, itemCount };
     }
 
     case 'CLEAR_CART':
-      return { items: [], total: 0, itemCount: 0 };
+      return { items: [], total: 0, itemCount: 0, promoCode: null };
 
     case 'LOAD_CART': {
-      const total = action.payload.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const itemCount = action.payload.reduce((sum, item) => sum + item.quantity, 0);
+      const total = action.payload.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const itemCount = action.payload.items.reduce((sum, item) => sum + item.quantity, 0);
 
-      return { items: action.payload, total, itemCount };
+      return {
+        items: action.payload.items,
+        total,
+        itemCount,
+        promoCode: action.payload.promoCode,
+      };
     }
+
+    case 'APPLY_PROMO':
+      return { ...state, promoCode: action.payload };
+
+    case 'CLEAR_PROMO':
+      return { ...state, promoCode: null };
 
     default:
       return state;
@@ -102,6 +120,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     items: [],
     total: 0,
     itemCount: 0,
+    promoCode: null,
   });
 
   // Load cart from localStorage on mount
@@ -109,8 +128,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const savedCart = localStorage.getItem('gamestop-kenya-cart');
     if (savedCart) {
       try {
-        const cartItems = JSON.parse(savedCart);
-        dispatch({ type: 'LOAD_CART', payload: cartItems });
+        const parsedCart = JSON.parse(savedCart);
+        const payload = Array.isArray(parsedCart)
+          ? { items: parsedCart, promoCode: null }
+          : {
+              items: Array.isArray(parsedCart?.items) ? parsedCart.items : [],
+              promoCode: typeof parsedCart?.promoCode === 'string' ? parsedCart.promoCode : null,
+            };
+
+        dispatch({ type: 'LOAD_CART', payload });
       } catch (error) {
         console.error('Error loading cart from localStorage:', error);
       }
@@ -119,8 +145,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('gamestop-kenya-cart', JSON.stringify(state.items));
-  }, [state.items]);
+    localStorage.setItem(
+      'gamestop-kenya-cart',
+      JSON.stringify({ items: state.items, promoCode: state.promoCode })
+    );
+  }, [state.items, state.promoCode]);
 
   const addItem = (item: Omit<CartItem, 'quantity'>) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
@@ -138,6 +167,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'CLEAR_CART' });
   };
 
+  const applyPromo = (code: string) => {
+    dispatch({ type: 'APPLY_PROMO', payload: code });
+  };
+
+  const clearPromo = () => {
+    dispatch({ type: 'CLEAR_PROMO' });
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -146,6 +183,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeItem,
         updateQuantity,
         clearCart,
+        applyPromo,
+        clearPromo,
       }}
     >
       {children}

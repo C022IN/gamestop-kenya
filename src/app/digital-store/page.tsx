@@ -49,9 +49,10 @@ const digitalStoreContent: RoutePageContent = {
       ],
     },
   ],
-  primaryAction: { label: 'Browse Games', href: '/games' },
+  primaryAction: { label: 'Browse Gift Cards', href: '/gift-cards' },
   secondaryAction: { label: 'Contact Support', href: '/contact' },
   relatedLinks: [
+    { label: 'Gift Cards', href: '/gift-cards' },
     { label: 'PlayStation 5', href: '/playstation' },
     { label: 'Xbox Series X|S', href: '/xbox' },
     { label: 'Nintendo Switch', href: '/nintendo-switch' },

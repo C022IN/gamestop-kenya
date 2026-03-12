@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import HeroSlider from '@/components/HeroSlider';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
+import { giftCardProducts } from '@/data/gift-cards';
 import {
   ShoppingBag,
   Gamepad2,
@@ -108,44 +109,7 @@ const flashDeals = [
   },
 ];
 
-const digitalProducts = [
-  {
-    id: '5',
-    title: 'PlayStation Network Card - KSh 2,000',
-    image: '/images/digital/psn-card.svg',
-    price: 2000,
-    platform: 'PlayStation',
-    isDigital: true,
-    inStock: true,
-  },
-  {
-    id: '6',
-    title: 'Xbox Game Pass Ultimate - 3 Months',
-    image: '/images/digital/game-pass.svg',
-    price: 4500,
-    platform: 'Xbox',
-    isDigital: true,
-    inStock: true,
-  },
-  {
-    id: '7',
-    title: 'Nintendo eShop Card - KSh 1,500',
-    image: '/images/digital/eshop-card.svg',
-    price: 1500,
-    platform: 'Nintendo',
-    isDigital: true,
-    inStock: true,
-  },
-  {
-    id: '8',
-    title: 'Steam Wallet Code - KSh 3,000',
-    image: '/images/digital/steam-wallet.svg',
-    price: 3000,
-    platform: 'PC',
-    isDigital: true,
-    inStock: true,
-  },
-];
+const digitalProducts = giftCardProducts.slice(0, 4);
 
 const categories = [
   {
@@ -165,11 +129,11 @@ const categories = [
     color: 'text-purple-600',
   },
   {
-    name: 'Digital Codes',
+    name: 'Gift Cards',
     icon: CreditCard,
     image: '/images/categories/digital-codes.svg',
-    count: '100+',
-    href: '/digital-store',
+    count: '150+',
+    href: '/gift-cards',
     color: 'text-green-600',
   },
   {
@@ -392,7 +356,7 @@ export default function Home() {
                     Shop PlayStation
                   </Button>
                 </Link>
-                <Link href="/digital-store">
+                <Link href="/gift-cards">
                   <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">
                     PSN Cards
                   </Button>
@@ -415,9 +379,9 @@ export default function Home() {
       <section className="bg-gray-950 py-14 text-white">
         <div className="container mx-auto px-4">
           <div className="mb-10 text-center">
-            <h2 className="mb-2 text-3xl font-bold">Digital Store</h2>
+            <h2 className="mb-2 text-3xl font-bold">Gift Cards & Digital Codes</h2>
             <p className="text-gray-400">
-              Instant delivery with secure code fulfillment via email or WhatsApp.
+              Shop store cards, wallet top-ups, subscriptions, and instant gifting in one place.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -426,9 +390,9 @@ export default function Home() {
             ))}
           </div>
           <div className="mt-8 text-center">
-            <Link href="/digital-store">
+            <Link href="/gift-cards">
               <Button className="bg-red-600 px-8 hover:bg-red-700">
-                Browse All Digital Products
+                Browse All Gift Cards
               </Button>
             </Link>
           </div>
@@ -461,7 +425,7 @@ export default function Home() {
                     Shop Nintendo
                   </Button>
                 </Link>
-                <Link href="/digital-store">
+                <Link href="/gift-cards">
                   <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">
                     eShop Cards
                   </Button>
@@ -489,7 +453,7 @@ export default function Home() {
                     Shop Xbox
                   </Button>
                 </Link>
-                <Link href="/digital-store">
+                <Link href="/gift-cards">
                   <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">
                     Game Pass
                   </Button>

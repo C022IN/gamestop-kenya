@@ -12,6 +12,7 @@ interface Product {
   originalPrice?: number;
   platform?: string;
   isDigital?: boolean;
+  formatLabel?: string;
   rating?: number;
   inStock?: boolean;
 }
@@ -25,6 +26,10 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
   const { addItem } = useCart();
   const rating = product.rating ?? 0;
   const isInStock = product.inStock ?? true;
+  const deliveryLabel = product.isDigital
+    ? 'Digital delivery after payment'
+    : 'In stock and ready to dispatch';
+  const formatLabel = product.formatLabel ?? (product.isDigital ? 'Digital' : undefined);
   const hasDiscount =
     typeof product.originalPrice === 'number' && product.originalPrice > product.price;
   const savingsRate = hasDiscount
@@ -84,9 +89,15 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
           </div>
         )}
 
-        {product.isDigital && (
-          <div className="absolute right-3 top-3 rounded-full bg-violet-600/95 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-violet-300/70">
-            DIGITAL
+        {formatLabel && (
+          <div
+            className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ${
+              formatLabel.toLowerCase() === 'physical'
+                ? 'bg-amber-500/95 ring-amber-200/70'
+                : 'bg-violet-600/95 ring-violet-300/70'
+            }`}
+          >
+            {formatLabel.toUpperCase()}
           </div>
         )}
 
@@ -149,7 +160,7 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
           {isInStock ? (
             <>
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              <span>In stock and ready to dispatch</span>
+              <span>{deliveryLabel}</span>
             </>
           ) : (
             <>
