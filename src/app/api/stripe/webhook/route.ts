@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import {
+  claimBillingLinkInvoice,
   getBillingLinkByStripeSessionId,
   getBillingLinkByStripeSubscriptionId,
   updateBillingLink,
@@ -10,6 +11,21 @@ import { getStripeWebhookSecret } from '@/lib/stripe/env';
 import { getStripeServerClient } from '@/lib/stripe/server';
 import { fromStripeAmount } from '@/lib/stripe/tax';
 import { markStoreOrderPaid } from '@/lib/store-orders';
+
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const invoiceSubscription =
+    invoice.parent?.type === 'subscription_details'
+      ? invoice.parent.subscription_details?.subscription
+      : null;
+
+  if (!invoiceSubscription) {
+    return null;
+  }
+
+  return typeof invoiceSubscription === 'string'
+    ? invoiceSubscription
+    : invoiceSubscription.id;
+}
 
 export async function POST(req: NextRequest) {
   const stripe = getStripeServerClient();
@@ -88,13 +104,7 @@ export async function POST(req: NextRequest) {
 
       case 'invoice.paid': {
         const invoice = event.data.object as Stripe.Invoice;
-        const invoiceSubscription = invoice.parent?.type === 'subscription_details'
-          ? invoice.parent.subscription_details?.subscription
-          : null;
-        const stripeSubscriptionId =
-          typeof invoiceSubscription === 'string'
-            ? invoiceSubscription
-            : invoiceSubscription?.id;
+        const stripeSubscriptionId = getInvoiceSubscriptionId(invoice);
 
         if (!stripeSubscriptionId) break;
         if (invoice.billing_reason === 'subscription_create') break;
@@ -102,10 +112,47 @@ export async function POST(req: NextRequest) {
         const link = await getBillingLinkByStripeSubscriptionId(stripeSubscriptionId);
         if (!link || link.kind !== 'iptv_subscription') break;
 
+        const claim = await claimBillingLinkInvoice(link.id, invoice.id);
+        if (!claim.claimed) break;
+
         const existing = await getSubscription(link.recordId);
         if (!existing || existing.status !== 'active') break;
 
         await extendSubscription(link.recordId, invoice.id);
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const stripeSubscriptionId = getInvoiceSubscriptionId(invoice);
+        if (!stripeSubscriptionId) break;
+
+        const link = await getBillingLinkByStripeSubscriptionId(stripeSubscriptionId);
+        if (!link || link.kind !== 'iptv_subscription') break;
+
+        await updateBillingLink(link.id, {
+          metadata: {
+            lastStripeFailedInvoiceId: invoice.id,
+            lastStripePaymentFailedAt: new Date().toISOString(),
+          },
+        });
+        break;
+      }
+
+      case 'invoice.finalization_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const stripeSubscriptionId = getInvoiceSubscriptionId(invoice);
+        if (!stripeSubscriptionId) break;
+
+        const link = await getBillingLinkByStripeSubscriptionId(stripeSubscriptionId);
+        if (!link || link.kind !== 'iptv_subscription') break;
+
+        await updateBillingLink(link.id, {
+          metadata: {
+            lastStripeFinalizationFailedInvoiceId: invoice.id,
+            lastStripeFinalizationFailedAt: new Date().toISOString(),
+          },
+        });
         break;
       }
 

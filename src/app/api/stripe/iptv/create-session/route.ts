@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     const stripe = getStripeServerClient();
     if (!stripe) {
       return NextResponse.json(
-        { error: 'Stripe is not configured on the server.' },
+        { error: 'Card payments are currently unavailable.' },
         { status: 503 }
       );
     }

@@ -1,7 +1,8 @@
 import type { IptvCredentials, IptvSubscription } from '@/lib/iptv-subscriptions';
+import { getAppUrl } from '@/lib/app-url';
 
 function getSiteHost(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://gamestopkenya.com').replace(/\/+$/, '');
+  return getAppUrl();
 }
 
 function buildLocalCredentials(subscriptionId: string): IptvCredentials {

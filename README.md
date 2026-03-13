@@ -45,6 +45,23 @@ For the provider-managed IPTV flow, use:
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This repo is prepared for Vercel with:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `vercel.json` to force `npm ci` and `npm run build`
+- `.github/workflows/ci.yml` to match the same Node 22 + npm build path
+- `scripts/vercel-env.mjs` to audit required production env and expected callback URLs
+
+Useful commands:
+
+```bash
+npm run env:example:check
+npm run env:audit
+npm run build
+```
+
+Before switching production to Vercel, make sure:
+
+- `NEXT_PUBLIC_SITE_URL` points at the Vercel production domain
+- Stripe webhooks target `/api/stripe/webhook`
+- M-Pesa callbacks target `/api/mpesa/callback` or let the app derive that path from `NEXT_PUBLIC_SITE_URL`
+- Supabase, Stripe, TMDB, IPTV, and Cloudflare env are populated in Vercel Project Settings

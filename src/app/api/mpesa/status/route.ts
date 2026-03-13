@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queryStkStatus } from '@/lib/mpesa';
 import { getPaymentResult, setPaymentResult } from '@/lib/mpesa-payment-results';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/mpesa/status?id=<checkoutRequestId>
  *

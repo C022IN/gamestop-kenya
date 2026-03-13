@@ -9,12 +9,14 @@ import {
 import { createAccessCodes, listAccessCodes } from '@/lib/iptv-codes';
 import { IPTV_PLANS, type PlanId } from '@/lib/iptv-subscriptions';
 
+export const dynamic = 'force-dynamic';
+
 function getIp(req: NextRequest) {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
 }
 
 async function getAuthorizedAdmin(req: NextRequest) {
-  if (!isAdminConfigured()) return { error: 'Not configured', status: 503 as const };
+  if (!(await isAdminConfigured())) return { error: 'Not configured', status: 503 as const };
   const token = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;
   if (!token) return { error: 'Unauthorized', status: 401 as const };
   const current = await getAdminContextByToken(token);

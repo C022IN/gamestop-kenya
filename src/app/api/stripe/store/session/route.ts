@@ -4,6 +4,8 @@ import { getStripeServerClient } from '@/lib/stripe/server';
 import { fromStripeAmount } from '@/lib/stripe/tax';
 import { getStoreOrderById, markStoreOrderPaid } from '@/lib/store-orders';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const sessionId = req.nextUrl.searchParams.get('sessionId');
@@ -14,7 +16,7 @@ export async function GET(req: NextRequest) {
     const stripe = getStripeServerClient();
     if (!stripe) {
       return NextResponse.json(
-        { error: 'Stripe is not configured on the server.' },
+        { error: 'Card payments are currently unavailable.' },
         { status: 503 }
       );
     }

@@ -2,6 +2,8 @@ import RouteContentPage, { type RoutePageContent } from '@/components/RouteConte
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
+export const revalidate = 300;
+
 const pcGamingContent: RoutePageContent = {
   eyebrow: 'PC Gaming',
   title: 'Graphics Cards, Headsets, And Digital Support For PC Players',

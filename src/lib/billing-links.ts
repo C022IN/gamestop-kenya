@@ -10,6 +10,7 @@ export interface BillingLink {
   stripeSessionId?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  lastStripeInvoiceId?: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
@@ -22,6 +23,7 @@ interface BillingLinkRow {
   stripe_session_id: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  last_stripe_invoice_id: string | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
@@ -30,6 +32,8 @@ interface BillingLinkRow {
 const linksById = new Map<string, BillingLink>();
 const linksBySessionId = new Map<string, string>();
 const linksBySubscriptionId = new Map<string, string>();
+const BILLING_LINK_SELECT =
+  'id, kind, record_id, stripe_session_id, stripe_customer_id, stripe_subscription_id, last_stripe_invoice_id, metadata, created_at, updated_at';
 
 function generateId() {
   return `bill_${Math.random().toString(36).slice(2, 10)}`;
@@ -43,6 +47,7 @@ function fromRow(row: BillingLinkRow): BillingLink {
     stripeSessionId: row.stripe_session_id ?? undefined,
     stripeCustomerId: row.stripe_customer_id ?? undefined,
     stripeSubscriptionId: row.stripe_subscription_id ?? undefined,
+    lastStripeInvoiceId: row.last_stripe_invoice_id ?? undefined,
     metadata: row.metadata ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -61,6 +66,7 @@ export async function createBillingLink(params: {
   stripeSessionId?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  lastStripeInvoiceId?: string;
   metadata?: Record<string, unknown>;
 }): Promise<BillingLink> {
   const now = new Date().toISOString();
@@ -71,6 +77,7 @@ export async function createBillingLink(params: {
     stripeSessionId: params.stripeSessionId,
     stripeCustomerId: params.stripeCustomerId,
     stripeSubscriptionId: params.stripeSubscriptionId,
+    lastStripeInvoiceId: params.lastStripeInvoiceId,
     metadata: params.metadata,
     createdAt: now,
     updatedAt: now,
@@ -87,11 +94,10 @@ export async function createBillingLink(params: {
         stripe_session_id: link.stripeSessionId ?? null,
         stripe_customer_id: link.stripeCustomerId ?? null,
         stripe_subscription_id: link.stripeSubscriptionId ?? null,
+        last_stripe_invoice_id: link.lastStripeInvoiceId ?? null,
         metadata: link.metadata ?? {},
       })
-      .select(
-        'id, kind, record_id, stripe_session_id, stripe_customer_id, stripe_subscription_id, metadata, created_at, updated_at'
-      )
+      .select(BILLING_LINK_SELECT)
       .maybeSingle();
 
     if (data) {
@@ -111,6 +117,7 @@ export async function updateBillingLink(
     stripeSessionId?: string;
     stripeCustomerId?: string;
     stripeSubscriptionId?: string;
+    lastStripeInvoiceId?: string;
     metadata?: Record<string, unknown>;
   }
 ): Promise<BillingLink | null> {
@@ -122,6 +129,7 @@ export async function updateBillingLink(
     stripeSessionId: patch.stripeSessionId ?? existing.stripeSessionId,
     stripeCustomerId: patch.stripeCustomerId ?? existing.stripeCustomerId,
     stripeSubscriptionId: patch.stripeSubscriptionId ?? existing.stripeSubscriptionId,
+    lastStripeInvoiceId: patch.lastStripeInvoiceId ?? existing.lastStripeInvoiceId,
     metadata: patch.metadata ? { ...(existing.metadata ?? {}), ...patch.metadata } : existing.metadata,
     updatedAt: new Date().toISOString(),
   };
@@ -134,13 +142,12 @@ export async function updateBillingLink(
         stripe_session_id: updated.stripeSessionId ?? null,
         stripe_customer_id: updated.stripeCustomerId ?? null,
         stripe_subscription_id: updated.stripeSubscriptionId ?? null,
+        last_stripe_invoice_id: updated.lastStripeInvoiceId ?? null,
         metadata: updated.metadata ?? {},
         updated_at: updated.updatedAt,
       })
       .eq('id', id)
-      .select(
-        'id, kind, record_id, stripe_session_id, stripe_customer_id, stripe_subscription_id, metadata, created_at, updated_at'
-      )
+      .select(BILLING_LINK_SELECT)
       .maybeSingle();
 
     if (data) {
@@ -163,9 +170,7 @@ export async function getBillingLinkById(id: string): Promise<BillingLink | null
 
   const { data, error } = await supabase
     .from('billing_links')
-    .select(
-      'id, kind, record_id, stripe_session_id, stripe_customer_id, stripe_subscription_id, metadata, created_at, updated_at'
-    )
+    .select(BILLING_LINK_SELECT)
     .eq('id', id)
     .maybeSingle();
 
@@ -185,9 +190,7 @@ export async function getBillingLinkByStripeSessionId(sessionId: string): Promis
 
   const { data, error } = await supabase
     .from('billing_links')
-    .select(
-      'id, kind, record_id, stripe_session_id, stripe_customer_id, stripe_subscription_id, metadata, created_at, updated_at'
-    )
+    .select(BILLING_LINK_SELECT)
     .eq('stripe_session_id', sessionId)
     .maybeSingle();
 
@@ -209,9 +212,7 @@ export async function getBillingLinkByStripeSubscriptionId(
 
   const { data, error } = await supabase
     .from('billing_links')
-    .select(
-      'id, kind, record_id, stripe_session_id, stripe_customer_id, stripe_subscription_id, metadata, created_at, updated_at'
-    )
+    .select(BILLING_LINK_SELECT)
     .eq('stripe_subscription_id', subscriptionId)
     .maybeSingle();
 
@@ -220,4 +221,52 @@ export async function getBillingLinkByStripeSubscriptionId(
   const link = fromRow(data as BillingLinkRow);
   indexLink(link);
   return link;
+}
+
+export async function claimBillingLinkInvoice(
+  id: string,
+  invoiceId: string
+): Promise<{ claimed: boolean; link: BillingLink | null }> {
+  const existing = await getBillingLinkById(id);
+  if (!existing) {
+    return { claimed: false, link: null };
+  }
+
+  if (existing.lastStripeInvoiceId === invoiceId) {
+    return { claimed: false, link: existing };
+  }
+
+  const supabase = getSupabaseAdminClient();
+  if (supabase) {
+    const now = new Date().toISOString();
+    const { data } = await supabase
+      .from('billing_links')
+      .update({
+        last_stripe_invoice_id: invoiceId,
+        updated_at: now,
+      })
+      .eq('id', id)
+      .or(`last_stripe_invoice_id.is.null,last_stripe_invoice_id.neq.${invoiceId}`)
+      .select(BILLING_LINK_SELECT)
+      .maybeSingle();
+
+    if (data) {
+      const saved = fromRow(data as BillingLinkRow);
+      indexLink(saved);
+      return { claimed: true, link: saved };
+    }
+
+    return {
+      claimed: false,
+      link: await getBillingLinkById(id),
+    };
+  }
+
+  const updated: BillingLink = {
+    ...existing,
+    lastStripeInvoiceId: invoiceId,
+    updatedAt: new Date().toISOString(),
+  };
+  indexLink(updated);
+  return { claimed: true, link: updated };
 }

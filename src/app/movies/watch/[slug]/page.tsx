@@ -17,6 +17,8 @@ import { getCatalogWatchContext } from '@/lib/iptv-catalog';
 import { hasActiveSubscriptionForProfile } from '@/lib/movie-platform';
 import { getCurrentMovieMember } from '@/lib/movie-session';
 
+export const dynamic = 'force-dynamic';
+
 interface WatchPageProps {
   params: Promise<{ slug: string }>;
 }

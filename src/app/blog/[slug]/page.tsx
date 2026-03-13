@@ -5,6 +5,9 @@ import SocialShare from '@/components/SocialShare';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Eye, Heart, User, ArrowLeft, Tag } from 'lucide-react';
 
+export const revalidate = 300;
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   return await listBlogSlugs();
 }

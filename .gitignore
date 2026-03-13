@@ -44,3 +44,5 @@ next-env.d.ts
 
 # local docs
 /docs/*.md
+
+.env*.local

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { formatPlaylist, getPlaylistEntries } from '@/lib/iptv-catalog';
 import { getSubscription } from '@/lib/iptv-subscriptions';
 
+export const dynamic = 'force-dynamic';
+
 interface PlaylistRouteProps {
   params: Promise<{ subscriptionId: string }>;
 }

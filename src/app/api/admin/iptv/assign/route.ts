@@ -14,8 +14,8 @@ function getRequestIp(req: NextRequest): string | null {
 }
 
 async function getAuthorizedAdmin(req: NextRequest) {
-  if (!isAdminConfigured()) {
-    return { error: 'Super-admin login is not configured yet.', status: 503 as const };
+  if (!(await isAdminConfigured())) {
+    return { error: 'Admin login is not configured yet.', status: 503 as const };
   }
 
   const token = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;

@@ -2,6 +2,8 @@ import RouteContentPage, { type RoutePageContent } from '@/components/RouteConte
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedGiftCardShowcaseCards } from '@/lib/storefront-media';
 
+export const revalidate = 300;
+
 const digitalStoreContent: RoutePageContent = {
   eyebrow: 'Digital Store',
   title: 'Fast Digital Codes For PlayStation, Xbox, Nintendo, And PC',

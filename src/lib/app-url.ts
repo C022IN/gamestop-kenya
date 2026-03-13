@@ -1,9 +1,19 @@
-export function getAppUrl(origin?: string | null): string {
-  const configured =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ??
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ??
-    origin?.trim() ??
-    'http://localhost:3000';
+function normalizeUrl(value?: string | null): string | null {
+  const next = value?.trim();
+  if (!next) return null;
 
-  return configured.replace(/\/+$/, '');
+  const withProtocol = /^https?:\/\//i.test(next) ? next : `https://${next}`;
+  return withProtocol.replace(/\/+$/, '');
+}
+
+export function getAppUrl(origin?: string | null): string {
+  return (
+    normalizeUrl(process.env.NEXT_PUBLIC_SITE_URL) ??
+    normalizeUrl(process.env.NEXT_PUBLIC_APP_URL) ??
+    normalizeUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL) ??
+    normalizeUrl(process.env.VERCEL_BRANCH_URL) ??
+    normalizeUrl(process.env.VERCEL_URL) ??
+    normalizeUrl(origin) ??
+    'http://localhost:3000'
+  );
 }

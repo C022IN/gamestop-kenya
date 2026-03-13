@@ -30,6 +30,8 @@ import {
   type TmdbItem,
 } from '@/lib/tmdb';
 
+export const dynamic = 'force-dynamic';
+
 const RAIL_LIMIT = 12;
 
 type TmdbRailType = 'movie' | 'tv';

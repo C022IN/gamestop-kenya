@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import AdminCatalogMediaDashboard from '@/components/admin/AdminCatalogMediaDashboard';
 import { getCurrentAdmin } from '@/lib/admin-session';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminCatalogPage() {
   const current = await getCurrentAdmin();
 

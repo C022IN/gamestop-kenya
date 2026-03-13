@@ -19,7 +19,7 @@ function getIp(req: NextRequest) {
 }
 
 async function getAuthorizedAdmin(req: NextRequest) {
-  if (!isAdminConfigured()) return { error: 'Not configured', status: 503 as const };
+  if (!(await isAdminConfigured())) return { error: 'Not configured', status: 503 as const };
   const token = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;
   if (!token) return { error: 'Unauthorized', status: 401 as const };
   const current = await getAdminContextByToken(token);

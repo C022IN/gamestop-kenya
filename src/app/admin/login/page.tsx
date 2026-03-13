@@ -4,6 +4,8 @@ import AdminLoginForm from '@/components/admin/AdminLoginForm';
 import { isAdminConfigured } from '@/lib/admin-auth';
 import { getCurrentAdmin } from '@/lib/admin-session';
 
+export const dynamic = 'force-dynamic';
+
 interface AdminLoginPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
@@ -20,7 +22,7 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
 
   return (
     <Suspense fallback={null}>
-      <AdminLoginForm configured={isAdminConfigured()} nextPath={nextPath} />
+      <AdminLoginForm configured={await isAdminConfigured()} nextPath={nextPath} />
     </Suspense>
   );
 }

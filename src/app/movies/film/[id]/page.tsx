@@ -28,6 +28,8 @@ import {
   type TmdbItem,
 } from '@/lib/tmdb';
 
+export const dynamic = 'force-dynamic';
+
 interface FilmPageProps {
   params: Promise<{ id: string }>;
   searchParams: Promise<{

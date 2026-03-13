@@ -487,7 +487,7 @@ function IPTVSubscribePageContent() {
 
                     {paymentMethod === 'stripe' && (
                       <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900">
-                        Stripe calculates VAT and sales tax from the billing details entered in checkout and collects VAT IDs when the country supports them.
+                        Taxes are calculated at checkout.
                       </div>
                     )}
 

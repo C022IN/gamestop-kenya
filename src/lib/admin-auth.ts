@@ -76,6 +76,8 @@ const managedAdmins = new Map<string, AdminRecord>();
 const adminSessions = new Map<string, AdminSession>();
 const adminAuditTrail: AdminAuditEntry[] = [];
 const MAX_AUDIT_ENTRIES = 200;
+const ADMIN_SELECT =
+  'id, role, name, email, phone, password_hash, created_at, created_by_admin_id';
 
 function trimEnv(value: string | undefined): string | null {
   const next = value?.trim();
@@ -102,10 +104,6 @@ function makeAdminId(prefix: 'admin' | 'super', seed?: string) {
   if (prefix === 'super') return SUPER_ADMIN_ID;
   const shortSeed = seed ? seed.replace(/[^a-z0-9]/gi, '').slice(-6).toLowerCase() : '';
   return `admin-${shortSeed || randomBytes(3).toString('hex')}`;
-}
-
-function getConfiguredPassword(): string | null {
-  return trimEnv(process.env.SUPER_ADMIN_PASSWORD);
 }
 
 function makePasswordHash(password: string): string {
@@ -190,10 +188,10 @@ function fromAuditRow(row: AdminAuditRow): AdminAuditEntry {
   };
 }
 
-function getSuperAdminRecord(): AdminRecord | null {
+function getEnvFallbackSuperAdminRecord(): AdminRecord | null {
   const email = normaliseEmail(trimEnv(process.env.SUPER_ADMIN_EMAIL));
   const phone = normaliseAdminPhone(trimEnv(process.env.SUPER_ADMIN_PHONE));
-  const password = getConfiguredPassword();
+  const password = trimEnv(process.env.SUPER_ADMIN_PASSWORD);
 
   if (!email || !password) {
     return null;
@@ -211,53 +209,38 @@ function getSuperAdminRecord(): AdminRecord | null {
   };
 }
 
-async function syncSuperAdminRecord() {
-  const supabase = getSupabaseAdminClient();
-  const superAdmin = getSuperAdminRecord();
-  if (!supabase || !superAdmin) {
-    return;
+function compareAdminRecords(a: AdminRecord, b: AdminRecord) {
+  if (a.role !== b.role) {
+    return a.role === 'super_admin' ? -1 : 1;
   }
 
-  await supabase.from('admin_accounts').upsert(
-    {
-      id: superAdmin.id,
-      role: superAdmin.role,
-      name: superAdmin.name,
-      email: superAdmin.email,
-      phone: superAdmin.phone,
-      password_hash: superAdmin.passwordHash,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      created_by_admin_id: null,
-    },
-    { onConflict: 'id' }
-  );
+  return a.name.localeCompare(b.name);
 }
 
-async function getManagedAdminRecords(): Promise<AdminRecord[]> {
+async function getAllAdminRecords(): Promise<AdminRecord[]> {
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
-    return Array.from(managedAdmins.values()).sort((a, b) => a.name.localeCompare(b.name));
+    const superAdmin = getEnvFallbackSuperAdminRecord();
+    const team = Array.from(managedAdmins.values());
+    return (superAdmin ? [superAdmin, ...team] : team).sort(compareAdminRecords);
   }
 
   const { data, error } = await supabase
     .from('admin_accounts')
-    .select('id, role, name, email, phone, password_hash, created_at, created_by_admin_id')
-    .eq('role', 'admin')
+    .select(ADMIN_SELECT)
     .eq('is_active', true)
-    .order('name', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (error || !data) {
     return [];
   }
 
-  return (data as AdminRow[]).map(fromAdminRow);
+  return (data as AdminRow[]).map(fromAdminRow).sort(compareAdminRecords);
 }
 
-async function getAllAdminRecords(): Promise<AdminRecord[]> {
-  const superAdmin = getSuperAdminRecord();
-  const team = await getManagedAdminRecords();
-  return superAdmin ? [superAdmin, ...team] : team;
+async function getSuperAdminRecord(): Promise<AdminRecord | null> {
+  const admins = await getAllAdminRecords();
+  return admins.find((admin) => admin.role === 'super_admin') ?? null;
 }
 
 async function getAdminByEmail(email: string): Promise<AdminRecord | null> {
@@ -272,7 +255,7 @@ async function getAdminByEmail(email: string): Promise<AdminRecord | null> {
 }
 
 export async function getConfiguredAdmin(): Promise<AdminIdentity | null> {
-  const superAdmin = getSuperAdminRecord();
+  const superAdmin = await getSuperAdminRecord();
   return superAdmin ? toIdentity(superAdmin) : null;
 }
 
@@ -287,8 +270,8 @@ export async function getAdminById(adminId: string): Promise<AdminIdentity | nul
   return admin ? toIdentity(admin) : null;
 }
 
-export function isAdminConfigured(): boolean {
-  return getSuperAdminRecord() !== null;
+export async function isAdminConfigured(): Promise<boolean> {
+  return (await getAllAdminRecords()).length > 0;
 }
 
 export function isSuperAdmin(admin: Pick<AdminIdentity, 'role'> | null | undefined): boolean {
@@ -300,11 +283,10 @@ export async function authenticateAdmin(email: string, password: string): Promis
   admin?: AdminIdentity;
   error?: string;
 }> {
-  if (!isAdminConfigured()) {
+  if (!(await isAdminConfigured())) {
     return {
       ok: false,
-      error:
-        'Super-admin login is not configured. Set SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD.',
+      error: 'Admin login is not configured. Create an active admin account in admin_accounts.',
     };
   }
 
@@ -392,7 +374,11 @@ export async function createStaffAdmin(params: {
 }
 
 function getTokenSecret(): string {
-  return process.env.SUPER_ADMIN_PASSWORD ?? 'dev-fallback-secret-do-not-use-in-prod';
+  return (
+    trimEnv(process.env.ADMIN_SECRET) ??
+    trimEnv(process.env.SUPABASE_SERVICE_ROLE_KEY) ??
+    'dev-fallback-secret-do-not-use-in-prod'
+  );
 }
 
 function signedToken(adminId: string, expiresAt: string): string {
@@ -435,10 +421,6 @@ export async function createAdminSession(
 
   const supabase = getSupabaseAdminClient();
   if (supabase) {
-    if (adminId === SUPER_ADMIN_ID) {
-      await syncSuperAdminRecord();
-    }
-
     await supabase.from('admin_sessions').upsert(
       {
         token: session.token,

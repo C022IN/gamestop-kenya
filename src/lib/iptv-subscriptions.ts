@@ -75,6 +75,7 @@ interface SubscriptionRow {
   assigned_admin_id: string;
   assigned_at: string;
   assigned_by_admin_id: string | null;
+  activation_in_progress: boolean;
 }
 
 interface CredentialsRow {
@@ -90,6 +91,11 @@ const subscriptions = new Map<string, IptvSubscription>();
 const byCheckoutId = new Map<string, string>();
 const byEmail = new Map<string, string[]>();
 const byPhone = new Map<string, string[]>();
+const activationLocks = new Set<string>();
+const SUBSCRIPTION_SELECT =
+  'id, plan_id, plan_name, months, amount_kes, customer_name, email, phone, status, checkout_request_id, mpesa_receipt, created_at, expires_at, activated_at, assigned_admin_id, assigned_at, assigned_by_admin_id, activation_in_progress';
+const ACTIVATION_WAIT_MS = 250;
+const ACTIVATION_WAIT_ATTEMPTS = 12;
 
 function generateId(): string {
   return 'IPTV-' + Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -189,6 +195,27 @@ async function getCredentialsMap(subscriptionIds: string[]): Promise<Map<string,
   );
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForActivationResult(subscriptionId: string): Promise<IptvSubscription | null> {
+  for (let attempt = 0; attempt < ACTIVATION_WAIT_ATTEMPTS; attempt += 1) {
+    const current = await getSubscription(subscriptionId, { fresh: true });
+    if (!current) {
+      return null;
+    }
+
+    if (current.status === 'active' && current.credentials) {
+      return current;
+    }
+
+    await delay(ACTIVATION_WAIT_MS);
+  }
+
+  return getSubscription(subscriptionId, { fresh: true });
+}
+
 export async function createPendingSubscription(params: {
   planId: PlanId;
   customerName: string;
@@ -241,6 +268,7 @@ export async function createPendingSubscription(params: {
       assigned_admin_id: sub.assignedAdminId,
       assigned_at: sub.assignedAt,
       assigned_by_admin_id: sub.assignedByAdminId,
+      activation_in_progress: false,
     });
   }
 
@@ -248,17 +276,25 @@ export async function createPendingSubscription(params: {
   return sub;
 }
 
-export async function getSubscription(id: string): Promise<IptvSubscription | null> {
+export async function getSubscription(
+  id: string,
+  options?: { fresh?: boolean }
+): Promise<IptvSubscription | null> {
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
     return subscriptions.get(id) ?? null;
   }
 
+  if (!options?.fresh) {
+    const cached = subscriptions.get(id);
+    if (cached) {
+      return cached;
+    }
+  }
+
   const { data, error } = await supabase
     .from('iptv_subscriptions')
-    .select(
-      'id, plan_id, plan_name, months, amount_kes, customer_name, email, phone, status, checkout_request_id, mpesa_receipt, created_at, expires_at, activated_at, assigned_admin_id, assigned_at, assigned_by_admin_id'
-    )
+    .select(SUBSCRIPTION_SELECT)
     .eq('id', id)
     .maybeSingle();
 
@@ -284,9 +320,7 @@ export async function getSubscriptionByCheckout(checkoutRequestId: string): Prom
 
   const { data, error } = await supabase
     .from('iptv_subscriptions')
-    .select(
-      'id, plan_id, plan_name, months, amount_kes, customer_name, email, phone, status, checkout_request_id, mpesa_receipt, created_at, expires_at, activated_at, assigned_admin_id, assigned_at, assigned_by_admin_id'
-    )
+    .select(SUBSCRIPTION_SELECT)
     .eq('checkout_request_id', checkoutRequestId)
     .maybeSingle();
 
@@ -312,54 +346,142 @@ export async function activateSubscription(
     assignedByAdminId?: string | null;
   }
 ): Promise<IptvSubscription | null> {
-  const sub = await getSubscription(subscriptionId);
-  if (!sub) return null;
-
-  const credentials = await provisionCredentials({
-    ...sub,
-    mpesaReceipt,
-  });
-  const updated: IptvSubscription = {
-    ...sub,
-    status: 'active',
-    mpesaReceipt,
-    credentials,
-    activatedAt: new Date().toISOString(),
-    assignedAdminId: options?.assignedAdminId ?? sub.assignedAdminId,
-    assignedAt: new Date().toISOString(),
-    assignedByAdminId: options?.assignedByAdminId ?? sub.assignedByAdminId,
-  };
-
   const supabase = getSupabaseAdminClient();
-  if (supabase) {
-    await supabase
-      .from('iptv_subscriptions')
-      .update({
-        status: updated.status,
-        mpesa_receipt: updated.mpesaReceipt ?? null,
-        activated_at: updated.activatedAt,
-        assigned_admin_id: updated.assignedAdminId,
-        assigned_at: updated.assignedAt,
-        assigned_by_admin_id: updated.assignedByAdminId,
-      })
-      .eq('id', subscriptionId);
+  const existing = await getSubscription(subscriptionId);
+  if (!existing) return null;
 
-    await supabase.from('iptv_credentials').upsert(
-      {
-        subscription_id: subscriptionId,
-        m3u_url: credentials.m3uUrl,
-        xtream_host: credentials.xtreamHost,
-        xtream_username: credentials.xtreamUsername,
-        xtream_password: credentials.xtreamPassword,
-        xtream_port: credentials.xtreamPort,
-        provisioned_at: updated.activatedAt,
-      },
-      { onConflict: 'subscription_id' }
-    );
+  if (existing.status === 'active' && existing.credentials) {
+    return existing;
   }
 
-  indexSubscription(updated);
-  return updated;
+  const assignedAdminId = options?.assignedAdminId ?? existing.assignedAdminId;
+  const assignedByAdminId = options?.assignedByAdminId ?? existing.assignedByAdminId;
+  let claim: IptvSubscription | null = null;
+
+  if (supabase) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const now = new Date().toISOString();
+      const { data } = await supabase
+        .from('iptv_subscriptions')
+        .update({
+          activation_in_progress: true,
+          mpesa_receipt: mpesaReceipt,
+          assigned_admin_id: assignedAdminId,
+          assigned_at: now,
+          assigned_by_admin_id: assignedByAdminId,
+        })
+        .eq('id', subscriptionId)
+        .eq('status', 'pending')
+        .eq('activation_in_progress', false)
+        .select(SUBSCRIPTION_SELECT)
+        .maybeSingle();
+
+      if (data) {
+        claim = fromSubscriptionRow(data as SubscriptionRow, existing.credentials ?? null);
+        indexSubscription(claim);
+        break;
+      }
+
+      const ready = await waitForActivationResult(subscriptionId);
+      if (ready?.status === 'active' && ready.credentials) {
+        return ready;
+      }
+    }
+  } else {
+    if (activationLocks.has(subscriptionId)) {
+      const ready = await waitForActivationResult(subscriptionId);
+      if (ready?.status === 'active' && ready.credentials) {
+        return ready;
+      }
+    }
+
+    activationLocks.add(subscriptionId);
+    claim = {
+      ...existing,
+      mpesaReceipt,
+      assignedAdminId,
+      assignedAt: new Date().toISOString(),
+      assignedByAdminId,
+    };
+  }
+
+  if (!claim) {
+    const settled = await waitForActivationResult(subscriptionId);
+    if (settled?.status === 'active' && settled.credentials) {
+      return settled;
+    }
+
+    return null;
+  }
+
+  try {
+    const activatedAt = new Date().toISOString();
+    const credentials = await provisionCredentials({
+      ...claim,
+      mpesaReceipt,
+    });
+    const updated: IptvSubscription = {
+      ...claim,
+      status: 'active',
+      mpesaReceipt,
+      credentials,
+      activatedAt,
+      assignedAdminId,
+      assignedAt: activatedAt,
+      assignedByAdminId,
+    };
+
+    if (supabase) {
+      await supabase.from('iptv_credentials').upsert(
+        {
+          subscription_id: subscriptionId,
+          m3u_url: credentials.m3uUrl,
+          xtream_host: credentials.xtreamHost,
+          xtream_username: credentials.xtreamUsername,
+          xtream_password: credentials.xtreamPassword,
+          xtream_port: credentials.xtreamPort,
+          provisioned_at: activatedAt,
+        },
+        { onConflict: 'subscription_id' }
+      );
+
+      await supabase
+        .from('iptv_subscriptions')
+        .update({
+          status: updated.status,
+          mpesa_receipt: updated.mpesaReceipt ?? null,
+          activated_at: updated.activatedAt,
+          assigned_admin_id: updated.assignedAdminId,
+          assigned_at: updated.assignedAt,
+          assigned_by_admin_id: updated.assignedByAdminId,
+          activation_in_progress: false,
+        })
+        .eq('id', subscriptionId);
+    }
+
+    indexSubscription(updated);
+    return updated;
+  } catch (error) {
+    if (supabase) {
+      await supabase
+        .from('iptv_subscriptions')
+        .update({
+          status: 'pending',
+          activation_in_progress: false,
+          mpesa_receipt: mpesaReceipt,
+          assigned_admin_id: assignedAdminId,
+          assigned_at: new Date().toISOString(),
+          assigned_by_admin_id: assignedByAdminId,
+        })
+        .eq('id', subscriptionId);
+    }
+
+    throw error;
+  } finally {
+    if (!supabase) {
+      activationLocks.delete(subscriptionId);
+    }
+  }
 }
 
 export async function activateByCheckoutId(
@@ -423,9 +545,7 @@ export async function getAllSubscriptions(): Promise<IptvSubscription[]> {
 
   const { data, error } = await supabase
     .from('iptv_subscriptions')
-    .select(
-      'id, plan_id, plan_name, months, amount_kes, customer_name, email, phone, status, checkout_request_id, mpesa_receipt, created_at, expires_at, activated_at, assigned_admin_id, assigned_at, assigned_by_admin_id'
-    )
+    .select(SUBSCRIPTION_SELECT)
     .order('created_at', { ascending: false });
 
   if (error || !data) {

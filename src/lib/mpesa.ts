@@ -8,9 +8,11 @@
  *   MPESA_CONSUMER_SECRET   - From Daraja developer portal
  *   MPESA_SHORTCODE         - Business shortcode (sandbox: 174379)
  *   MPESA_PASSKEY           - From Daraja portal (sandbox passkey provided below)
- *   MPESA_CALLBACK_URL      - Publicly accessible HTTPS URL for callbacks
+ *   MPESA_CALLBACK_URL      - Optional explicit callback URL. Falls back to {site}/api/mpesa/callback
  *   MPESA_ENVIRONMENT       - "sandbox" | "production"
  */
+
+import { getAppUrl } from '@/lib/app-url';
 
 const SANDBOX_BASE = 'https://sandbox.safaricom.co.ke';
 const PRODUCTION_BASE = 'https://api.safaricom.co.ke';
@@ -101,7 +103,8 @@ export async function initiateStkPush(params: StkPushParams): Promise<StkPushRes
   const timestamp = getDarajaTimestamp();
   const password = getStkPassword(timestamp);
   const shortcode = process.env.MPESA_SHORTCODE ?? '';
-  const callbackUrl = process.env.MPESA_CALLBACK_URL ?? '';
+  const callbackUrl =
+    process.env.MPESA_CALLBACK_URL?.trim() || `${getAppUrl()}/api/mpesa/callback`;
 
   const body = {
     BusinessShortCode: shortcode,

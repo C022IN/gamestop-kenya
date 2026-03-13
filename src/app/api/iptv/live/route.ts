@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchCategoryChannels, fetchMultipleCategories, CHANNEL_CATEGORIES } from '@/lib/iptv-org';
 
+export const revalidate = 3600;
+
 /**
  * GET /api/iptv/live?cat=sports            → channels for one category
  * GET /api/iptv/live?cat=sports,news,kenya → multiple categories (parallel)

@@ -2,6 +2,8 @@ import RouteContentPage, { type RoutePageContent } from '@/components/RouteConte
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
+export const revalidate = 300;
+
 const nintendoContent: RoutePageContent = {
   eyebrow: 'Nintendo Switch',
   title: 'Nintendo Switch Consoles And Family-Friendly Gaming Picks',

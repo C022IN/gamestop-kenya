@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import AdminIptvDashboard from '@/components/admin/AdminIptvDashboard';
 import { getCurrentAdmin } from '@/lib/admin-session';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminIptvPage() {
   const current = await getCurrentAdmin();
 

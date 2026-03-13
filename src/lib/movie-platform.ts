@@ -96,7 +96,11 @@ function generateAccessCode(length = 8): string {
 }
 
 function getMovieTokenSecret(): string {
-  return process.env.SUPER_ADMIN_PASSWORD ?? 'movie-dev-fallback-secret';
+  return (
+    process.env.ADMIN_SECRET?.trim() ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    'movie-dev-fallback-secret'
+  );
 }
 
 function generateSessionToken(profileId: string, expiresAt: string): string {

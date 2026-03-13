@@ -707,12 +707,12 @@ function CheckoutPageContent() {
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
                     {digitalOnly
                       ? `After payment, your gift cards will be sent via ${deliveryInfo.channel === 'email' ? 'email' : 'WhatsApp'} to ${deliveryTarget}.`
-                      : 'After payment, your order moves into delivery confirmation and dispatch.'}
+                      : 'After payment, we will prepare your order for delivery.'}
                   </div>
 
                   {!canUseMpesa && !digitalOnly && (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                      International physical orders use Stripe Checkout so destination-based VAT and sales tax can be calculated correctly.
+                      International physical orders use card checkout.
                     </div>
                   )}
 
@@ -789,10 +789,10 @@ function CheckoutPageContent() {
                         </div>
                       )}
                       <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-                        Stripe hosts the card checkout for this order. Visa, Mastercard, Link, VAT ID capture, and jurisdiction-based tax calculation all run inside the same hosted flow.
+                        Pay securely with card via Stripe.
                       </div>
                       <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-                        Taxes and VAT are calculated at checkout from the billing and shipping details you confirm there, so the final charged amount can be slightly higher than the pre-tax cart total shown here.
+                        Taxes are calculated at checkout.
                       </div>
                       <div className="flex gap-3">
                         <Button type="button" variant="outline" onClick={() => setCurrentStep(2)} className="flex-1 rounded-xl">
@@ -884,7 +884,7 @@ function CheckoutPageContent() {
                 <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-2"><span>Estimated Total</span><span className="text-red-600">{formatPrice(finalTotal)}</span></div>
               </div>
               <p className="mt-3 text-xs text-gray-400">
-                Final tax depends on billing or shipping country. US and European VAT or sales-tax rules are applied in Stripe Checkout when you pay by card.
+                Final tax depends on your billing or shipping country.
               </p>
               {customerInfo.firstName && (
                 <div className="border-t border-gray-100 mt-4 pt-4 text-xs text-gray-500 space-y-1">

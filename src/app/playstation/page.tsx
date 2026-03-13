@@ -2,6 +2,8 @@ import RouteContentPage, { type RoutePageContent } from '@/components/RouteConte
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
+export const revalidate = 300;
+
 const playstationContent: RoutePageContent = {
   eyebrow: 'PlayStation 5',
   title: 'PS5 Consoles, Games, Accessories, And Wallet Codes',

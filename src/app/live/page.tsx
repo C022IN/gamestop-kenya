@@ -6,6 +6,7 @@ import { hasActiveSubscriptionForProfile } from '@/lib/movie-platform';
 import { CHANNEL_CATEGORIES } from '@/lib/iptv-org';
 import ChannelBrowser from '@/components/iptv/ChannelBrowser';
 
+export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Live TV - GameStop IPTV' };
 
 export default async function LiveTvPage() {

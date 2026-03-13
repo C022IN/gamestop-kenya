@@ -2,6 +2,8 @@ import RouteContentPage, { type RoutePageContent } from '@/components/RouteConte
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedGameShowcaseCards } from '@/lib/storefront-media';
 
+export const revalidate = 300;
+
 const preOwnedContent: RoutePageContent = {
   eyebrow: 'Pre-Owned Games',
   title: 'Value-Focused Gaming With Verified Condition Checks',

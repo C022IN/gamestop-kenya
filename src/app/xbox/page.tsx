@@ -2,6 +2,8 @@ import RouteContentPage, { type RoutePageContent } from '@/components/RouteConte
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 
+export const revalidate = 300;
+
 const xboxContent: RoutePageContent = {
   eyebrow: 'Xbox Series X|S',
   title: 'Xbox Hardware, Games, And Subscription-Ready Add-Ons',

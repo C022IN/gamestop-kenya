@@ -334,10 +334,14 @@ create table if not exists billing_links (
   stripe_session_id text unique,
   stripe_customer_id text,
   stripe_subscription_id text unique,
+  last_stripe_invoice_id text,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table if exists billing_links
+  add column if not exists last_stripe_invoice_id text;
 
 create index if not exists billing_links_kind_idx on billing_links(kind);
 create index if not exists billing_links_record_idx on billing_links(record_id);
@@ -410,8 +414,12 @@ create table if not exists iptv_subscriptions (
   assigned_admin_id text not null,
   assigned_at timestamptz not null default timezone('utc', now()),
   assigned_by_admin_id text,
+  activation_in_progress boolean not null default false,
   metadata jsonb not null default '{}'::jsonb
 );
+
+alter table if exists iptv_subscriptions
+  add column if not exists activation_in_progress boolean not null default false;
 
 create index if not exists iptv_subscriptions_phone_idx on iptv_subscriptions(phone);
 create index if not exists iptv_subscriptions_email_idx on iptv_subscriptions(email);
