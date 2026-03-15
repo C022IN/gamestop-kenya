@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LockKeyhole, ShieldCheck, Smartphone, Tv2, Waves } from 'lucide-react';
+import { LockKeyhole, ShieldCheck, Smartphone, Tv2 } from 'lucide-react';
 
 export default function MoviesLoginPage() {
-  const router = useRouter();
   const [phone, setPhone] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,29 +49,28 @@ export default function MoviesLoginPage() {
               GameStop IPTV Member Access
             </p>
             <h1 className="mt-4 max-w-4xl text-4xl font-black leading-tight md:text-6xl">
-              Sign in once and open your live TV, movies, series, and sports hub.
+              Open your member hub.
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-white/[0.66]">
-              Use the same phone number you paid with and the access code shown after payment.
-              Your membership session opens the full catalog tied to your active subscription.
+              Use your payment phone number and access code.
             </p>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {[
                 {
                   icon: Smartphone,
-                  title: 'Phone-first sign in',
-                  text: 'Use your M-Pesa number as the member identifier.',
+                  title: 'Phone sign in',
+                  text: 'Use your M-Pesa number.',
                 },
                 {
                   icon: LockKeyhole,
-                  title: 'Access code protected',
-                  text: 'Your code is generated when the subscription activates.',
+                  title: 'Access code',
+                  text: 'Shown after activation.',
                 },
                 {
                   icon: Tv2,
-                  title: 'One media hub',
-                  text: 'Open live TV, movies, series, and sports from one dashboard.',
+                  title: 'One hub',
+                  text: 'Live TV, movies, series, sports.',
                 },
               ].map(({ icon: Icon, title, text }) => (
                 <div
@@ -88,11 +85,6 @@ export default function MoviesLoginPage() {
                 </div>
               ))}
             </div>
-
-            <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-amber-200/15 bg-amber-300/10 px-4 py-2 text-sm text-amber-100">
-              <Waves className="h-4 w-4" />
-              Premium sports slots only go live after a provider feed is configured.
-            </div>
           </section>
 
           <section className="rounded-[32px] border border-white/10 bg-white/[0.06] p-6 backdrop-blur-2xl">
@@ -100,7 +92,7 @@ export default function MoviesLoginPage() {
               <div>
                 <h2 className="text-2xl font-black text-white">Member Sign In</h2>
                 <p className="mt-2 text-sm text-white/[0.62]">
-                  Enter the same phone number you used to activate the subscription.
+                  Use the phone number tied to your plan.
                 </p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-300/15 text-emerald-200">
@@ -147,11 +139,11 @@ export default function MoviesLoginPage() {
             <div className="mt-6 rounded-[24px] border border-white/10 bg-black/20 p-4 text-sm text-white/[0.66]">
               <p className="font-semibold text-white">No access code yet?</p>
               <p className="mt-1 leading-6">
-                Complete payment from the{' '}
+                Pay from the{' '}
                 <Link href="/iptv" className="font-semibold text-sky-200 underline">
                   IPTV plans page
                 </Link>
-                . If your payment already succeeded, contact support with your phone number or receipt.
+                {' '}or contact support if payment already went through.
               </p>
             </div>
           </section>

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { CompactSocialShare } from '@/components/SocialShare';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Calendar, Clock, Eye, Heart, User } from 'lucide-react';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
+import { Calendar, Clock, User } from 'lucide-react';
 import type { BlogCategory, BlogPost } from '@/types/blog';
 
 interface BlogPageClientProps {
@@ -14,14 +15,15 @@ interface BlogPageClientProps {
   posts: BlogPost[];
 }
 
-export default function BlogPageClient({ categories, posts }: BlogPageClientProps) {
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+const blogDateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
 
-  const toggleCurrency = () =>
-    setCurrency((prev) =>
-      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
-    );
+export default function BlogPageClient({ categories, posts }: BlogPageClientProps) {
+  const { currency, toggleCurrency } = useStoreCurrency();
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const featuredPosts = posts.filter((post) => post.featured);
   const filteredPosts =
@@ -29,12 +31,7 @@ export default function BlogPageClient({ categories, posts }: BlogPageClientProp
       ? posts
       : posts.filter((post) => post.category.slug === selectedCategory);
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const formatDate = (dateString: string) => blogDateFormatter.format(new Date(dateString));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -45,20 +42,15 @@ export default function BlogPageClient({ categories, posts }: BlogPageClientProp
           <span className="mb-4 inline-block rounded-full bg-red-600/30 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-red-300">
             GameStop Kenya Blog
           </span>
-          <h1 className="mb-4 text-4xl font-black md:text-6xl">
-            Gaming News, Reviews & Guides
-          </h1>
-          <p className="text-lg text-gray-300">
-            Your ultimate source for gaming insights, reviews, and community stories from Kenya's
-            #1 gaming destination.
-          </p>
+          <h1 className="mb-4 text-4xl font-black md:text-6xl">News, Reviews, Guides</h1>
+          <p className="text-lg text-gray-300">Short reads on games, hardware, and local releases.</p>
         </div>
       </section>
 
       {featuredPosts.length > 0 && (
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <h2 className="mb-6 text-2xl font-bold">Featured Articles</h2>
+            <h2 className="mb-6 text-2xl font-bold">Featured</h2>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               {featuredPosts.map((post, index) => (
                 <article key={post.id} className={index === 0 ? 'lg:col-span-2' : ''}>
@@ -103,14 +95,6 @@ export default function BlogPageClient({ categories, posts }: BlogPageClientProp
                           </span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="flex items-center gap-1">
-                            <Eye className="h-3.5 w-3.5" />
-                            {post.views.toLocaleString()}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Heart className="h-3.5 w-3.5" />
-                            {post.likes}
-                          </span>
                           <CompactSocialShare
                             url={`/blog/${post.slug}`}
                             title={post.title}
@@ -136,7 +120,7 @@ export default function BlogPageClient({ categories, posts }: BlogPageClientProp
               onClick={() => setSelectedCategory('all')}
               className={selectedCategory === 'all' ? 'bg-red-600 hover:bg-red-700' : ''}
             >
-              All Articles
+              All
             </Button>
             {categories.map((cat) => (
               <Button
@@ -157,12 +141,10 @@ export default function BlogPageClient({ categories, posts }: BlogPageClientProp
         <div className="container mx-auto px-4">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold">
-              {selectedCategory === 'all'
-                ? 'All Articles'
-                : categories.find((c) => c.slug === selectedCategory)?.name}
+              {selectedCategory === 'all' ? 'All Posts' : categories.find((c) => c.slug === selectedCategory)?.name}
             </h2>
             <span className="text-sm text-gray-400">
-              {filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''}
+              {filteredPosts.length} post{filteredPosts.length !== 1 ? 's' : ''}
             </span>
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -199,44 +181,15 @@ export default function BlogPageClient({ categories, posts }: BlogPageClientProp
                         {post.readTime}m
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1">
-                        <Eye className="h-3 w-3" />
-                        {post.views.toLocaleString()}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Heart className="h-3 w-3" />
-                        {post.likes}
-                      </span>
-                      <CompactSocialShare
-                        url={`/blog/${post.slug}`}
-                        title={post.title}
-                        description={post.excerpt}
-                      />
-                    </div>
+                    <CompactSocialShare
+                      url={`/blog/${post.slug}`}
+                      title={post.title}
+                      description={post.excerpt}
+                    />
                   </div>
                 </div>
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-gray-900 py-14 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="mb-2 text-3xl font-bold">Stay Updated with Gaming News</h2>
-          <p className="mx-auto mb-8 max-w-md text-gray-400">
-            Get the latest gaming news, reviews, and exclusive deals delivered to your inbox.
-          </p>
-          <div className="mx-auto flex max-w-md gap-3">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none"
-            />
-            <Button className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
-              Subscribe
-            </Button>
           </div>
         </div>
       </section>

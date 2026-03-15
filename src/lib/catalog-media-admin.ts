@@ -6,6 +6,10 @@ import type {
   StorefrontKind,
 } from '@/lib/storefront-types';
 import {
+  getStorefrontCatalogSalesStats,
+  syncStorefrontCatalogProducts,
+} from '@/lib/storefront-catalog';
+import {
   getStorefrontMediaOverrides,
   getStorefrontSeedProductById,
   getStorefrontSeedProducts,
@@ -34,6 +38,15 @@ export interface CatalogMediaEntry {
   fallbackImage: string;
   storefrontImage: string;
   hasOverride: boolean;
+  catalog: {
+    syncedToBackend: boolean;
+    sku: string;
+    lastSeedSyncAt?: string;
+    orderCount: number;
+    unitsSold: number;
+    revenueKes: number;
+    lastSoldAt?: string;
+  };
   media: {
     primaryImageUrl: string | null;
     gallery: string[];
@@ -140,9 +153,13 @@ export async function listCatalogMediaEntries(kind?: StorefrontKind, ids?: strin
       return left.title.localeCompare(right.title);
     });
 
+  const catalogProducts = await syncStorefrontCatalogProducts(seeds.map((product) => product.id));
+  const catalogSales = await getStorefrontCatalogSalesStats(seeds.map((product) => product.id));
   const overrides = await getStorefrontMediaOverrides(seeds.map((product) => product.id));
 
   return seeds.map((seed) => {
+    const catalog = catalogProducts.get(seed.id);
+    const sales = catalogSales.get(seed.id);
     const override = overrides.get(seed.id);
     const metadata = readMediaMetadata((override?.metadata as Record<string, unknown> | undefined) ?? null);
 
@@ -157,6 +174,17 @@ export async function listCatalogMediaEntries(kind?: StorefrontKind, ids?: strin
       fallbackImage: seed.image,
       storefrontImage: override?.image ?? seed.image,
       hasOverride: Boolean(override),
+      catalog: {
+        syncedToBackend: Boolean(catalog),
+        sku:
+          catalog?.sku ??
+          seed.id.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toUpperCase(),
+        lastSeedSyncAt: catalog?.lastSeedSyncAt,
+        orderCount: sales?.orderCount ?? 0,
+        unitsSold: sales?.unitsSold ?? 0,
+        revenueKes: sales?.revenueKes ?? 0,
+        lastSoldAt: sales?.lastSoldAt,
+      },
       media: {
         primaryImageUrl: override?.image ?? null,
         gallery: override?.gallery ?? [],

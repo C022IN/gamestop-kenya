@@ -45,6 +45,15 @@ interface CatalogMediaProduct {
   fallbackImage: string;
   storefrontImage: string;
   hasOverride: boolean;
+  catalog: {
+    syncedToBackend: boolean;
+    sku: string;
+    lastSeedSyncAt?: string;
+    orderCount: number;
+    unitsSold: number;
+    revenueKes: number;
+    lastSoldAt?: string;
+  };
   media: {
     primaryImageUrl: string | null;
     gallery: string[];
@@ -186,6 +195,24 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
     return filteredProducts.find((product) => product.id === selectedId) ?? filteredProducts[0] ?? null;
   }, [filteredProducts, selectedId]);
 
+  const catalogSummary = useMemo(() => {
+    return products.reduce(
+      (summary, product) => {
+        summary.syncedProducts += product.catalog.syncedToBackend ? 1 : 0;
+        summary.productsSold += product.catalog.unitsSold > 0 ? 1 : 0;
+        summary.unitsSold += product.catalog.unitsSold;
+        summary.revenueKes += product.catalog.revenueKes;
+        return summary;
+      },
+      {
+        syncedProducts: 0,
+        productsSold: 0,
+        unitsSold: 0,
+        revenueKes: 0,
+      }
+    );
+  }, [products]);
+
   useEffect(() => {
     if (!filteredProducts.length) {
       setSelectedId('');
@@ -309,10 +336,10 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
       <div className="border-b border-white/10 bg-black/30">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">Catalog Media Ops</p>
-            <h1 className="mt-2 text-3xl font-black">Licensed product imagery</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">Catalog Ops</p>
+            <h1 className="mt-2 text-3xl font-black">Catalog media and product tracking</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-300">
-              Save approved game, hardware, and gift-card artwork into Supabase so storefront pages stop depending on placeholders.
+              Keep the storefront catalog synced, track sold products, and manage approved artwork in one place.
             </p>
             <p className="mt-3 text-xs text-slate-400">
               Signed in as {admin.name}
@@ -348,37 +375,41 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
             <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/15 text-red-300">
               <ImageUp className="h-5 w-5" />
             </div>
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Managed scope</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Catalog scope</p>
             <p className="mt-2 text-2xl font-black">{products.length.toLocaleString()}</p>
-            <p className="mt-2 text-sm text-slate-300">Storefront products ready for official or licensed media overrides.</p>
+            <p className="mt-2 text-sm text-slate-300">
+              {catalogSummary.productsSold} sold products | {catalogSummary.unitsSold.toLocaleString()} units
+            </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-300">
               <Database className="h-5 w-5" />
             </div>
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Persistence</p>
-            <p className="mt-2 text-2xl font-black">{hasSupabase ? 'Supabase ready' : 'Read-only fallback'}</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Backend sync</p>
+            <p className="mt-2 text-2xl font-black">
+              {hasSupabase ? `${catalogSummary.syncedProducts} synced` : 'Read-only'}
+            </p>
             <p className="mt-2 text-sm text-slate-300">
               {hasSupabase
-                ? 'Changes save into products and product_media, then flow into the storefront.'
-                : 'Catalog browsing still works, but saving is disabled until Supabase server env is configured.'}
+                ? 'Products are mirrored into Supabase so sales and media stay tied to the same catalog.'
+                : 'Browse only until Supabase server env is configured.'}
             </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/15 text-sky-300">
               <ShieldCheck className="h-5 w-5" />
             </div>
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Licensing rule</p>
-            <p className="mt-2 text-lg font-black">Use approved assets only</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Sales tracked</p>
+            <p className="mt-2 text-lg font-black">{formatKes(catalogSummary.revenueKes)} linked revenue</p>
             <p className="mt-2 text-sm text-slate-300">
-              Save URLs for official brand art, distributor-provided art, or owned assets. Do not ingest scraped third-party files without permission.
+              Use approved assets only. Sold items are now linked back to catalog products for internal tracking.
             </p>
           </div>
         </div>
 
         {!hasSupabase && (
           <div className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
-            Supabase persistence is not configured in this environment. You can review the catalog and prep metadata, but save and clear actions stay disabled until server credentials are present.
+            Supabase is not configured. You can review the catalog, but saving and backend sync stay disabled.
           </div>
         )}
 
@@ -443,7 +474,7 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
                 {loading ? (
                   <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-[#0b1220] p-4 text-sm text-slate-300">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading catalog media...
+                    Loading catalog...
                   </div>
                 ) : filteredProducts.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-white/10 bg-[#0b1220] p-4 text-sm text-slate-400">
@@ -489,11 +520,13 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
                             <span>{formatKes(product.price)}</span>
                             {product.platform && <span>{product.platform}</span>}
                             {product.isDigital && <span>Digital</span>}
+                            <span>{product.catalog.unitsSold} sold</span>
                           </div>
                           <div className="mt-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em]">
                             <span className={product.hasOverride ? 'text-emerald-300' : 'text-slate-500'}>
                               {product.hasOverride ? 'DB media active' : 'Local fallback'}
                             </span>
+                            <span className="text-slate-500">{product.catalog.sku}</span>
                           </div>
                         </div>
                       </div>
@@ -511,7 +544,7 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                     <div className="mb-4 flex items-center justify-between">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Current preview</p>
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Product detail</p>
                         <h2 className="mt-2 text-2xl font-black">{selectedProduct.title}</h2>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-slate-300">
@@ -552,9 +585,26 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2 text-xs">
                       <span className="rounded-full bg-white/10 px-3 py-1 text-slate-200">{selectedProduct.id}</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-slate-200">{selectedProduct.catalog.sku}</span>
                       <span className="rounded-full bg-white/10 px-3 py-1 text-slate-200">{formatKes(selectedProduct.price)}</span>
+                      <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-200">
+                        {selectedProduct.catalog.unitsSold} units sold
+                      </span>
+                      <span className="rounded-full bg-sky-500/10 px-3 py-1 text-sky-200">
+                        {selectedProduct.catalog.orderCount} orders
+                      </span>
                       {selectedProduct.originalPrice && (
                         <span className="rounded-full bg-white/10 px-3 py-1 text-slate-200">Was {formatKes(selectedProduct.originalPrice)}</span>
+                      )}
+                      {selectedProduct.catalog.lastSoldAt && (
+                        <span className="rounded-full bg-violet-500/10 px-3 py-1 text-violet-200">
+                          Sold {new Date(selectedProduct.catalog.lastSoldAt).toLocaleDateString()}
+                        </span>
+                      )}
+                      {selectedProduct.catalog.lastSeedSyncAt && (
+                        <span className="rounded-full bg-white/10 px-3 py-1 text-slate-200">
+                          Synced {new Date(selectedProduct.catalog.lastSeedSyncAt).toLocaleDateString()}
+                        </span>
                       )}
                       {selectedProduct.media.lastSyncedAt && (
                         <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-200">
@@ -567,9 +617,9 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                     <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Source notes</p>
                     <div className="mt-4 space-y-3 text-sm text-slate-300">
-                      <p>Use official publisher, platform, distributor, or owned asset URLs only.</p>
-                      <p>Primary image URL becomes the storefront default. Gallery URLs are stored in product_media order.</p>
-                      <p>Image aspect, fit, and position control how the storefront cards frame the product.</p>
+                      <p>Use official, licensed, or owned asset URLs only.</p>
+                      <p>Primary image becomes the storefront default. Gallery URLs follow the saved order.</p>
+                      <p>Aspect, fit, and position control the card crop.</p>
                     </div>
                     {selectedProduct.media.sourceUrl && (
                       <a
@@ -588,7 +638,7 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
                   <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Editor</p>
-                      <h2 className="mt-2 text-2xl font-black">Save approved media metadata</h2>
+                      <h2 className="mt-2 text-2xl font-black">Update media</h2>
                     </div>
                     <div className="flex flex-wrap gap-3">
                       <Button

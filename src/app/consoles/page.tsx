@@ -16,6 +16,7 @@ import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { hardwareCatalog } from '@/data/hardware-catalog';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
 const platformFilters = ['All', 'PlayStation', 'Xbox', 'Nintendo'] as const;
@@ -32,15 +33,9 @@ const starterAddonIds = [
 ] as const;
 
 export default function ConsolesPage() {
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const { currency, toggleCurrency } = useStoreCurrency();
   const [selectedPlatform, setSelectedPlatform] = useState<(typeof platformFilters)[number]>('All');
   const mergedHardware = useStorefrontProducts('hardware', hardwareCatalog);
-
-  const toggleCurrency = () => {
-    setCurrency((prev) =>
-      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
-    );
-  };
 
   const productMap = useMemo(
     () => new Map(mergedHardware.map((product) => [product.id, product])),
@@ -82,7 +77,7 @@ export default function ConsolesPage() {
                 PlayStation, Xbox, and Nintendo consoles in one shelf.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 md:text-lg">
-                Compare PS5, Xbox, and Nintendo hardware with KES pricing, clear product photos, and the right add-ons ready in the same basket.
+                Compare PS5, Xbox, and Nintendo hardware with clear pricing and matching add-ons.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
@@ -203,7 +198,7 @@ export default function ConsolesPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
                 Starter Add-Ons
               </p>
-              <h2 className="mt-2 text-3xl font-black text-gray-900">Pair the console with the gear buyers usually need next</h2>
+              <h2 className="mt-2 text-3xl font-black text-gray-900">Add the gear buyers usually need next</h2>
             </div>
             <Button asChild variant="outline" className="rounded-xl border-red-200 text-red-600 hover:bg-red-50">
               <Link href="/accessories">See All Accessories</Link>

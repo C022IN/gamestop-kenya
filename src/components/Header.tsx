@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, User, ShoppingCart, Menu, Globe, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import BrandLogo from '@/components/BrandLogo';
 import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 
@@ -29,6 +30,7 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [announcementIndex, setAnnouncementIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showNavBadges, setShowNavBadges] = useState(false);
   const { itemCount } = useCart();
 
   useEffect(() => {
@@ -36,6 +38,32 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
       setAnnouncementIndex((prev) => (prev + 1) % announcements.length);
     }, 4000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const storageKey = 'gamestop.storefront.nav-badges.dismissed';
+
+    try {
+      if (window.sessionStorage.getItem(storageKey) === '1') {
+        return;
+      }
+    } catch {
+      // Ignore storage errors and fall back to in-memory timing below.
+    }
+
+    setShowNavBadges(true);
+
+    const timer = window.setTimeout(() => {
+      setShowNavBadges(false);
+
+      try {
+        window.sessionStorage.setItem(storageKey, '1');
+      } catch {
+        // Ignore storage errors.
+      }
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const navigationItems = [
@@ -73,13 +101,7 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
             </Button>
 
             <Link href="/" className="flex items-center gap-2">
-              <div className="text-2xl font-black tracking-tight">
-                <span className="text-gray-900">Game</span>
-                <span className="text-red-600">Stop</span>
-              </div>
-              <span className="rounded bg-green-600 px-2 py-1 text-xs font-bold text-white">
-                KENYA
-              </span>
+              <BrandLogo size="lg" />
             </Link>
           </div>
 
@@ -159,7 +181,7 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
                 className="relative flex items-center gap-2 whitespace-nowrap px-3 py-3 text-sm transition-colors hover:bg-gray-800 hover:text-red-400"
               >
                 {item.label}
-                {item.badge && (
+                {showNavBadges && item.badge && (
                   <span
                     className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
                       item.badge === 'NEW' ? 'bg-purple-600 text-white' : 'bg-yellow-500 text-black'

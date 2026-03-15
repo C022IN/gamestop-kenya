@@ -8,7 +8,6 @@ import {
   Gamepad2,
   ShieldCheck,
   Sparkles,
-  Zap,
 } from 'lucide-react';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
@@ -16,6 +15,7 @@ import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { gameCatalog } from '@/data/game-catalog';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
 const platformFilters = ['All Platforms', 'PS5', 'Xbox', 'Switch', 'PC'] as const;
@@ -30,34 +30,28 @@ const editorialGroups = [
   {
     title: 'Story-First Sessions',
     kicker: 'For solo players',
-    description: 'High-impact campaigns and cinematic pacing for players who want a premium single-player weekend.',
+    description: 'Big single-player campaigns for weekend sessions.',
     productIds: ['marvel-spiderman-2-ps5', 'god-of-war-ragnarok-ps5', 'cyberpunk-2077-ultimate-pc'],
   },
   {
     title: 'Competitive Weekend Picks',
     kicker: 'For squads and rivals',
-    description: 'Sports, racing, and fighters for living-room tournaments and after-work energy.',
+    description: 'Sports, racing, and fighters for quick competitive sessions.',
     productIds: ['ea-fc-25-ps5', 'forza-horizon-5-xbox', 'mortal-kombat-1-xbox'],
   },
   {
     title: 'Budget Library Builders',
     kicker: 'For value hunters',
-    description: 'Pre-owned and discounted titles that stretch a gaming budget without feeling second-tier.',
+    description: 'Pre-owned and discounted picks for tighter budgets.',
     productIds: ['cyberpunk-2077-pre-owned-ps5', 'forza-horizon-5-pre-owned-xbox', 'hogwarts-legacy-xbox'],
   },
 ];
 
 export default function GamesPage() {
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const { currency, toggleCurrency } = useStoreCurrency();
   const [selectedPlatform, setSelectedPlatform] = useState<(typeof platformFilters)[number]>('All Platforms');
   const [selectedCategory, setSelectedCategory] = useState<(typeof categoryFilters)[number]>('all');
   const mergedCatalog = useStorefrontProducts('games', gameCatalog);
-
-  const toggleCurrency = () => {
-    setCurrency((prev) =>
-      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
-    );
-  };
 
   const filteredProducts = useMemo(() => {
     return mergedCatalog.filter((product) => {
@@ -96,7 +90,7 @@ export default function GamesPage() {
                 Shop PS5, Xbox, Switch, and PC games in one shelf.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 md:text-lg">
-                Browse new releases, pre-owned value picks, sports titles, fighters, and story-driven games with KES pricing and fast checkout.
+                New releases, pre-owned picks, and fast KES-first checkout.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
@@ -288,33 +282,6 @@ export default function GamesPage() {
               </p>
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="bg-[#050816] py-14 text-white">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-200">Why players shop here</p>
-              <h2 className="mt-2 text-3xl font-black">Everything stays in one basket.</h2>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
-                Buy games, gift cards, and hardware from the same store without bouncing between separate pages or payment flows.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                'KES pricing is visible first, with a quick USD toggle when needed.',
-                'Gift cards, subscriptions, and games can be checked out together where the cart allows it.',
-                'Pre-owned and discounted titles stay easy to spot when the budget matters.',
-                'M-Pesa and card payments stay available across the different checkout paths.',
-              ].map((item) => (
-                <div key={item} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-slate-200">
-                  <Zap className="mb-3 h-5 w-5 text-red-300" />
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 

@@ -71,34 +71,34 @@ export default function GiftCardBuilder({ currency }: GiftCardBuilderProps) {
         <div className="bg-gradient-to-br from-gray-950 via-red-950 to-gray-950 p-8 text-white md:p-10">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-red-100">
             <Sparkles className="h-3.5 w-3.5" />
-            GameStop-Style Store Card
+            Custom Store Card
           </div>
           <h2 className="max-w-xl text-3xl font-black leading-tight md:text-4xl">
-            Build a custom GameStop Kenya gift card for instant gifting or physical handoff.
+            Build a GameStop Kenya gift card.
           </h2>
           <p className="mt-4 max-w-xl text-sm leading-6 text-red-100/90 md:text-base">
-            Choose a format, amount, and card design, then send it through the same checkout and payment flow as the rest of the storefront.
+            Choose the format, amount, and design.
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <Mail className="mb-2 h-5 w-5 text-red-200" />
               <p className="text-sm font-semibold">Digital Delivery</p>
-              <p className="mt-1 text-xs text-red-100/80">Fast fulfillment after M-Pesa confirmation.</p>
+              <p className="mt-1 text-xs text-red-100/80">Sent after payment.</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <Package className="mb-2 h-5 w-5 text-red-200" />
               <p className="text-sm font-semibold">Physical Card</p>
-              <p className="mt-1 text-xs text-red-100/80">Add a tangible gift card to mixed-product orders.</p>
+              <p className="mt-1 text-xs text-red-100/80">For handoff or delivery.</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <MessageSquareText className="mb-2 h-5 w-5 text-red-200" />
               <p className="text-sm font-semibold">Gift Message</p>
-              <p className="mt-1 text-xs text-red-100/80">Personalize the order before it reaches the recipient.</p>
+              <p className="mt-1 text-xs text-red-100/80">Add a short note.</p>
             </div>
           </div>
 
           <div className="mt-8 rounded-[1.75rem] border border-white/10 bg-black/20 p-5 shadow-[0_24px_60px_rgba(0,0,0,0.28)] backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-200">Live preview</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-200">Preview</p>
             <div className={`mt-4 overflow-hidden rounded-[1.6rem] border border-white/10 bg-gradient-to-br ${activeDesign.accent} p-5 shadow-[0_22px_48px_rgba(0,0,0,0.3)]`}>
               <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
                 <span>GameStop Kenya</span>
@@ -106,12 +106,12 @@ export default function GiftCardBuilder({ currency }: GiftCardBuilderProps) {
               </div>
               <p className="mt-8 text-3xl font-black text-white md:text-4xl">{formatPrice(activeAmount || 0)}</p>
               <p className="mt-2 text-sm text-white/80">
-                {recipientName ? `For ${recipientName}` : 'Ready for gifting'}
+                {recipientName ? `For ${recipientName}` : 'Gift ready'}
               </p>
               <div className="mt-10 rounded-2xl border border-white/15 bg-black/20 p-4 text-sm text-white/90">
                 <p className="font-semibold">{senderName ? `From ${senderName}` : 'From GameStop Kenya customer'}</p>
                 <p className="mt-2 line-clamp-2 text-white/70">
-                  {message || 'Add a personal note and send this through the same secure checkout as the rest of the store.'}
+                  {message || 'Add a note.'}
                 </p>
               </div>
             </div>
@@ -121,19 +121,19 @@ export default function GiftCardBuilder({ currency }: GiftCardBuilderProps) {
         <div className="p-6 md:p-8">
           <div className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-900">Choose delivery format</label>
+              <label className="mb-2 block text-sm font-semibold text-gray-900">Delivery</label>
               <div className="grid gap-3 sm:grid-cols-2">
                 {[
                   {
                     id: 'digital',
                     label: 'Digital',
-                    description: 'Email-ready gift card with instant fulfillment support.',
+                    description: 'Sent by email after payment.',
                     icon: Mail,
                   },
                   {
                     id: 'physical',
                     label: 'Physical',
-                    description: 'Printed-style store card for surprise gifts and handovers.',
+                    description: 'For handoff or delivery.',
                     icon: Gift,
                   },
                 ].map(({ id, label, description, icon: Icon }) => (
@@ -186,7 +186,7 @@ export default function GiftCardBuilder({ currency }: GiftCardBuilderProps) {
                   step="100"
                   value={customAmount}
                   onChange={(event) => setCustomAmount(event.target.value)}
-                  placeholder="Enter any amount from KSh 500"
+                  placeholder="Minimum KSh 500"
                   className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-red-500 focus:outline-none"
                 />
               </div>
@@ -267,8 +267,8 @@ export default function GiftCardBuilder({ currency }: GiftCardBuilderProps) {
                   <p className="text-sm font-semibold text-gray-900">Ready to add</p>
                   <p className="mt-1 text-xs text-gray-500">
                     {selectedFormat === 'digital'
-                      ? 'Digital gift cards skip shipping and stay payment-ready.'
-                      : 'Physical cards join the regular shipping flow during checkout.'}
+                      ? 'Sent by email after payment.'
+                      : 'Ships with the rest of your order.'}
                   </p>
                 </div>
                 <div className="text-right">
@@ -283,7 +283,7 @@ export default function GiftCardBuilder({ currency }: GiftCardBuilderProps) {
               onClick={handleAddToCart}
               className="w-full rounded-xl bg-red-600 py-5 font-bold hover:bg-red-700"
             >
-              Add Custom Gift Card To Cart
+              Add Gift Card To Cart
             </Button>
           </div>
         </div>

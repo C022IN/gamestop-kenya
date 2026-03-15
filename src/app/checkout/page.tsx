@@ -13,6 +13,7 @@ import {
   getCheckoutCountryLabel,
   isStateRequiredForCheckout,
 } from '@/lib/checkout-countries';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
 import {
   AlertCircle,
   ArrowLeft,
@@ -78,7 +79,7 @@ function CheckoutPageContent() {
   const { items, clearCart, promoCode } = useCart();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const { currency, toggleCurrency } = useStoreCurrency();
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     firstName: '',
     lastName: '',
@@ -125,11 +126,6 @@ function CheckoutPageContent() {
     { number: 3, title: 'Payment', icon: CreditCard },
     { number: 4, title: 'Confirmation', icon: Check },
   ];
-
-  const toggleCurrency = () =>
-    setCurrency((prev) =>
-      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
-    );
 
   const formatPrice = (price: number) => {
     const converted = currency.code === 'USD' ? price / 150 : price;
@@ -376,7 +372,7 @@ function CheckoutPageContent() {
         <Header currency={currency} onCurrencyToggle={toggleCurrency} />
         <div className="container mx-auto px-4 py-24 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Cart is Empty</h1>
-          <p className="text-gray-600 mb-8">Add some items to your cart before checking out.</p>
+          <p className="text-gray-600 mb-8">Add items before checkout.</p>
           <Link href="/">
             <Button className="bg-red-600 hover:bg-red-700">Continue Shopping</Button>
           </Link>
@@ -393,7 +389,7 @@ function CheckoutPageContent() {
         <div className="container mx-auto px-4 py-24 text-center">
           <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-blue-600" />
           <h1 className="text-2xl font-bold text-gray-900">Verifying your Stripe checkout</h1>
-          <p className="mt-2 text-gray-500">Please wait while we confirm your order.</p>
+          <p className="mt-2 text-gray-500">Confirming your order.</p>
         </div>
         <Footer />
       </div>
@@ -593,7 +589,7 @@ function CheckoutPageContent() {
                     </div>
                   </div>
                   <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-                    Stripe uses this destination plus the billing address you confirm later to calculate VAT and sales tax for supported countries, especially US and Europe.
+                    Stripe uses this address to calculate tax where required.
                   </div>
                   <textarea
                     rows={2}
@@ -623,7 +619,7 @@ function CheckoutPageContent() {
                 >
                   <h2 className="text-xl font-bold">Digital Delivery</h2>
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                    No shipping address is required. Choose where your gift cards should be delivered after payment.
+                    No shipping address is required. Choose where your gift cards should go.
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {[
@@ -706,8 +702,8 @@ function CheckoutPageContent() {
 
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
                     {digitalOnly
-                      ? `After payment, your gift cards will be sent via ${deliveryInfo.channel === 'email' ? 'email' : 'WhatsApp'} to ${deliveryTarget}.`
-                      : 'After payment, we will prepare your order for delivery.'}
+                      ? `After payment, your gift cards will be sent by ${deliveryInfo.channel === 'email' ? 'email' : 'WhatsApp'} to ${deliveryTarget}.`
+                      : 'After payment, we will prepare your order.'}
                   </div>
 
                   {!canUseMpesa && !digitalOnly && (
@@ -789,7 +785,7 @@ function CheckoutPageContent() {
                         </div>
                       )}
                       <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-                        Pay securely with card via Stripe.
+                        Secure card checkout with Stripe.
                       </div>
                       <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
                         Taxes are calculated at checkout.
@@ -822,7 +818,7 @@ function CheckoutPageContent() {
 
                   <div className="flex items-center gap-2 text-xs text-gray-400">
                     <Shield className="h-3.5 w-3.5" />
-                    Secure 256-bit SSL encrypted checkout
+                    Secure encrypted checkout
                   </div>
                 </div>
               )}
@@ -835,8 +831,8 @@ function CheckoutPageContent() {
                   <h2 className="text-3xl font-black text-gray-900 mb-2">Order Confirmed</h2>
                   <p className="text-gray-500 mb-6">
                     {confirmationDigitalOnly
-                      ? `Your gift cards will be delivered via ${confirmationDelivery.channel === 'email' ? 'email' : 'WhatsApp'} to ${confirmationTarget}.`
-                      : `We will contact you on ${confirmationCustomer.phone} to confirm delivery.`}
+                      ? `Your gift cards will be delivered by ${confirmationDelivery.channel === 'email' ? 'email' : 'WhatsApp'} to ${confirmationTarget}.`
+                      : `We will contact you on ${confirmationCustomer.phone}.`}
                   </p>
                   <div className="bg-gray-50 rounded-2xl p-5 mb-6 text-left space-y-2">
                     <div className="flex justify-between text-sm"><span className="text-gray-500">Order Number</span><span className="font-mono font-bold">{confirmationOrder?.orderNumber ?? orderNumber}</span></div>
@@ -884,7 +880,7 @@ function CheckoutPageContent() {
                 <div className="flex justify-between font-bold text-base border-t border-gray-100 pt-2"><span>Estimated Total</span><span className="text-red-600">{formatPrice(finalTotal)}</span></div>
               </div>
               <p className="mt-3 text-xs text-gray-400">
-                Final tax depends on your billing or shipping country.
+                Final tax depends on destination.
               </p>
               {customerInfo.firstName && (
                 <div className="border-t border-gray-100 mt-4 pt-4 text-xs text-gray-500 space-y-1">

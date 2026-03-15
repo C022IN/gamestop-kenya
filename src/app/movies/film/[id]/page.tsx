@@ -197,7 +197,7 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
 
             <div className="max-w-4xl">
               <p className="text-sm font-semibold uppercase tracking-[0.34em] text-cyan-200/78">
-                TMDB title page
+                TMDB title
               </p>
               <h1 className="mt-4 text-5xl font-black leading-[0.95] text-white md:text-7xl">
                 {title}
@@ -272,11 +272,11 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
                   </a>
                 )}
                 <Link
-                  href="/movies"
+                  href={`/movies/search?q=${encodeURIComponent(title)}`}
                   className="inline-flex h-14 items-center rounded-xl border border-white/15 bg-white/15 px-7 text-lg font-bold text-white transition-colors hover:bg-white/25"
                 >
                   <Info className="mr-2 h-5 w-5" />
-                  More Titles
+                  Search More
                 </Link>
               </div>
             </div>
@@ -293,7 +293,7 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
                 <p className="mt-1 text-sm text-white/56">
                   {mediaType === 'tv'
                     ? `Starting at Season ${defaultSeason}, Episode ${defaultEpisode}.`
-                    : 'Embedded with the configured compatible player provider.'}
+                    : 'Using the configured player.'}
                 </p>
               </div>
             </div>

@@ -3,7 +3,14 @@
   <rect x="24" y="24" width="592" height="372" rx="28" fill="url(#paint0_linear)"/>
   <circle cx="522" cy="108" r="84" fill="#16A34A" fill-opacity="0.18"/>
   <circle cx="118" cy="318" r="110" fill="#F97316" fill-opacity="0.18"/>
-  <text x="64" y="132" fill="white" font-family="Arial, sans-serif" font-size="32" font-weight="700">GAMESTOP KENYA</text>
+  <g transform="translate(82 87)">
+    <text x="0" y="24" fill="#111827" stroke="#F8FAFC" stroke-width="2.1" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif" font-size="32" font-style="italic" font-weight="800">Game</text>
+    <text x="98" y="24" fill="#DC2626" stroke="#F8FAFC" stroke-width="2.1" paint-order="stroke fill" font-family="Segoe UI, Arial, sans-serif" font-size="32" font-style="italic" font-weight="800">Stop</text>
+    <path d="M4 33C34 38 95 38 171 32" stroke="url(#paint1_linear)" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M185 1L192 1L187 19L180 19L185 1Z" fill="#DC2626"/>
+    <rect x="198" y="0" width="40" height="26" rx="8" fill="#16A34A"/>
+    <text x="218" y="18" text-anchor="middle" fill="white" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="800" letter-spacing="0.6">KE</text>
+  </g>
   <text x="64" y="190" fill="#FEE2E2" font-family="Arial, sans-serif" font-size="58" font-weight="800">GIFT CARD</text>
   <text x="64" y="248" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="24">Redeem online or in store</text>
   <rect x="64" y="292" width="196" height="52" rx="18" fill="#DC2626"/>
@@ -13,6 +20,11 @@
       <stop stop-color="#111827"/>
       <stop offset="0.5" stop-color="#7F1D1D"/>
       <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="paint1_linear" x1="2" y1="34" x2="172" y2="34" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111827"/>
+      <stop offset="0.62" stop-color="#111827"/>
+      <stop offset="1" stop-color="#DC2626"/>
     </linearGradient>
   </defs>
 </svg>

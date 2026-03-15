@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { useStoreCurrency, type StoreCurrency } from '@/hooks/useStoreCurrency';
 import {
   Check,
   CheckCircle2,
@@ -17,8 +17,6 @@ import {
   Tv2,
   Waves,
 } from 'lucide-react';
-
-type Currency = { code: 'KES' | 'USD'; symbol: string };
 type Plan = {
   id: string;
   name: string;
@@ -39,10 +37,10 @@ const plans: Plan[] = [
     kesPrice: 4499,
     badge: 'Starter',
     features: [
-      'M-Pesa activation flow',
-      'Protected playlist URL',
-      'Member login with phone + access code',
-      'WhatsApp setup support',
+      'M-Pesa activation',
+      'Protected playlist',
+      'Phone + code sign-in',
+      'Setup help',
     ],
   },
   {
@@ -54,10 +52,10 @@ const plans: Plan[] = [
     badge: 'Best Value',
     popular: true,
     features: [
-      'M-Pesa activation flow',
-      'Live TV, movies, series, and sports hub',
-      'Priority support queue',
-      'Renewal help on WhatsApp',
+      'M-Pesa activation',
+      'Live TV, movies, and sports',
+      'Priority support',
+      'Renewal help',
     ],
   },
   {
@@ -68,34 +66,28 @@ const plans: Plan[] = [
     kesPrice: 22499,
     badge: 'Long-Term',
     features: [
-      'M-Pesa activation flow',
-      'Protected playlist URL',
-      'Member login with phone + access code',
-      'Long-term support coverage',
+      'M-Pesa activation',
+      'Protected playlist',
+      'Phone + code sign-in',
+      'Long-term support',
     ],
   },
 ];
 
-function getPrice(plan: Plan, currency: Currency) {
+function getPrice(plan: Plan, currency: StoreCurrency) {
   return currency.code === 'USD'
     ? `$${plan.usdPrice.toFixed(2)}`
     : `KSh ${plan.kesPrice.toLocaleString()}`;
 }
 
-function getMonthlyPrice(plan: Plan, currency: Currency) {
+function getMonthlyPrice(plan: Plan, currency: StoreCurrency) {
   return currency.code === 'USD'
     ? `$${(plan.usdPrice / plan.months).toFixed(2)}/mo`
     : `KSh ${Math.round(plan.kesPrice / plan.months).toLocaleString()}/mo`;
 }
 
 export default function IPTVPage() {
-  const [currency, setCurrency] = useState<Currency>({ code: 'KES', symbol: 'KSh' });
-
-  const toggleCurrency = () => {
-    setCurrency((prev) =>
-      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
-    );
-  };
+  const { currency, toggleCurrency } = useStoreCurrency();
 
   return (
     <div className="min-h-screen bg-[#f6f7fb]">
@@ -114,11 +106,10 @@ export default function IPTVPage() {
                   GameStop IPTV
                 </div>
                 <h1 className="mt-5 text-4xl font-black leading-tight md:text-6xl">
-                  One checkout for live TV, movies, series, and sports.
+                  One checkout for live TV, movies, and sports.
                 </h1>
                 <p className="mt-5 max-w-2xl text-lg text-white/[0.66]">
-                  Pay with M-Pesa, get your playlist and member login instantly, and open your media
-                  hub from phone, TV, laptop, or streaming box.
+                  Pay with M-Pesa, get your login, and watch on any screen.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-4">
@@ -152,9 +143,9 @@ export default function IPTVPage() {
 
                 <div className="mt-10 grid gap-3 sm:grid-cols-3">
                   {[
-                    { icon: Radio, title: 'Live TV', text: 'Channel rails and always-on feeds.' },
-                    { icon: PlayCircle, title: 'VOD', text: 'Movies and series in one member hub.' },
-                    { icon: Waves, title: 'Sports', text: 'Provider-driven live event slots.' },
+                    { icon: Radio, title: 'Live TV', text: 'Always-on channels.' },
+                    { icon: PlayCircle, title: 'VOD', text: 'Movies and series.' },
+                    { icon: Waves, title: 'Sports', text: 'Live event slots.' },
                   ].map(({ icon: Icon, title, text }) => (
                     <div
                       key={title}
@@ -171,30 +162,28 @@ export default function IPTVPage() {
               </div>
 
               <div className="rounded-[32px] border border-white/10 bg-white/[0.06] p-6 backdrop-blur-2xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-100/80">
-                  Activation Flow
-                </p>
+                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-100/80">How it works</p>
                 <div className="mt-5 space-y-4">
                   {[
                     {
                       icon: CreditCard,
                       title: '1. Choose a plan',
-                      text: 'Pick the subscription length that matches your household.',
+                      text: 'Pick a plan.',
                     },
                     {
                       icon: Smartphone,
-                      title: '2. Approve the M-Pesa prompt',
-                      text: 'The payment prompt is sent directly to your phone.',
+                      title: '2. Approve M-Pesa',
+                      text: 'Confirm on your phone.',
                     },
                     {
                       icon: LockKeyhole,
-                      title: '3. Save your member access',
-                      text: 'Your phone number and access code are shown immediately after activation.',
+                      title: '3. Save access',
+                      text: 'Your phone and code appear after activation.',
                     },
                     {
                       icon: CheckCircle2,
                       title: '4. Start watching',
-                      text: 'Open the member hub or use the protected playlist URL on compatible players.',
+                      text: 'Open the hub or playlist.',
                     },
                   ].map(({ icon: Icon, title, text }) => (
                     <div
@@ -226,17 +215,17 @@ export default function IPTVPage() {
               {
                 icon: ShieldCheck,
                 title: 'Protected playback',
-                text: 'Each member login is tied to an active subscription before playback is exposed.',
+                text: 'Tied to active subscriptions.',
               },
               {
                 icon: Tv2,
                 title: 'Unified member hub',
-                text: 'Live TV, movies, series, and sports live in one clean catalog.',
+                text: 'Live TV, movies, and sports in one place.',
               },
               {
                 icon: Waves,
                 title: 'Provider-based live events',
-                text: 'Premium sports slots are designed around approved provider feeds instead of public embeds.',
+                text: 'Sports slots use approved feeds.',
               },
             ].map(({ icon: Icon, title, text }) => (
               <article key={title} className="rounded-[28px] border border-slate-200 bg-slate-50 p-6">
@@ -256,7 +245,7 @@ export default function IPTVPage() {
           <div className="mb-10 text-center">
             <h2 className="text-3xl font-black">Choose a plan</h2>
             <p className="mt-2 text-white/[0.58]">
-              Activate once, save your access details, and return any time from the member login page.
+              Activate once and sign in anytime.
             </p>
           </div>
 
@@ -299,31 +288,6 @@ export default function IPTVPage() {
                 </Link>
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white py-14">
-        <div className="container mx-auto max-w-5xl px-4">
-          <div className="rounded-[32px] border border-amber-200 bg-amber-50 p-8">
-            <h2 className="text-2xl font-black text-slate-950">Before you activate</h2>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="rounded-[24px] bg-white p-5">
-                <p className="text-sm font-semibold text-slate-950">Use your payment number</p>
-                <p className="mt-2 text-sm text-slate-600">
-                  Enter the same M-Pesa number you want to use later as your member identifier.
-                </p>
-              </div>
-              <div className="rounded-[24px] bg-white p-5">
-                <p className="text-sm font-semibold text-slate-950">Save your details right away</p>
-                <p className="mt-2 text-sm text-slate-600">
-                  Your access code and protected playlist link appear after activation. Save them before leaving the page.
-                </p>
-              </div>
-            </div>
-            <p className="mt-6 text-sm text-slate-700">
-              Premium sports fixtures, including Champions League slots, require a rights-cleared provider source to be configured in the catalog before they can go live.
-            </p>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ArrowLeft, Radio, ShieldCheck, Tv2, Waves } from 'lucide-react';
+import { ArrowLeft, Radio, Search, ShieldCheck, Tv2, Waves } from 'lucide-react';
 import { getCurrentMovieMember } from '@/lib/movie-session';
 import { hasActiveSubscriptionForProfile } from '@/lib/movie-platform';
 import { CHANNEL_CATEGORIES } from '@/lib/iptv-org';
@@ -43,6 +43,13 @@ export default async function LiveTvPage() {
                 <Radio className="h-4 w-4 text-violet-300" />
                 Live TV
               </div>
+              <Link
+                href="/movies/search"
+                className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white/72 transition-colors hover:bg-white/[0.08] hover:text-white md:inline-flex"
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </Link>
             </div>
 
             <div className="inline-flex items-center gap-2 rounded-full border border-red-500/25 bg-red-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-red-200">
@@ -60,11 +67,10 @@ export default async function LiveTvPage() {
                 Global live access
               </div>
               <h1 className="mt-5 text-4xl font-black leading-tight text-white md:text-6xl">
-                Browse live categories first, then switch channels without leaving the stream.
+                Browse live channels and switch fast.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/62 md:text-lg">
-                The live experience now follows the same dense dashboard language as the member hub:
-                clear categories, a large player, and channel switching that stays fast.
+                Pick a category and keep the player open while you switch.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
@@ -72,7 +78,7 @@ export default async function LiveTvPage() {
                   className="inline-flex items-center gap-2 rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
                 >
                   <Tv2 className="h-4 w-4" />
-                  Open movie dashboard
+                  Open hub
                 </Link>
                 <Link
                   href="/iptv"
@@ -88,12 +94,12 @@ export default async function LiveTvPage() {
               {[
                 {
                   title: 'Sports focus',
-                  copy: 'Champions League and premium fixtures stay surfaced inside sports categories and event rails.',
+                  copy: 'Big fixtures stay easy to find.',
                   icon: Waves,
                 },
                 {
                   title: 'Session ready',
-                  copy: `Signed in as ${memberState.profile.profileId}. Access remains gated by your active IPTV subscription.`,
+                  copy: `Signed in as ${memberState.profile.profileId}. Access follows your active plan.`,
                   icon: ShieldCheck,
                 },
               ].map(({ title, copy, icon: Icon }) => (

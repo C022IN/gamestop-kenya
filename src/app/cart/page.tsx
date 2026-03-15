@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { getCartRecommendations } from '@/data/game-catalog';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 import { getCartPricing, getPromoDetails, normalizePromoCode } from '@/lib/cart-pricing';
 import {
@@ -35,7 +36,7 @@ export default function CartPage() {
     clearPromo,
     addItem,
   } = useCart();
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const { currency, toggleCurrency } = useStoreCurrency();
   const [promoInput, setPromoInput] = useState(promoCode ?? '');
   const [promoFeedback, setPromoFeedback] = useState('');
   const recommendedProducts = useStorefrontProducts('games', recommendedFallbackProducts).map((product) => ({
@@ -45,11 +46,6 @@ export default function CartPage() {
     image: product.image,
     platform: product.platform ?? 'Game',
   }));
-
-  const toggleCurrency = () =>
-    setCurrency((prev) =>
-      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
-    );
 
   useEffect(() => {
     setPromoInput(promoCode ?? '');
@@ -99,7 +95,7 @@ export default function CartPage() {
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-3">Your cart is empty</h1>
             <p className="text-gray-500 mb-8">
-              Looks like you have not added anything yet. Start browsing our collection.
+              Add something to get started.
             </p>
             <Link href="/">
               <Button className="bg-red-600 hover:bg-red-700 px-8">Continue Shopping</Button>
@@ -275,7 +271,7 @@ export default function CartPage() {
               {appliedPromo && promoFeedback && (
                 <p className="text-gray-500 text-xs mt-2 font-medium">{promoFeedback}</p>
               )}
-              <p className="text-gray-400 text-xs mt-2">Try: GAMESTOP10 for 10% off</p>
+              <p className="text-gray-400 text-xs mt-2">Try GAMESTOP10.</p>
             </div>
           </div>
 
@@ -310,7 +306,7 @@ export default function CartPage() {
                 )}
                 {digitalOnly && (
                   <p className="text-xs text-emerald-600">
-                    Digital gift card orders skip shipping and stay payment-ready.
+                    Digital orders skip shipping.
                   </p>
                 )}
                 <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-base">
@@ -318,9 +314,7 @@ export default function CartPage() {
                   <span className="text-red-600">{formatPrice(finalTotal)}</span>
                 </div>
               </div>
-              <p className="mb-5 text-xs text-gray-400">
-                VAT and sales tax are calculated in Stripe Checkout for card orders based on billing or shipping country.
-              </p>
+              <p className="mb-5 text-xs text-gray-400">Tax is calculated at secure checkout.</p>
 
               <div className="mb-5">
                 <p className="text-xs text-gray-400 uppercase tracking-wider mb-2 font-semibold">
@@ -363,7 +357,7 @@ export default function CartPage() {
         </div>
 
         <section className="mt-10">
-          <h2 className="text-xl font-bold mb-5">You Might Also Like</h2>
+          <h2 className="text-xl font-bold mb-5">Suggested</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {recommendedProducts.map((rec) => (
               <div

@@ -10,7 +10,6 @@ import {
   Mail,
   MessageCircleMore,
   Package,
-  ShieldCheck,
   WalletCards,
 } from 'lucide-react';
 import Header from '@/components/Header';
@@ -20,10 +19,9 @@ import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import {
   giftCardBrands,
-  giftCardFaqs,
-  giftCardHighlights,
   giftCardProducts,
 } from '@/data/gift-cards';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
 const categoryFilters = [
@@ -35,18 +33,10 @@ const categoryFilters = [
 ] as const;
 
 export default function GiftCardsPage() {
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const { currency, toggleCurrency } = useStoreCurrency();
   const [selectedCategory, setSelectedCategory] = useState<(typeof categoryFilters)[number]['id']>('all');
   const [selectedBrand, setSelectedBrand] = useState<string>('All brands');
   const products = useStorefrontProducts('gift-cards', giftCardProducts);
-
-  const toggleCurrency = () => {
-    setCurrency((prev) =>
-      prev.code === 'KES'
-        ? { code: 'USD', symbol: '$' }
-        : { code: 'KES', symbol: 'KSh' }
-    );
-  };
 
   const filteredProducts = products.filter((product) => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
@@ -78,10 +68,10 @@ export default function GiftCardsPage() {
                 Gift Cards
               </div>
               <h1 className="max-w-3xl text-4xl font-black leading-tight md:text-6xl">
-                GameStop-style gift cards for store credit, platform wallets, and instant digital gifting.
+                Gift cards for store credit, wallets, and digital delivery.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-red-100/90 md:text-lg">
-                This page is structured after the GameStop gift-card storefront model: quick access to store cards, digital gift cards, subscription codes, and brand-led browsing in one place.
+                Store cards, wallet top-ups, and subscriptions in one checkout.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild className="rounded-xl bg-white px-6 font-bold text-red-700 hover:bg-red-50">
@@ -103,7 +93,7 @@ export default function GiftCardsPage() {
               <div className="relative min-h-[24rem] overflow-hidden rounded-[2rem] border border-white/10 bg-white/8 p-5 shadow-plan-dark backdrop-blur">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(248,250,252,0.16),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(248,113,113,0.22),_transparent_28%)]" />
                 <div className="absolute right-5 top-5 rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-red-100">
-                  Inspired by GameStop gift-card framing
+                  Gift-card layout
                 </div>
                 <div className="relative h-full">
                   <div className="absolute left-4 top-16 z-20 w-[62%] overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/20 p-4 shadow-[0_26px_70px_rgba(0,0,0,0.32)]">
@@ -128,7 +118,7 @@ export default function GiftCardsPage() {
                     </div>
                   ))}
                   <div className="absolute bottom-5 left-5 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-100 backdrop-blur">
-                    Better fit, cleaner framing, less crop.
+                    Cleaner framing.
                   </div>
                 </div>
               </div>
@@ -138,13 +128,13 @@ export default function GiftCardsPage() {
                   <div className="mb-4 inline-flex rounded-full bg-emerald-400/15 p-3 text-emerald-200">
                     <Mail className="h-5 w-5" />
                   </div>
-                  <h2 className="text-2xl font-black">Shop Digital Gift Cards</h2>
+                  <h2 className="text-2xl font-black">Digital cards</h2>
                   <p className="mt-3 text-sm leading-6 text-gray-200">
-                    Last-minute gifting with M-Pesa-ready checkout, fast code fulfillment, and platform wallet options.
+                    Fast wallet and subscription gifting.
                   </p>
                   <div className="mt-6 flex items-center justify-between text-sm text-emerald-200">
                     <span>{digitalCount} digital products</span>
-                    <span>Best for instant delivery</span>
+                    <span>Instant delivery</span>
                   </div>
                 </div>
 
@@ -152,13 +142,13 @@ export default function GiftCardsPage() {
                   <div className="mb-4 inline-flex rounded-full bg-amber-300/15 p-3 text-amber-200">
                     <Package className="h-5 w-5" />
                   </div>
-                  <h2 className="text-2xl font-black">Shop Physical Gift Cards</h2>
+                  <h2 className="text-2xl font-black">Physical cards</h2>
                   <p className="mt-3 text-sm leading-6 text-gray-200">
-                    Tangible store cards for gifting, bundles, and mixed checkout orders with regular delivery.
+                    Physical cards for gifting.
                   </p>
                   <div className="mt-6 flex items-center justify-between text-sm text-amber-100">
                     <span>{physicalCount} physical options</span>
-                    <span>Best for hand-delivered gifts</span>
+                    <span>Hand-delivered gifts</span>
                   </div>
                 </div>
               </div>
@@ -232,7 +222,7 @@ export default function GiftCardsPage() {
                 Browse all gift cards by type and brand
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-500">
-                Store cards, digital wallet top-ups, subscription codes, and virtual-currency picks are grouped for a faster browse and a cleaner add-to-cart flow.
+                Filter by type or brand for a faster browse.
               </p>
             </div>
 
@@ -267,12 +257,12 @@ export default function GiftCardsPage() {
                   </div>
                   <p className="text-sm leading-6 text-gray-600">
                     {product.category === 'store'
-                      ? 'Best for general store balance, gifting, and flexible basket checkout.'
+                      ? 'Best for store balance and gifting.'
                       : product.category === 'subscription'
-                        ? 'Best for recurring membership access, online services, and month-based plans.'
+                        ? 'Best for memberships and online services.'
                         : product.category === 'virtual-currency'
-                          ? 'Best for skins, in-game currency, subscriptions, and creator-support spending.'
-                          : 'Best for fast wallet top-ups before buying games, DLC, or launch-day content.'}
+                          ? 'Best for in-game currency and subscriptions.'
+                          : 'Best for fast wallet top-ups.'}
                   </p>
                 </div>
               </div>
@@ -283,77 +273,10 @@ export default function GiftCardsPage() {
             <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center">
               <p className="text-lg font-semibold text-gray-900">No gift cards match that filter yet.</p>
               <p className="mt-2 text-sm text-gray-500">
-                Switch brand or category filters to see more products.
+                Change the brand or category filter.
               </p>
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="bg-gray-950 py-14 text-white">
-        <div className="container mx-auto px-4">
-          <div className="mb-8 flex items-center gap-3">
-            <ShieldCheck className="h-6 w-6 text-emerald-400" />
-            <div>
-              <h2 className="text-2xl font-black">Integrated with checkout and payment</h2>
-              <p className="text-sm text-gray-400">
-                Gift-card orders now flow through the same cart, promo, and payment experience as the rest of the storefront.
-              </p>
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {giftCardHighlights.map((highlight) => (
-              <div key={highlight} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                <p className="text-sm leading-6 text-gray-200">{highlight}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-gray-50 py-14">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-            <div className="rounded-[2rem] bg-white p-8 shadow-sm ring-1 ring-gray-100">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">Frequently Asked Questions</p>
-              <h2 className="mt-2 text-3xl font-black text-gray-900">Gift card support and delivery details</h2>
-              <div className="mt-6 space-y-3">
-                {giftCardFaqs.map((faq) => (
-                  <details key={faq.question} className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
-                    <summary className="cursor-pointer text-sm font-semibold text-gray-900">
-                      {faq.question}
-                    </summary>
-                    <p className="mt-3 text-sm leading-6 text-gray-600">{faq.answer}</p>
-                  </details>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] bg-gradient-to-br from-red-600 to-red-700 p-8 text-white shadow-lg">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-100">
-                Need Help?
-              </p>
-              <h2 className="mt-2 text-3xl font-black">Check balances, redeem codes, or finish your order fast.</h2>
-              <p className="mt-4 text-sm leading-6 text-red-50/90">
-                If you need redemption guidance or want to confirm the right card before paying, contact support or head straight to checkout once your cart is ready.
-              </p>
-              <div className="mt-8 space-y-3">
-                <Button asChild className="w-full rounded-xl bg-white font-bold text-red-700 hover:bg-red-50">
-                  <Link href="/cart">Review Cart</Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="w-full rounded-xl border-white/30 bg-transparent font-bold text-white hover:bg-white/10"
-                >
-                  <Link href="/contact">Contact Support</Link>
-                </Button>
-              </div>
-              <p className="mt-6 text-xs uppercase tracking-[0.24em] text-red-100/80">
-                Promo code hint: use GAMESTOP10 in cart.
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 

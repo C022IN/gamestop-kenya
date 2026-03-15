@@ -1,5 +1,9 @@
 import 'server-only';
 import type { CartItem } from '@/context/CartContext';
+import {
+  getStorefrontCatalogSeed,
+  syncStorefrontCatalogProducts,
+} from '@/lib/storefront-catalog';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 
 export interface StoreCheckoutCustomerInfo {
@@ -188,6 +192,14 @@ export async function createStoreOrder(params: {
 
   const supabase = getSupabaseAdminClient();
   if (supabase) {
+    const catalogProductIds = params.items
+      .map((item) => getStorefrontCatalogSeed(item.id)?.id ?? null)
+      .filter((id): id is string => Boolean(id));
+
+    if (catalogProductIds.length > 0) {
+      await syncStorefrontCatalogProducts(catalogProductIds);
+    }
+
     const { data: orderRow } = await supabase
       .from('orders')
       .insert({
@@ -213,7 +225,7 @@ export async function createStoreOrder(params: {
     await supabase.from('order_items').insert(
       params.items.map((item) => ({
         order_id: id,
-        product_id: null,
+        product_id: getStorefrontCatalogSeed(item.id)?.id ?? null,
         title: item.title,
         quantity: item.quantity,
         unit_price_kes: item.price,

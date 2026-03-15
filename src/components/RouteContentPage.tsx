@@ -48,6 +48,14 @@ interface RouteContentPageProps {
 }
 
 export default function RouteContentPage({ content }: RouteContentPageProps) {
+  const highlights = content.highlights.slice(0, 3);
+  const sections = content.sections.slice(0, 2).map((section) => ({
+    ...section,
+    points: section.points.slice(0, 2),
+  }));
+  const faqs = content.faqs?.slice(0, 3) ?? [];
+  const relatedLinks = content.relatedLinks.slice(0, 2);
+
   return (
     <StorefrontPageShell>
       <section className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(220,38,38,0.2),_transparent_24%),radial-gradient(circle_at_82%_18%,_rgba(59,130,246,0.14),_transparent_22%),linear-gradient(135deg,_#030712,_#111827_48%,_#1f2937_100%)] py-16 text-white">
@@ -169,11 +177,9 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
             <div className="mb-8 flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-red-500">
-                  Featured Picks
+                  Featured
                 </p>
-                <h2 className="mt-2 text-3xl font-black text-slate-900">
-                  Gear and add-ons for this platform
-                </h2>
+                <h2 className="mt-2 text-3xl font-black text-slate-900">Platform Picks</h2>
               </div>
             </div>
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -219,9 +225,9 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
 
       <section className="py-14">
         <div className="container mx-auto px-4">
-          <h2 className="mb-6 text-2xl font-bold text-gray-900">Why Shop Here</h2>
+          <h2 className="mb-6 text-2xl font-bold text-gray-900">Key Points</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {content.highlights.map((item) => (
+            {highlights.map((item) => (
               <div
                 key={item}
                 className="lux-card flex items-start gap-3 rounded-xl p-4"
@@ -236,9 +242,9 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
 
       <section className="bg-white py-12">
         <div className="container mx-auto px-4">
-          <h3 className="mb-6 text-2xl font-bold text-gray-900">Buying Guide</h3>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {content.sections.map((section) => (
+          <h3 className="mb-6 text-2xl font-bold text-gray-900">Quick Guide</h3>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {sections.map((section) => (
               <article
                 key={section.title}
                 className="lux-card rounded-xl p-5"
@@ -261,12 +267,12 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
         </div>
       </section>
 
-      {content.faqs && content.faqs.length > 0 && (
+      {faqs.length > 0 && (
         <section className="border-t border-gray-200 bg-gray-50 py-12">
           <div className="container mx-auto px-4">
-            <h3 className="mb-6 text-2xl font-bold text-gray-900">Frequently Asked Questions</h3>
+            <h3 className="mb-6 text-2xl font-bold text-gray-900">FAQ</h3>
             <div className="space-y-3">
-              {content.faqs.map((faq) => (
+              {faqs.map((faq) => (
                 <details key={faq.question} className="lux-card rounded-lg p-4">
                   <summary className="cursor-pointer font-semibold text-gray-900">
                     {faq.question}
@@ -281,9 +287,9 @@ export default function RouteContentPage({ content }: RouteContentPageProps) {
 
       <section className="border-t border-gray-200 bg-white py-12">
         <div className="container mx-auto px-4">
-          <h3 className="mb-4 text-xl font-bold text-gray-900">Helpful Links</h3>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {content.relatedLinks.map((item) => (
+          <h3 className="mb-4 text-xl font-bold text-gray-900">Next</h3>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {relatedLinks.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

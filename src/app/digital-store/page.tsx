@@ -1,69 +1,8 @@
-import RouteContentPage, { type RoutePageContent } from '@/components/RouteContentPage';
-import { gamingVisuals } from '@/data/gaming-visuals';
+import RouteContentPage from '@/components/RouteContentPage';
+import { digitalStorePageContent } from '@/data/route-page-content';
 import { getMergedGiftCardShowcaseCards } from '@/lib/storefront-media';
 
 export const revalidate = 300;
-
-const digitalStoreContent: RoutePageContent = {
-  eyebrow: 'Digital Store',
-  title: 'Fast Digital Codes For PlayStation, Xbox, Nintendo, And PC',
-  heroImage: gamingVisuals.gamingLounge.src,
-  heroImageAlt: gamingVisuals.gamingLounge.alt,
-  intro:
-    'Buy wallet top-ups and digital gaming products when you want fast access without waiting for physical delivery.',
-  facts: [
-    { label: 'Delivery Model', value: 'Digital Fulfillment' },
-    { label: 'Platforms', value: 'PS / Xbox / Nintendo / PC' },
-    { label: 'Checkout', value: 'Secure' },
-    { label: 'Support', value: 'Activation Help' },
-  ],
-  highlights: [
-    'Digital codes are the fastest way to top up or complete a game purchase.',
-    'Coverage spans major gaming ecosystems and wallet denominations.',
-    'Support stays available for delivery confirmation and activation questions.',
-    'Digital products fit naturally beside console and accessory orders.',
-  ],
-  sections: [
-    {
-      title: 'Selecting The Right Code',
-      description:
-        'Correct platform and denomination selection prevents activation issues.',
-      points: [
-        'Verify platform before completing payment.',
-        'Choose value based on planned purchases.',
-        'Use support if unsure about compatibility.',
-      ],
-    },
-    {
-      title: 'Fulfillment Flow',
-      description:
-        'Digital deliveries begin after payment verification and processing checks.',
-      points: [
-        'Order and payment are validated in sequence.',
-        'Delivery details are shared through configured channels.',
-        'Support can confirm status if delay occurs.',
-      ],
-    },
-    {
-      title: 'Best Use Cases',
-      description:
-        'Digital products are especially useful for fast access and gifting.',
-      points: [
-        'Quick wallet top-ups before game launches.',
-        'Gift purchases without physical shipping dependencies.',
-        'Complement console orders with instant content availability.',
-      ],
-    },
-  ],
-  primaryAction: { label: 'Browse Gift Cards', href: '/gift-cards' },
-  secondaryAction: { label: 'Contact Support', href: '/contact' },
-  relatedLinks: [
-    { label: 'Gift Cards', href: '/gift-cards' },
-    { label: 'PlayStation 5', href: '/playstation' },
-    { label: 'Xbox Series X|S', href: '/xbox' },
-    { label: 'Nintendo Switch', href: '/nintendo-switch' },
-  ],
-};
 
 export default async function DigitalStorePage() {
   const showcaseCards = await getMergedGiftCardShowcaseCards([
@@ -73,5 +12,5 @@ export default async function DigitalStorePage() {
     'gift-psn-3000',
   ]);
 
-  return <RouteContentPage content={{ ...digitalStoreContent, showcaseCards }} />;
+  return <RouteContentPage content={{ ...digitalStorePageContent, showcaseCards }} />;
 }

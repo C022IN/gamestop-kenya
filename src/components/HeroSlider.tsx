@@ -11,7 +11,6 @@ interface Slide {
   badge?: string;
   title: string;
   subtitle: string;
-  highlight?: string;
   price?: string;
   originalPrice?: string;
   buttonText: string;
@@ -30,9 +29,7 @@ const heroSlides: Slide[] = [
     id: '1',
     badge: 'TOP SELLER',
     title: 'PlayStation 5 Slim',
-    subtitle:
-      'PS5 Slim stock with fast SSD load times, DualSense support, and local delivery options for Kenyan buyers.',
-    highlight: 'From KSh 75,900',
+    subtitle: 'PS5 Slim stock with local delivery and add-ons ready.',
     price: 'KSh 75,900',
     buttonText: 'Shop PS5',
     buttonLink: '/playstation',
@@ -48,9 +45,7 @@ const heroSlides: Slide[] = [
     id: '2',
     badge: 'NEW SERVICE',
     title: 'Premium IPTV',
-    subtitle:
-      'Activate a protected member hub for live TV, movies, series, and sports with M-Pesa and device-friendly playback.',
-    highlight: 'From KSh 4,499',
+    subtitle: 'Live TV, movies, and sports with protected playback.',
     price: 'KSh 4,499',
     buttonText: 'Explore IPTV',
     buttonLink: '/iptv',
@@ -65,9 +60,7 @@ const heroSlides: Slide[] = [
     id: '3',
     badge: 'FLASH DEAL - 40% OFF',
     title: 'Xbox Series X',
-    subtitle:
-      'Xbox performance for 4K gaming, sports nights, and Game Pass-ready setups with local support.',
-    highlight: 'KSh 71,900',
+    subtitle: '4K-ready Xbox performance with local support.',
     price: 'KSh 71,900',
     buttonText: 'Shop Xbox',
     buttonLink: '/xbox',
@@ -83,9 +76,7 @@ const heroSlides: Slide[] = [
     id: '4',
     badge: 'FAMILY FAVORITE',
     title: 'Nintendo Switch OLED',
-    subtitle:
-      'Flexible handheld and docked play for shared family gaming, travel, and Nintendo exclusives.',
-    highlight: 'KSh 45,500',
+    subtitle: 'Docked or handheld play for family sessions and travel.',
     price: 'KSh 45,500',
     buttonText: 'Shop Nintendo',
     buttonLink: '/nintendo-switch',
@@ -101,9 +92,7 @@ const heroSlides: Slide[] = [
     id: '5',
     badge: 'PC PARTS',
     title: 'GeForce And Radeon GPUs',
-    subtitle:
-      'Named GeForce and Radeon cards for 1080p, 1440p, and entry-4K builds with clearer price ranges.',
-    highlight: 'From KSh 68,900',
+    subtitle: 'GeForce and Radeon cards for 1080p to 4K builds.',
     price: 'From KSh 68,900',
     buttonText: 'Shop PC Gaming',
     buttonLink: '/pc-gaming',
@@ -167,7 +156,7 @@ export default function HeroSlider() {
                   <p className="mb-5 max-w-md text-sm leading-relaxed text-white/85 md:text-base">
                     {slide.subtitle}
                   </p>
-                  {slide.highlight && (
+                  {slide.price && (
                     <div className="mb-6 flex items-center gap-3">
                       <span className={`text-2xl font-extrabold ${slide.accentColor}`}>
                         {slide.price}

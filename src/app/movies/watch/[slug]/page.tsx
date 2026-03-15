@@ -137,15 +137,13 @@ export default async function WatchPage({ params }: WatchPageProps) {
                 <div className="flex aspect-video items-center justify-center bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.22),transparent_30%),linear-gradient(180deg,#091120_0%,#040814_100%)] p-8 text-center">
                   <div className="max-w-xl">
                     <PlayCircle className="mx-auto h-12 w-12 text-white/75" />
-                    <h1 className="mt-4 text-2xl font-black">Playback source not configured yet</h1>
+                    <h1 className="mt-4 text-2xl font-black">Playback not ready</h1>
                     <p className="mt-3 text-sm leading-6 text-white/[0.66]">
-                      This title is visible in the member hub, but it still needs a provider source in
-                      the IPTV playback table before it can be watched here.
+                      This title is listed, but no provider source is attached yet.
                     </p>
                     {item.kind === 'sports_event' && (
                       <p className="mt-3 text-sm leading-6 text-amber-200/80">
-                        For premium fixtures like Champions League, attach the licensed event feed to
-                        this slot before going live.
+                        Add the event feed before kickoff.
                       </p>
                     )}
                   </div>
@@ -259,7 +257,7 @@ export default async function WatchPage({ params }: WatchPageProps) {
             <div className="mt-6 space-y-3 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-sm text-white/[0.72]">
               <div className="flex items-start gap-3">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-                <p>Access is checked against your active subscription before playback is shown.</p>
+                <p>Subscription check passed.</p>
               </div>
               <div className="flex items-start gap-3">
                 <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" />
@@ -285,7 +283,7 @@ export default async function WatchPage({ params }: WatchPageProps) {
                 className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white px-4 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-200"
               >
                 <ExternalLink className="h-4 w-4" />
-                Open provider source
+                Open source
               </a>
             )}
 

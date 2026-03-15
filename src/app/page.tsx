@@ -14,6 +14,7 @@ import {
   getFlashDeals,
 } from '@/data/game-catalog';
 import { giftCardProducts } from '@/data/gift-cards';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 import {
   ShoppingBag,
@@ -74,52 +75,6 @@ const categoryBlueprints = [
   },
 ];
 
-const testimonials = [
-  {
-    name: 'Brian Mutua',
-    location: 'Nairobi CBD',
-    rating: 5,
-    text: 'Ordered a PS5 on Friday and received it the same evening in Westlands. Packaging was secure and pricing was fair.',
-    product: 'PlayStation 5',
-    date: 'January 2025',
-  },
-  {
-    name: 'Amina Wanjiru',
-    location: 'Kilimani',
-    rating: 5,
-    text: 'I bought the Nintendo Switch OLED as a birthday gift. The support team recommended the right bundle and delivered on time.',
-    product: 'Nintendo Switch OLED',
-    date: 'February 2025',
-  },
-  {
-    name: 'James Ochieng',
-    location: 'Westlands',
-    rating: 5,
-    text: 'The IPTV package works perfectly. Setup took less than 10 minutes and support helped immediately when I needed guidance.',
-    product: 'Premium IPTV - 3 Months',
-    date: 'March 2025',
-  },
-  {
-    name: 'Sandra Cherop',
-    location: 'Thika Road',
-    rating: 4,
-    text: 'Great game selection and smooth M-Pesa checkout. My Xbox arrived in two days exactly as promised.',
-    product: 'Xbox Series S',
-    date: 'February 2025',
-  },
-];
-
-const brands = [
-  'Sony',
-  'Microsoft',
-  'Nintendo',
-  'Razer',
-  'Logitech',
-  'SteelSeries',
-  'HyperX',
-  'Corsair',
-];
-
 function CountdownTimer({ targetHours = 8 }: { targetHours?: number }) {
   const [timeLeft, setTimeLeft] = useState({ h: targetHours, m: 0, s: 0 });
 
@@ -155,17 +110,11 @@ function CountdownTimer({ targetHours = 8 }: { targetHours?: number }) {
 }
 
 export default function Home() {
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const { currency, toggleCurrency } = useStoreCurrency();
   const featuredProducts = useStorefrontProducts('games', featuredFallbackProducts);
   const flashDeals = useStorefrontProducts('games', flashDealFallbackProducts);
   const digitalProducts = useStorefrontProducts('gift-cards', digitalFallbackProducts);
   const hardwareProducts = useStorefrontProducts('hardware', hardwareFallbackProducts);
-
-  const toggleCurrency = () => {
-    setCurrency((prev) =>
-      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
-    );
-  };
 
   const hardwareMap = useMemo(
     () => new Map(hardwareProducts.map((product) => [product.id, product])),
@@ -265,9 +214,7 @@ export default function Home() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Flash Deals</h2>
-                <p className="text-sm text-gray-500">
-                  Limited-time offers. Reserve these prices before they expire.
-                </p>
+                <p className="text-sm text-gray-500">Limited-time pricing.</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -305,7 +252,7 @@ export default function Home() {
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">Featured Hardware</h2>
-              <p className="text-sm text-gray-500">PS5, premium audio, and current GeForce and Radeon cards.</p>
+              <p className="text-sm text-gray-500">Consoles, audio, and GPUs.</p>
             </div>
             <Link href="/accessories">
               <Button variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50">
@@ -330,7 +277,7 @@ export default function Home() {
               </span>
               <h2 className="mb-4 text-4xl font-black">Shop All Things PlayStation</h2>
               <p className="mb-6 text-lg text-blue-200">
-                Discover the latest PS5 games, DualSense controllers, and premium digital content.
+                PS5 hardware, games, and PSN extras.
               </p>
               <div className="flex gap-3">
                 <Link href="/playstation">
@@ -363,7 +310,7 @@ export default function Home() {
           <div className="mb-10 text-center">
             <h2 className="mb-2 text-3xl font-bold">Gift Cards & Digital Codes</h2>
             <p className="text-gray-400">
-              Shop store cards, wallet top-ups, subscriptions, and instant gifting in one place.
+              Store cards, wallet top-ups, and subscriptions.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -399,7 +346,7 @@ export default function Home() {
               </span>
               <h2 className="mb-4 text-4xl font-black">Shop All Things Nintendo</h2>
               <p className="mb-6 text-lg text-red-200">
-                Experience gaming anywhere with Switch OLED hardware and a strong first-party catalog.
+                Switch hardware and first-party games.
               </p>
               <div className="flex gap-3">
                 <Link href="/nintendo-switch">
@@ -427,7 +374,7 @@ export default function Home() {
               </span>
               <h2 className="mb-4 text-4xl font-black">Shop All Things Xbox</h2>
               <p className="mb-6 text-lg text-green-200">
-                Power your setup with Xbox Series X|S and a huge library through Game Pass.
+                Xbox hardware, Game Pass, and add-ons.
               </p>
               <div className="flex gap-3">
                 <Link href="/xbox">
@@ -460,13 +407,13 @@ export default function Home() {
                 NEW SERVICE
               </div>
               <h2 className="mb-4 text-4xl font-black leading-tight">
-                Premium IPTV - <span className="text-violet-400">One Member Hub for Every Screen</span>
+                Premium IPTV - <span className="text-violet-400">One Hub for Every Screen</span>
               </h2>
               <p className="mb-6 text-lg text-gray-300">
-                Activate with M-Pesa, open your protected member hub, and manage live TV, movies, series, and sports from one clean interface.
+                Activate with M-Pesa and open live TV, movies, and sports.
               </p>
               <ul className="mb-8 grid grid-cols-2 gap-2 text-sm text-gray-300">
-                {['Protected member login', 'Playlist-ready playback', 'Live TV and VOD hub', 'Sports event slots', 'Any Device', '24/7 Support'].map((f) => (
+                {['Protected login', 'Playlist playback', 'Live TV and VOD', 'Sports slots', 'Any device', 'Setup help'].map((f) => (
                   <li key={f} className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-400" /> {f}
                   </li>
@@ -502,75 +449,8 @@ export default function Home() {
                 </div>
               </div>
               <p className="mt-4 text-center text-sm font-medium text-amber-300">
-                Limited slots available. Start today.
+                Start today.
               </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-gray-50 py-14">
-        <div className="container mx-auto px-4">
-          <div className="mb-10 text-center">
-            <h2 className="mb-2 text-3xl font-bold">What Our Customers Say</h2>
-            <p className="text-gray-500">Trusted by 50,000+ gamers across Kenya</p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {testimonials.map((t, i) => (
-              <div key={i} className="lux-card rounded-2xl p-6">
-                <div className="mb-3 flex text-yellow-400">
-                  {Array.from({ length: t.rating }).map((_, j) => (
-                    <Star key={j} className="h-4 w-4 fill-current" />
-                  ))}
-                </div>
-                <p className="mb-4 text-sm leading-relaxed text-gray-600">"{t.text}"</p>
-                <div className="border-t border-gray-200 pt-3">
-                  <div className="text-sm font-bold text-gray-900">{t.name}</div>
-                  <div className="text-xs text-gray-500">
-                    {t.location} | {t.date}
-                  </div>
-                  <div className="mt-1 text-xs text-red-500">Purchased: {t.product}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-gray-100 bg-white py-10">
-        <div className="container mx-auto px-4">
-          <p className="mb-6 text-center text-sm font-semibold uppercase tracking-widest text-gray-400">
-            Official Partners and Brands
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
-            {brands.map((brand) => (
-              <div key={brand} className="text-xl font-bold text-gray-300 transition-colors hover:text-gray-700">
-                {brand}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-gradient-to-r from-red-600 to-red-700 py-12 text-white">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-            <div className="flex items-center gap-4">
-              <div className="rounded-2xl bg-white/20 p-4">
-                <Award className="h-10 w-10" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-black">GameStop Rewards</h2>
-                <p className="text-red-100">
-                  Earn points on every purchase and redeem them for discounts and exclusive drops.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button className="bg-white px-6 font-bold text-red-700 hover:bg-red-50">Join Free</Button>
-              <Button variant="outline" className="border-white/40 text-white hover:bg-white/15">
-                Learn More
-              </Button>
             </div>
           </div>
         </div>
@@ -587,19 +467,19 @@ export default function Home() {
                 icon: Truck,
                 color: 'bg-green-600',
                 title: 'Fast Delivery',
-                desc: 'Same-day delivery within Nairobi CBD. Free delivery for orders above KSh 5,000.',
+                desc: 'Same-day delivery in Nairobi CBD.',
               },
               {
                 icon: CreditCard,
                 color: 'bg-green-600',
                 title: 'M-Pesa Ready',
-                desc: 'Pay easily with M-Pesa, Airtel Money, Visa, or Mastercard with instant confirmation.',
+                desc: 'Pay with M-Pesa or card.',
               },
               {
                 icon: ShoppingBag,
                 color: 'bg-green-600',
                 title: 'Local Support',
-                desc: 'Dedicated support team available in English and Swahili for quick issue resolution.',
+                desc: 'Fast local support after checkout.',
               },
             ].map(({ icon: Icon, color, title, desc }) => (
               <div key={title} className="lux-card rounded-2xl p-6 text-center">
@@ -611,26 +491,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="bg-gray-900 py-14 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="mb-2 text-3xl font-bold">Stay in the Game</h2>
-          <p className="mx-auto mb-8 max-w-md text-gray-400">
-            Get exclusive deals, new arrivals, and gaming news sent directly to your inbox.
-          </p>
-          <div className="mx-auto flex max-w-md gap-3">
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="flex-1 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500"
-            />
-            <Button className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
-              Subscribe
-            </Button>
-          </div>
-          <p className="mt-3 text-xs text-gray-500">Join 50,000+ subscribers. Unsubscribe anytime.</p>
         </div>
       </section>
 

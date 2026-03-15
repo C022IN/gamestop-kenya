@@ -15,6 +15,7 @@ import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { hardwareCatalog } from '@/data/hardware-catalog';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
 import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
 
 const familyFilters = ['All', 'PlayStation', 'Xbox', 'Nintendo', 'PC', 'Universal'] as const;
@@ -38,17 +39,11 @@ const graphicsCardIds = [
 ] as const;
 
 export default function AccessoriesPage() {
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
+  const { currency, toggleCurrency } = useStoreCurrency();
   const [selectedFamily, setSelectedFamily] = useState<(typeof familyFilters)[number]>('All');
   const [selectedDepartment, setSelectedDepartment] =
     useState<(typeof departmentFilters)[number]['id']>('all');
   const mergedHardware = useStorefrontProducts('hardware', hardwareCatalog);
-
-  const toggleCurrency = () => {
-    setCurrency((prev) =>
-      prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }
-    );
-  };
 
   const productMap = useMemo(
     () => new Map(mergedHardware.map((product) => [product.id, product])),
@@ -94,7 +89,7 @@ export default function AccessoriesPage() {
                 Controllers, headsets, racing wheels, and graphics cards.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-200 md:text-lg">
-                Shop official console controllers, premium audio, sim-racing gear, and named GeForce and Radeon cards with visible price ranges.
+                Shop official controllers, premium audio, sim-racing gear, and named GeForce and Radeon cards.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild className="rounded-xl bg-red-600 px-6 font-bold hover:bg-red-700">
@@ -148,7 +143,7 @@ export default function AccessoriesPage() {
                 </p>
                 <h2 className="mt-2 text-2xl font-black">GeForce and Radeon stock</h2>
                 <p className="mt-3 text-sm leading-6 text-slate-200">
-                  RTX 4060, RTX 5070 Ti, RX 7800 XT, and RX 9070 XT are listed with clearer price ranges for faster comparison.
+                  RTX 4060, RTX 5070 Ti, RX 7800 XT, and RX 9070 XT with clearer price bands.
                 </p>
               </article>
             </div>
@@ -273,7 +268,7 @@ export default function AccessoriesPage() {
             <div className="rounded-[2rem] border border-dashed border-gray-300 bg-gray-50 px-6 py-12 text-center">
               <p className="text-lg font-semibold text-gray-900">No accessories match that filter.</p>
               <p className="mt-2 text-sm text-gray-500">
-                Change the platform or product type to see more stock.
+                Change the filters to see more stock.
               </p>
             </div>
           )}

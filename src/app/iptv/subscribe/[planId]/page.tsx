@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
 import { DEVICE_ONBOARDING_GUIDES } from '@/lib/iptv-product';
 import {
   ArrowLeft,
@@ -96,7 +97,7 @@ const deviceIcons = {
 type MpesaPhase =
   | { phase: 'idle' }
   | { phase: 'sending' }
-  | { phase: 'waiting'; checkoutRequestId: string; subscriptionId: string; msg: string }
+  | { phase: 'waiting'; checkoutRequestId: string; msg: string }
   | { phase: 'confirming' }
   | { phase: 'failed'; reason: string };
 
@@ -126,9 +127,7 @@ function IPTVSubscribePageContent() {
   const searchParams = useSearchParams();
   const plan = PLANS[planId as PlanId];
 
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
-  const toggleCurrency = () =>
-    setCurrency((p) => (p.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' }));
+  const { currency, toggleCurrency } = useStoreCurrency();
 
   const [customerName, setCustomerName] = useState('');
   const [email, setEmail] = useState('');
@@ -182,7 +181,7 @@ function IPTVSubscribePageContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-xl font-bold mb-4">Invalid plan selected.</p>
+          <p className="mb-4 text-xl font-bold">Plan not found.</p>
           <Link href="/iptv"><Button>Back to IPTV Plans</Button></Link>
         </div>
       </div>
@@ -195,8 +194,8 @@ function IPTVSubscribePageContent() {
         <Header currency={currency} onCurrencyToggle={toggleCurrency} />
         <div className="container mx-auto px-4 py-24 text-center">
           <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-violet-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Verifying your Stripe subscription</h1>
-          <p className="mt-2 text-gray-500">Please wait while we prepare your access.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Verifying your Stripe payment</h1>
+          <p className="mt-2 text-gray-500">Preparing your access.</p>
         </div>
         <Footer />
       </div>
@@ -207,7 +206,7 @@ function IPTVSubscribePageContent() {
     ? `$${plan.usdPrice.toFixed(2)}`
     : `KSh ${plan.kesPrice.toLocaleString()}`;
 
-  const startPolling = (checkoutRequestId: string, subscriptionId: string) => {
+  const startPolling = (checkoutRequestId: string) => {
     let attempts = 0;
     const maxAttempts = 24;
 
@@ -280,11 +279,10 @@ function IPTVSubscribePageContent() {
       setMpesaState({
         phase: 'waiting',
         checkoutRequestId: data.checkoutRequestId,
-        subscriptionId: data.subscriptionId,
         msg: data.customerMessage ?? 'Check your phone for the M-Pesa prompt.',
       });
 
-      startPolling(data.checkoutRequestId, data.subscriptionId);
+      startPolling(data.checkoutRequestId);
     } catch {
       setMpesaState({ phase: 'failed', reason: 'Network error. Please check your connection.' });
     }
@@ -370,7 +368,7 @@ function IPTVSubscribePageContent() {
             <div className="md:col-span-3">
               <div className="rounded-2xl border border-gray-100 bg-white p-7 shadow-sm">
                 <h1 className="mb-1 text-2xl font-black">Activate your IPTV plan</h1>
-                <p className="mb-6 text-sm text-gray-500">Enter your account details, pay with M-Pesa or Stripe, and your member access plus protected playlist will appear on this page.</p>
+                <p className="mb-6 text-sm text-gray-500">Enter your details, pay, and your access appears here.</p>
 
                 {(mpesaState.phase === 'idle' || mpesaState.phase === 'failed') && (
                   <form
@@ -440,7 +438,7 @@ function IPTVSubscribePageContent() {
                         onChange={(e) => setPhone(e.target.value)}
                         className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-violet-500 focus:outline-none"
                       />
-                      <p className="mt-1 text-xs text-gray-400">Use the same number you will use later to sign in.</p>
+                      <p className="mt-1 text-xs text-gray-400">Use this number to sign in later.</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -465,29 +463,27 @@ function IPTVSubscribePageContent() {
                     </div>
 
                     <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-                      <p className="mb-1 font-semibold">How payment works:</p>
-                      <ol className="list-decimal list-inside space-y-1 text-xs">
+                      <p className="mb-1 font-semibold">Next</p>
+                      <ul className="space-y-1 text-xs">
                         {paymentMethod === 'mpesa' ? (
                           <>
-                            <li>Click "Pay {displayPrice} with M-Pesa" below</li>
-                            <li>A pop-up appears on your phone</li>
-                            <li>Enter your M-Pesa PIN to confirm</li>
-                            <li>Your member code and playlist details appear on this page</li>
+                            <li>Tap pay below.</li>
+                            <li>Approve on your phone.</li>
+                            <li>Your access appears here.</li>
                           </>
                         ) : (
                           <>
-                            <li>Click "Continue with Stripe" below</li>
-                            <li>Stripe opens a secure hosted subscription checkout</li>
-                            <li>Complete the first payment with your card</li>
-                            <li>Your member code and playlist details appear on this page after redirect</li>
+                            <li>Continue to Stripe.</li>
+                            <li>Complete payment.</li>
+                            <li>Your access appears here.</li>
                           </>
                         )}
-                      </ol>
+                      </ul>
                     </div>
 
                     {paymentMethod === 'stripe' && (
                       <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900">
-                        Taxes are calculated at checkout.
+                        Tax is shown at checkout.
                       </div>
                     )}
 
@@ -528,7 +524,7 @@ function IPTVSubscribePageContent() {
                 {mpesaState.phase === 'sending' && (
                   <div className="py-12 text-center">
                     <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-violet-600" />
-                    <p className="font-semibold text-gray-800">Sending M-Pesa prompt...</p>
+                    <p className="font-semibold text-gray-800">Sending prompt...</p>
                     <p className="mt-1 text-sm text-gray-500">Please wait a moment.</p>
                   </div>
                 )}
@@ -539,23 +535,23 @@ function IPTVSubscribePageContent() {
                       <Smartphone className="h-10 w-10 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-xl font-black text-gray-900">Check your phone!</p>
+                      <p className="text-xl font-black text-gray-900">Check your phone</p>
                       <p className="mt-1 text-sm text-gray-500">{mpesaState.msg}</p>
                     </div>
                     <div className="mx-auto max-w-xs rounded-xl border border-green-200 bg-green-50 p-4 text-left text-sm text-green-800">
-                      <p className="font-semibold">Enter your M-Pesa PIN to pay:</p>
+                      <p className="font-semibold">Approve payment</p>
                       <p className="mt-1 text-2xl font-black text-green-700">{displayPrice}</p>
                     </div>
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Waiting for confirmation...
+                      Waiting for payment...
                     </div>
                     <button
                       type="button"
                       onClick={() => setMpesaState({ phase: 'idle' })}
                       className="text-xs text-gray-400 underline hover:text-red-500"
                     >
-                      Cancel and try again
+                      Cancel
                     </button>
                   </div>
                 )}
@@ -563,7 +559,7 @@ function IPTVSubscribePageContent() {
                 {mpesaState.phase === 'confirming' && (
                   <div className="py-12 text-center">
                     <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-violet-600" />
-                    <p className="font-semibold text-gray-800">Payment confirmed. Preparing your access...</p>
+                    <p className="font-semibold text-gray-800">Payment confirmed. Preparing access.</p>
                   </div>
                 )}
               </div>
@@ -585,12 +581,11 @@ function IPTVSubscribePageContent() {
 
                 <ul className="mb-5 space-y-2">
                   {[
-                    'M-Pesa or Stripe activation flow',
-                    'Protected playlist URL',
-                    'Member login with phone + access code',
-                    'Live TV, movies, series, and sports hub',
-                    'Provider-managed playback',
-                    'WhatsApp setup support',
+                    'M-Pesa or card checkout',
+                    'Protected playlist',
+                    'Phone + code sign-in',
+                    'Live TV, movies, and sports',
+                    'Setup help',
                   ].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 shrink-0 text-emerald-400" />
@@ -601,7 +596,7 @@ function IPTVSubscribePageContent() {
 
                 <div className="rounded-xl border border-violet-600/40 bg-violet-800/40 p-3 text-xs text-violet-200">
                   <Tv className="mb-1 h-4 w-4 text-violet-300" />
-                  Your member access and playlist show right after payment. Use the protected playlist first for the simplest setup.
+                  Your access appears here after payment.
                 </div>
               </div>
             </div>
@@ -614,9 +609,9 @@ function IPTVSubscribePageContent() {
                 <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
                   <CheckCircle2 className="h-10 w-10 text-emerald-600" />
                 </div>
-                <h1 className="text-3xl font-black text-gray-900">You&apos;re Ready to Watch</h1>
+                <h1 className="text-3xl font-black text-gray-900">Access ready</h1>
                 <p className="mt-2 text-gray-500">
-                  Your login details are ready. Save them before leaving this page.
+                  Save these details before leaving.
                 </p>
               </div>
 
@@ -663,7 +658,7 @@ function IPTVSubscribePageContent() {
               </div>
 
               <div className="mb-6">
-                <h2 className="mb-3 text-lg font-bold">Your Member Sign-In Details</h2>
+                <h2 className="mb-3 text-lg font-bold">Sign-in details</h2>
                 <div className="space-y-2 rounded-xl border border-red-200 bg-red-50 p-4">
                   {[
                     { label: 'Phone Number', value: member!.profileId },
@@ -679,14 +674,14 @@ function IPTVSubscribePageContent() {
                   ))}
                 </div>
                 <p className="mt-2 text-xs text-gray-400">
-                  You are already signed in on this device. Use these details the next time you open the GameStop IPTV member hub.
+                  You are signed in on this device.
                 </p>
               </div>
 
               {/* Credentials */}
               {sub!.credentials && (
                 <div className="mb-6">
-                  <h2 className="mb-3 text-lg font-bold">Your Playlist and Player Details</h2>
+                  <h2 className="mb-3 text-lg font-bold">Playlist details</h2>
                   <div className="space-y-2 rounded-xl border border-violet-200 bg-violet-50 p-4">
                     {[
                       { label: 'Playlist Link', value: sub!.credentials.m3uUrl },
@@ -704,19 +699,19 @@ function IPTVSubscribePageContent() {
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-gray-400">
-                    Save these details now. The protected playlist URL is the quickest setup path. If you need help later, contact support with your phone number or payment reference.
+                    Save these details now. Contact support with your phone or reference if needed.
                   </p>
                 </div>
               )}
 
               {/* Setup instructions */}
               <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-                <p className="mb-2 font-semibold">Quick Setup:</p>
+                <p className="mb-2 font-semibold">Quick setup</p>
                 <ol className="list-decimal list-inside space-y-1 text-xs">
-                  <li>Download <strong>IPTV Smarters Pro</strong>, <strong>TiviMate</strong>, <strong>VLC</strong>, or another compatible player</li>
-                  <li>Paste the protected playlist link for the fastest setup path</li>
-                  <li>If your player supports it, use the host, username, and password shown above</li>
-                  <li>Return to the member login page to open the browser-based hub any time</li>
+                  <li>Install <strong>IPTV Smarters Pro</strong>, <strong>TiviMate</strong>, <strong>VLC</strong>, or any compatible player</li>
+                  <li>Paste the playlist link</li>
+                  <li>Or use the host, username, and password above</li>
+                  <li>Use the member hub anytime from the login page</li>
                 </ol>
                 <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                   {DEVICE_ONBOARDING_GUIDES.map((guide) => {
@@ -782,8 +777,8 @@ function IPTVSubscribePageFallback() {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-24 text-center">
         <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-violet-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Loading subscription checkout</h1>
-        <p className="mt-2 text-gray-500">Preparing your plan details.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Loading checkout</h1>
+        <p className="mt-2 text-gray-500">Preparing your plan.</p>
       </div>
     </div>
   );

@@ -54,6 +54,10 @@ export interface StorefrontSeedProduct {
   price: number;
   originalPrice?: number;
   isDigital?: boolean;
+  formatLabel?: string;
+  blurb?: string;
+  rating?: number;
+  inStock?: boolean;
 }
 
 export interface StorefrontMediaOverride {
@@ -119,6 +123,10 @@ export function getStorefrontSeedProducts(): StorefrontSeedProduct[] {
       price: product.price,
       originalPrice: product.originalPrice,
       isDigital: product.isDigital,
+      formatLabel: product.formatLabel,
+      blurb: product.blurb,
+      rating: product.rating,
+      inStock: product.inStock,
     })),
     ...hardwareCatalog.map((product) => ({
       id: product.id,
@@ -129,6 +137,10 @@ export function getStorefrontSeedProducts(): StorefrontSeedProduct[] {
       price: product.price,
       originalPrice: product.originalPrice,
       isDigital: product.isDigital,
+      formatLabel: product.formatLabel,
+      blurb: product.blurb,
+      rating: product.rating,
+      inStock: product.inStock,
     })),
     ...giftCardProducts.map((product) => ({
       id: product.id,
@@ -139,6 +151,10 @@ export function getStorefrontSeedProducts(): StorefrontSeedProduct[] {
       price: product.price,
       originalPrice: product.originalPrice,
       isDigital: product.isDigital,
+      formatLabel: product.formatLabel,
+      blurb: product.blurb,
+      rating: product.rating,
+      inStock: product.inStock,
     })),
   ];
 }

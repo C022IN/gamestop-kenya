@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { useStoreCurrency } from '@/hooks/useStoreCurrency';
 import { Search, Package, Truck, CheckCircle, Clock, ArrowLeft } from 'lucide-react';
 
 interface Order {
@@ -25,11 +26,8 @@ interface Order {
 
 export default function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [currency, setCurrency] = useState({ code: 'KES', symbol: 'KSh' });
-  const toggleCurrency = () =>
-    setCurrency(prev => prev.code === 'KES' ? { code: 'USD', symbol: '$' } : { code: 'KES', symbol: 'KSh' });
+  const { currency, toggleCurrency } = useStoreCurrency();
 
-  // Sample orders data (in a real app, this would come from an API)
   const sampleOrders: Order[] = [
     {
       id: '1',
@@ -90,7 +88,8 @@ export default function OrdersPage() {
   ];
 
   const formatPrice = (price: number) => {
-    return `${currency.symbol}${Math.round(price).toLocaleString()}`;
+    const converted = currency.code === 'USD' ? price / 150 : price;
+    return `${currency.symbol}${Math.round(converted).toLocaleString()}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -156,16 +155,14 @@ export default function OrdersPage() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search by order number or product name..."
+                placeholder="Order number or product"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
               />
               <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             </div>
-            <p className="text-sm text-gray-600 mt-2">
-              Enter your order number (e.g., GS234567) or search for a specific product
-            </p>
+            <p className="text-sm text-gray-600 mt-2">Example: GS234567</p>
           </div>
 
           {/* Orders List */}
@@ -174,10 +171,7 @@ export default function OrdersPage() {
               <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Orders Found</h3>
               <p className="text-gray-600 mb-6">
-                {searchQuery
-                  ? "No orders match your search criteria. Try a different search term."
-                  : "You haven't placed any orders yet. Start shopping to see your orders here!"
-                }
+                {searchQuery ? 'No orders match that search.' : 'No orders yet.'}
               </p>
               <Link href="/">
                 <Button className="bg-red-600 hover:bg-red-700">
@@ -247,15 +241,11 @@ export default function OrdersPage() {
                       </div>
                     )}
 
-                    {/* Order Actions */}
-                    <div className="flex space-x-3">
-                      <Button variant="outline" className="flex-1">
-                        View Details
-                      </Button>
+                  {/* Order Actions */}
+                  <div className="flex space-x-3">
+                      <Button variant="outline" className="flex-1">View Details</Button>
                       {order.status === 'delivered' && (
-                        <Button className="flex-1 bg-red-600 hover:bg-red-700">
-                          Reorder Items
-                        </Button>
+                        <Button className="flex-1 bg-red-600 hover:bg-red-700">Reorder</Button>
                       )}
                       {order.status === 'processing' && (
                         <Button variant="outline" className="flex-1 text-red-600 border-red-300 hover:bg-red-50">
@@ -268,37 +258,6 @@ export default function OrdersPage() {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Help Section */}
-        <div className="max-w-4xl mx-auto mt-12 bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Need Help?</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-            <div>
-              <Package className="h-8 w-8 text-red-600 mx-auto mb-2" />
-              <h4 className="font-medium mb-1">Order Issues</h4>
-              <p className="text-sm text-gray-600">Problems with your order?</p>
-              <Button variant="outline" size="sm" className="mt-2">
-                Contact Support
-              </Button>
-            </div>
-            <div>
-              <Truck className="h-8 w-8 text-red-600 mx-auto mb-2" />
-              <h4 className="font-medium mb-1">Shipping Info</h4>
-              <p className="text-sm text-gray-600">Learn about delivery times</p>
-              <Button variant="outline" size="sm" className="mt-2">
-                Shipping Policy
-              </Button>
-            </div>
-            <div>
-              <CheckCircle className="h-8 w-8 text-red-600 mx-auto mb-2" />
-              <h4 className="font-medium mb-1">Returns</h4>
-              <p className="text-sm text-gray-600">Need to return an item?</p>
-              <Button variant="outline" size="sm" className="mt-2">
-                Return Policy
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
       <Footer />
