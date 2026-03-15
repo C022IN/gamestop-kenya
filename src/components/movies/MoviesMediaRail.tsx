@@ -2,16 +2,24 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Info, Play, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, Info, Play, Star, Tv2 } from 'lucide-react';
 import type { MoviesHubSection, MoviesHubTile } from '@/components/movies/movie-hub-types';
 import { useCarouselControls } from '@/hooks/useCarouselControls';
 import { useHoverPreview } from '@/hooks/useHoverPreview';
+import { useSeriesResume } from '@/hooks/useSeriesResume';
 
 interface MoviesMediaRailProps {
   section: MoviesHubSection;
   onOpenItem: (item: MoviesHubTile) => void;
   onQuickView: (item: MoviesHubTile) => void;
+}
+
+function hasEpisodePicker(item: MoviesHubTile) {
+  return item.tmdbType === 'tv';
+}
+
+function hasDirectMoviePlayback(item: MoviesHubTile) {
+  return item.tmdbType === 'movie';
 }
 
 function RailCard({
@@ -33,6 +41,25 @@ function RailCard({
   onPreviewStart: () => void;
   onPreviewEnd: () => void;
 }) {
+  const seriesItem = hasEpisodePicker(item);
+  const movieItem = hasDirectMoviePlayback(item);
+  const seriesResume = useSeriesResume(item);
+  const primaryHref = seriesItem
+    ? seriesResume.primaryHref
+    : movieItem
+      ? `${item.href}?play=1#player`
+      : item.href;
+  const primaryLabel = seriesItem
+    ? seriesResume.primaryLabel
+    : movieItem || item.playable
+      ? 'Play'
+      : item.ctaLabel ?? 'Open';
+  const previewAttributes = [
+    item.maturityRating ?? item.secondaryMeta ?? item.meta,
+    item.genres[0],
+  ].filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index);
+  const primaryActionLabel = movieItem || item.playable ? 'Play now' : primaryLabel;
+
   return (
     <article
       data-rail-card
@@ -98,12 +125,14 @@ function RailCard({
         <div className="absolute bottom-0 left-0 right-0 z-20 p-4">
           <p className="line-clamp-2 text-lg font-black text-white md:text-xl">{item.title}</p>
           <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white/88 backdrop-blur-sm">
-            {item.playable ? (
+            {seriesItem ? (
+              <Tv2 className="h-3.5 w-3.5" />
+            ) : item.playable ? (
               <Play className="h-3.5 w-3.5" fill="currentColor" />
             ) : (
               <Info className="h-3.5 w-3.5" />
             )}
-            {item.ctaLabel ?? 'Open'}
+            {seriesItem ? 'Episodes' : item.ctaLabel ?? 'Open'}
           </span>
         </div>
 
@@ -112,7 +141,7 @@ function RailCard({
             previewEnabled && previewActive ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
         >
-          <div className="flex h-full flex-col">
+          <div className="flex h-full min-h-0 flex-col">
             <div className="flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/62">
               <span>{item.kindLabel ?? item.meta ?? 'Title'}</span>
               {typeof item.rating === 'number' ? (
@@ -124,43 +153,68 @@ function RailCard({
             </div>
 
             <h3 className="mt-3 text-xl font-black text-white">{item.title}</h3>
-            <p className="mt-3 line-clamp-4 text-sm leading-6 text-white/72">
+            <p className="mt-2 line-clamp-2 text-sm leading-6 text-white/72">
               {item.description?.trim() || 'Open this title to view more details.'}
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {item.genres.slice(0, 3).map((genre) => (
-                <span
-                  key={`${item.id}-${genre}`}
-                  className="rounded-full border border-white/12 bg-white/6 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/70"
+            <div className="mt-auto pt-4">
+              <div className="flex items-center gap-2">
+                <Link
+                  href={primaryHref}
+                  onClick={() => onOpenItem(item)}
+                  title={primaryLabel}
+                  aria-label={primaryLabel}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-black transition-colors hover:bg-white/90"
                 >
-                  {genre}
-                </span>
-              ))}
-            </div>
-
-            <div className="mt-auto flex gap-2 pt-5">
-              <Button
-                asChild
-                className="h-10 rounded-full bg-white px-4 text-xs font-black uppercase tracking-[0.16em] text-black hover:bg-white/90"
-              >
-                <Link href={item.href} onClick={() => onOpenItem(item)}>
-                  {item.playable ? (
-                    <Play className="mr-1.5 h-3.5 w-3.5" fill="currentColor" />
+                  {seriesItem || movieItem || item.playable ? (
+                    <Play className="h-4 w-4" fill="currentColor" />
                   ) : (
-                    <Info className="mr-1.5 h-3.5 w-3.5" />
+                    <Info className="h-4 w-4" />
                   )}
-                  {item.ctaLabel ?? 'Open'}
                 </Link>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onQuickView(item)}
-                className="h-10 rounded-full border-white/12 bg-white/[0.06] px-4 text-xs font-black uppercase tracking-[0.16em] text-white hover:bg-white/[0.12]"
-              >
-                Quick View
-              </Button>
+                {seriesItem ? (
+                  <Link
+                    href={item.href}
+                    onClick={() => onOpenItem(item)}
+                    title="Choose episodes"
+                    aria-label="Choose episodes"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-white/[0.06] text-white transition-colors hover:bg-white/[0.12]"
+                  >
+                    <Tv2 className="h-4 w-4" />
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => onQuickView(item)}
+                  title="Quick view"
+                  aria-label={`Quick view ${item.title}`}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-white/[0.06] text-white transition-colors hover:bg-white/[0.12]"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-3 flex min-h-[1rem] items-center gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/58">
+                  {primaryActionLabel}
+                </p>
+                {seriesItem && seriesResume.hasResume ? (
+                  <span className="rounded-full border border-cyan-400/16 bg-cyan-400/[0.1] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100">
+                    {primaryLabel}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {previewAttributes.slice(0, 2).map((attribute) => (
+                  <span
+                    key={`${item.id}-${attribute}`}
+                    className="rounded-full border border-white/12 bg-white/6 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/70"
+                  >
+                    {attribute}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>

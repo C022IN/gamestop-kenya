@@ -2,10 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Clapperboard, Info, Play, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, ArrowRight, Clapperboard, Info, Play, Star, Tv2 } from 'lucide-react';
 import type { MoviesHubTile } from '@/components/movies/movie-hub-types';
 import { useHeroRotation } from '@/hooks/useHeroRotation';
+import { useSeriesResume } from '@/hooks/useSeriesResume';
 
 interface MoviesHeroSpotlightProps {
   items: MoviesHubTile[];
@@ -26,6 +26,14 @@ const FALLBACK_ITEM: MoviesHubTile = {
   source: 'catalog',
 };
 
+function hasEpisodePicker(item: MoviesHubTile) {
+  return item.tmdbType === 'tv';
+}
+
+function hasDirectMoviePlayback(item: MoviesHubTile) {
+  return item.tmdbType === 'movie';
+}
+
 export default function MoviesHeroSpotlight({
   items,
   profileId,
@@ -36,6 +44,16 @@ export default function MoviesHeroSpotlight({
   const heroItems = items.length > 0 ? items : [FALLBACK_ITEM];
   const { activeIndex, goNext, goPrev, goTo } = useHeroRotation(heroItems.length);
   const activeItem = heroItems[activeIndex] ?? FALLBACK_ITEM;
+  const seriesItem = hasEpisodePicker(activeItem);
+  const movieItem = hasDirectMoviePlayback(activeItem);
+  const seriesResume = useSeriesResume(activeItem);
+  const primaryHref = seriesItem ? seriesResume.primaryHref : activeItem.href;
+  const resolvedPrimaryHref = movieItem ? `${activeItem.href}?play=1#player` : primaryHref;
+  const primaryLabel = seriesItem
+    ? seriesResume.primaryLabel
+    : movieItem || activeItem.playable
+      ? 'Play'
+      : activeItem.ctaLabel ?? 'Open';
 
   return (
     <>
@@ -97,22 +115,43 @@ export default function MoviesHeroSpotlight({
             ) : null}
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href={activeItem.href} onClick={() => onOpenItem(activeItem)}>
-              <Button className="h-14 rounded-xl bg-white px-7 text-lg font-bold text-black hover:bg-white/90">
-                <Play className="mr-2 h-5 w-5" fill="currentColor" />
-                {activeItem.playable ? 'Play' : 'Open'}
-              </Button>
-            </Link>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onQuickView(activeItem)}
-              className="h-14 rounded-xl border-white/15 bg-white/15 px-7 text-lg font-bold text-white hover:bg-white/25"
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link
+              href={resolvedPrimaryHref}
+              onClick={() => onOpenItem(activeItem)}
+              title={primaryLabel}
+              aria-label={primaryLabel}
+              className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-black transition-colors hover:bg-white/90"
             >
-              <Info className="mr-2 h-5 w-5" />
-              Quick View
-            </Button>
+              {seriesItem || movieItem || activeItem.playable ? (
+                <Play className="h-5 w-5" fill="currentColor" />
+              ) : (
+                <Info className="h-5 w-5" />
+              )}
+            </Link>
+            {seriesItem ? (
+              <Link
+                href={activeItem.href}
+                onClick={() => onOpenItem(activeItem)}
+                title="Choose episodes"
+                aria-label="Choose episodes"
+                className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white transition-colors hover:bg-white/25"
+              >
+                <Tv2 className="h-5 w-5" />
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => onQuickView(activeItem)}
+              title="Quick view"
+              aria-label={`Quick view ${activeItem.title}`}
+              className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/15 bg-white/15 text-white transition-colors hover:bg-white/25"
+            >
+              <Info className="h-5 w-5" />
+            </button>
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-white/72">
+              {primaryLabel}
+            </div>
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold text-white/72">

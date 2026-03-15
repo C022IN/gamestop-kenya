@@ -21,11 +21,14 @@ import {
 import {
   getCredits,
   getDetails,
+  getSeasonDetails,
   getSimilar,
   getVideos,
   tmdbBackdrop,
   tmdbPoster,
+  type TmdbEpisodeDetails,
   type TmdbItem,
+  type TmdbSeasonSummary,
 } from '@/lib/tmdb';
 
 export const dynamic = 'force-dynamic';
@@ -73,6 +76,141 @@ function trailerKeyFromResults(results: { key: string; site: string; type: strin
 function parsePositiveInteger(value: string | undefined, fallback: number) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+}
+
+function formatEpisodeCode(seasonNumber: number, episodeNumber: number) {
+  return `S${String(seasonNumber).padStart(2, '0')} E${String(episodeNumber).padStart(2, '0')}`;
+}
+
+function buildFilmHref(
+  id: string,
+  options: {
+    play?: boolean;
+    season?: number;
+    episode?: number;
+    anchor?: string;
+  }
+) {
+  const params = new URLSearchParams();
+  if (options.play) {
+    params.set('play', '1');
+  }
+  if (typeof options.season === 'number') {
+    params.set('season', String(options.season));
+  }
+  if (typeof options.episode === 'number') {
+    params.set('episode', String(options.episode));
+  }
+
+  const query = params.toString();
+  return `/movies/film/${id}${query ? `?${query}` : ''}${options.anchor ? `#${options.anchor}` : ''}`;
+}
+
+function SeasonLink({
+  id,
+  season,
+  selected,
+}: {
+  id: string;
+  season: TmdbSeasonSummary;
+  selected: boolean;
+}) {
+  return (
+    <Link
+      href={buildFilmHref(id, {
+        season: season.season_number,
+        episode: 1,
+        anchor: 'episodes',
+      })}
+      className={`inline-flex min-w-[120px] shrink-0 flex-col rounded-2xl border px-4 py-3 text-left transition-colors ${
+        selected
+          ? 'border-cyan-300/70 bg-cyan-400/14 text-white'
+          : 'border-white/10 bg-[#071121] text-white/74 hover:border-white/20 hover:text-white'
+      }`}
+    >
+      <span className="text-sm font-bold">
+        {season.name || `Season ${season.season_number}`}
+      </span>
+      <span className="mt-1 text-xs uppercase tracking-[0.14em] text-white/48">
+        {season.episode_count} episodes
+      </span>
+    </Link>
+  );
+}
+
+function EpisodeCard({
+  id,
+  seasonNumber,
+  episode,
+  selected,
+}: {
+  id: string;
+  seasonNumber: number;
+  episode: TmdbEpisodeDetails;
+  selected: boolean;
+}) {
+  const stillUrl = tmdbBackdrop(episode.still_path, 'w780');
+
+  return (
+    <Link
+      href={buildFilmHref(id, {
+        play: true,
+        season: seasonNumber,
+        episode: episode.episode_number,
+        anchor: 'player',
+      })}
+      className={`group overflow-hidden rounded-[24px] border transition-all duration-300 ${
+        selected
+          ? 'border-cyan-300/70 bg-cyan-400/[0.08] shadow-[0_24px_60px_-36px_rgba(34,211,238,0.4)]'
+          : 'border-white/10 bg-[#071121] hover:-translate-y-1 hover:border-white/18'
+      }`}
+    >
+      <div className="grid gap-0 md:grid-cols-[220px,1fr]">
+        <div className="relative aspect-video overflow-hidden md:aspect-auto md:min-h-[180px]">
+          {stillUrl ? (
+            <Image
+              src={stillUrl}
+              alt={episode.name}
+              fill
+              sizes="(max-width: 768px) 100vw, 220px"
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+              unoptimized
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.18),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(139,92,246,0.18),transparent_30%),linear-gradient(180deg,#091120_0%,#040814_100%)]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/10 to-transparent" />
+        </div>
+
+        <div className="flex flex-col p-5">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/54">
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-white/72">
+              {formatEpisodeCode(seasonNumber, episode.episode_number)}
+            </span>
+            {episode.runtime ? (
+              <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-white/72">
+                {episode.runtime} min
+              </span>
+            ) : null}
+            {episode.air_date ? (
+              <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-white/72">
+                {episode.air_date}
+              </span>
+            ) : null}
+          </div>
+
+          <h3 className="mt-4 text-xl font-black text-white">{episode.name}</h3>
+          <p className="mt-3 line-clamp-4 text-sm leading-6 text-white/68">
+            {episode.overview?.trim() || 'Open this episode to start playback.'}
+          </p>
+
+          <div className="mt-auto pt-5 text-sm font-bold text-cyan-100">
+            {selected ? 'Selected for playback' : 'Play episode'}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 function SimilarTile({ item, mediaType }: { item: TmdbItem; mediaType: 'movie' | 'tv' }) {
@@ -132,13 +270,35 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
   const rating = details.vote_average ? details.vote_average.toFixed(1) : null;
   const backdropUrl = tmdbBackdrop(details.backdrop_path, 'original');
   const posterUrl = tmdbPoster(details.poster_path, 'w500');
+  const availableSeasons =
+    mediaType === 'tv'
+      ? [...(details.seasons ?? [])]
+          .filter((season) => season.episode_count > 0)
+          .sort((left, right) => left.season_number - right.season_number)
+      : [];
   const trailerKey = trailerKeyFromResults(videos?.results ?? []);
   const cast = (credits?.cast ?? []).slice(0, 8);
   const relatedTitles = (similar?.results ?? []).slice(0, 10);
   const playerEnabled = isCompatiblePlayerConfigured();
   const playerOptions = getDefaultCompatiblePlayerOptions();
-  const defaultSeason = parsePositiveInteger(query.season, 1);
-  const defaultEpisode = parsePositiveInteger(query.episode, 1);
+  const requestedSeason = parsePositiveInteger(query.season, availableSeasons[0]?.season_number ?? 1);
+  const defaultSeason =
+    mediaType === 'tv'
+      ? availableSeasons.find((season) => season.season_number === requestedSeason)?.season_number ??
+        availableSeasons[0]?.season_number ??
+        1
+      : 1;
+  const selectedSeasonDetails =
+    mediaType === 'tv' ? await getSeasonDetails(tmdbId, defaultSeason) : null;
+  const seasonEpisodes = selectedSeasonDetails?.episodes ?? [];
+  const requestedEpisode = parsePositiveInteger(query.episode, seasonEpisodes[0]?.episode_number ?? 1);
+  const selectedEpisode =
+    mediaType === 'tv'
+      ? seasonEpisodes.find((episode) => episode.episode_number === requestedEpisode) ??
+        seasonEpisodes[0] ??
+        null
+      : null;
+  const defaultEpisode = selectedEpisode?.episode_number ?? 1;
   const shouldPlay = query.play === '1';
   const playerOrigin = getCompatiblePlayerOrigin();
   const playerUrl =
@@ -147,8 +307,25 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
       : buildCompatibleTvPlayerUrl(tmdbId, defaultSeason, defaultEpisode, playerOptions);
   const playHref =
     mediaType === 'movie'
-      ? `/movies/film/${id}?play=1#player`
-      : `/movies/film/${id}?play=1&season=${defaultSeason}&episode=${defaultEpisode}#player`;
+      ? buildFilmHref(id, { play: true, anchor: 'player' })
+      : buildFilmHref(id, {
+          play: true,
+          season: defaultSeason,
+          episode: defaultEpisode,
+          anchor: 'player',
+        });
+  const browseEpisodesHref =
+    mediaType === 'tv'
+      ? buildFilmHref(id, {
+          season: defaultSeason,
+          episode: defaultEpisode,
+          anchor: 'episodes',
+        })
+      : null;
+  const playLabel =
+    mediaType === 'tv'
+      ? `Play ${formatEpisodeCode(defaultSeason, defaultEpisode)}`
+      : 'Play';
 
   return (
     <div className="min-h-screen bg-[#040814] text-white">
@@ -227,6 +404,12 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
                     {details.number_of_seasons} season{details.number_of_seasons !== 1 ? 's' : ''}
                   </span>
                 )}
+                {details.number_of_episodes && mediaType === 'tv' && (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-black/30 px-4 py-2">
+                    <PlayCircle className="h-4 w-4" />
+                    {details.number_of_episodes} episodes
+                  </span>
+                )}
                 {rating && (
                   <span className="inline-flex items-center gap-2 rounded-full bg-black/30 px-4 py-2">
                     <Star className="h-4 w-4 text-amber-400" fill="currentColor" />
@@ -259,9 +442,18 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
                     className="inline-flex h-14 items-center rounded-xl bg-white px-7 text-lg font-bold text-black transition-colors hover:bg-white/90"
                   >
                     <PlayCircle className="mr-2 h-5 w-5" />
-                    Play
+                    {playLabel}
                   </a>
                 )}
+                {browseEpisodesHref ? (
+                  <a
+                    href={browseEpisodesHref}
+                    className="inline-flex h-14 items-center rounded-xl border border-cyan-300/18 bg-cyan-400/[0.08] px-7 text-lg font-bold text-cyan-50 transition-colors hover:bg-cyan-400/[0.14]"
+                  >
+                    <Tv2 className="mr-2 h-5 w-5" />
+                    Choose Episodes
+                  </a>
+                ) : null}
                 {trailerKey && (
                   <a
                     href={`#trailer`}
@@ -292,17 +484,85 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
                 <h2 className="text-[1.75rem] font-black tracking-tight text-white">Player</h2>
                 <p className="mt-1 text-sm text-white/56">
                   {mediaType === 'tv'
-                    ? `Starting at Season ${defaultSeason}, Episode ${defaultEpisode}.`
+                    ? selectedEpisode
+                      ? `Now playing ${formatEpisodeCode(defaultSeason, defaultEpisode)} - ${selectedEpisode.name}.`
+                      : `Starting at Season ${defaultSeason}, Episode ${defaultEpisode}.`
                     : 'Using the configured player.'}
                 </p>
               </div>
             </div>
             <CompatiblePlayerFrame
               src={playerUrl}
-              title={`${title} player`}
+              title={
+                mediaType === 'tv'
+                  ? `${title} ${formatEpisodeCode(defaultSeason, defaultEpisode)}`
+                  : `${title} player`
+              }
               playerOrigin={playerOrigin}
-              storageKey={`${mediaType}-${tmdbId}`}
+              storageKey={
+                mediaType === 'tv'
+                  ? `tv-${tmdbId}-s${defaultSeason}-e${defaultEpisode}`
+                  : `${mediaType}-${tmdbId}`
+              }
             />
+          </section>
+        )}
+
+        {mediaType === 'tv' && (
+          <section id="episodes" className="mt-10">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="text-[1.75rem] font-black tracking-tight text-white">Episodes</h2>
+                <p className="mt-1 text-sm text-white/56">
+                  Pick a season, then jump straight into the episode you want.
+                </p>
+              </div>
+              {selectedEpisode ? (
+                <span className="rounded-full border border-cyan-300/18 bg-cyan-400/[0.08] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-50">
+                  Selected {formatEpisodeCode(defaultSeason, defaultEpisode)}
+                </span>
+              ) : null}
+            </div>
+
+            {availableSeasons.length > 0 ? (
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {availableSeasons.map((season) => (
+                  <SeasonLink
+                    key={season.id}
+                    id={id}
+                    season={season}
+                    selected={season.season_number === defaultSeason}
+                  />
+                ))}
+              </div>
+            ) : null}
+
+            {selectedSeasonDetails?.overview ? (
+              <div className="mt-5 rounded-[24px] border border-white/10 bg-[#071121] p-5 text-sm leading-7 text-white/70">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/46">
+                  {selectedSeasonDetails.name || `Season ${defaultSeason}`}
+                </p>
+                <p className="mt-2">{selectedSeasonDetails.overview}</p>
+              </div>
+            ) : null}
+
+            {seasonEpisodes.length > 0 ? (
+              <div className="mt-6 grid gap-4 xl:grid-cols-2">
+                {seasonEpisodes.map((episode) => (
+                  <EpisodeCard
+                    key={episode.id}
+                    id={id}
+                    seasonNumber={defaultSeason}
+                    episode={episode}
+                    selected={episode.episode_number === defaultEpisode}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 rounded-[24px] border border-white/10 bg-[#071121] p-6 text-sm text-white/62">
+                Episode data is not available for this season yet.
+              </div>
+            )}
           </section>
         )}
 

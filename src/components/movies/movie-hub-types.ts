@@ -17,6 +17,7 @@ export interface MoviesHubTile {
   tmdbType?: 'movie' | 'tv';
   kindLabel?: string;
   secondaryMeta?: string;
+  maturityRating?: string;
   rank?: number;
 }
 

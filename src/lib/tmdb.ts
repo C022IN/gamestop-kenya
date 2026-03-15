@@ -42,9 +42,21 @@ export interface TmdbItem {
 export interface TmdbDetails extends TmdbItem {
   genres: { id: number; name: string }[];
   runtime?: number;
+  number_of_episodes?: number;
   number_of_seasons?: number;
+  seasons?: TmdbSeasonSummary[];
   status: string;
   tagline?: string;
+}
+
+export interface TmdbSeasonSummary {
+  id: number;
+  air_date?: string;
+  episode_count: number;
+  name: string;
+  overview: string;
+  poster_path: string | null;
+  season_number: number;
 }
 
 export interface TmdbEpisodeDetails {
@@ -56,6 +68,17 @@ export interface TmdbEpisodeDetails {
   episode_number: number;
   season_number: number;
   runtime?: number;
+  vote_average: number;
+}
+
+export interface TmdbSeasonDetails {
+  id: number;
+  air_date?: string;
+  episodes: TmdbEpisodeDetails[];
+  name: string;
+  overview: string;
+  poster_path: string | null;
+  season_number: number;
   vote_average: number;
 }
 
@@ -118,6 +141,9 @@ export const discoverByGenre = (mediaType: 'movie' | 'tv', genreId: number) =>
 
 export const getDetails = (mediaType: 'movie' | 'tv', id: number) =>
   tmdbGet<TmdbDetails>(`/${mediaType}/${id}`);
+
+export const getSeasonDetails = (seriesId: number, seasonNumber: number) =>
+  tmdbGet<TmdbSeasonDetails>(`/tv/${seriesId}/season/${seasonNumber}`);
 
 export const getEpisodeDetails = (seriesId: number, seasonNumber: number, episodeNumber: number) =>
   tmdbGet<TmdbEpisodeDetails>(

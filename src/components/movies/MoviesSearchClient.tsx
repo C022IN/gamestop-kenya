@@ -270,7 +270,7 @@ export default function MoviesSearchClient({
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search titles, genres, live channels..."
-                    className="h-14 w-full rounded-2xl border border-white/10 bg-black/25 px-12 pr-12 text-base text-white outline-none transition-colors placeholder:text-white/34 focus:border-cyan-300/40"
+                    className="h-14 w-full appearance-none rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(5,10,24,0.98),rgba(11,19,36,0.96))] px-12 pr-12 text-base text-white outline-none transition-colors placeholder:text-white/34 selection:bg-cyan-300/30 selection:text-white focus:border-cyan-300/40 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
                   />
                   {query ? (
                     <button

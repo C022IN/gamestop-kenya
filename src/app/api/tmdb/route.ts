@@ -8,6 +8,7 @@ import {
   getVideos,
   getCredits,
   getSimilar,
+  getSeasonDetails,
   searchMulti,
   isTmdbConfigured,
 } from '@/lib/tmdb';
@@ -21,6 +22,7 @@ import {
  * GET /api/tmdb?action=videos&type=movie&id=123
  * GET /api/tmdb?action=credits&type=movie&id=123
  * GET /api/tmdb?action=similar&type=movie&id=123
+ * GET /api/tmdb?action=season&id=123&season=1
  * GET /api/tmdb?action=search&q=inception
  */
 export async function GET(req: NextRequest) {
@@ -76,6 +78,16 @@ export async function GET(req: NextRequest) {
       if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
       const data = await getSimilar(type, id);
       return NextResponse.json(data ?? { results: [] }, { headers });
+    }
+    case 'season': {
+      const seasonNumber = Number(p.get('season'));
+      if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+      if (!seasonNumber) {
+        return NextResponse.json({ error: 'season required' }, { status: 400 });
+      }
+      const data = await getSeasonDetails(id, seasonNumber);
+      if (!data) return NextResponse.json({ error: 'not found' }, { status: 404 });
+      return NextResponse.json(data, { headers });
     }
     case 'search': {
       const q = p.get('q') ?? '';

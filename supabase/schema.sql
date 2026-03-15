@@ -613,3 +613,25 @@ create table if not exists organization_settings (
   value jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+-- ----------------------------------------------------------
+-- Security
+-- ----------------------------------------------------------
+
+-- Enable RLS on every table in the public schema. The app currently uses the
+-- Supabase service role on the server, so server-side access keeps working
+-- while anon/authenticated access stays locked down until explicit policies
+-- are added.
+do $$
+declare
+  current_table text;
+begin
+  for current_table in
+    select tablename
+    from pg_tables
+    where schemaname = 'public'
+  loop
+    execute format('alter table public.%I enable row level security', current_table);
+  end loop;
+end
+$$;

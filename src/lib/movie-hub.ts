@@ -123,7 +123,7 @@ export function toTmdbTiles(
         undefined,
       href: tmdbHref(item, fallbackType),
       meta: tmdbYear(item) || (actualType === 'tv' ? 'Series' : 'Movie'),
-      ctaLabel: 'More Info',
+      ctaLabel: actualType === 'tv' ? 'Episodes' : 'More Info',
       playable: false,
       description: truncate(item.overview, 220),
       genres: tmdbGenres(item, fallbackType),
@@ -162,6 +162,7 @@ export function toCatalogTiles(items: IptvCatalogEntry[], limit = MOVIE_HUB_LIMI
     rating: item.voteAverage,
     source: 'catalog',
     kindLabel: catalogKindLabel(item),
+    maturityRating: item.maturityRating,
     secondaryMeta:
       item.kind === 'sports_event'
         ? item.liveEvent?.competition

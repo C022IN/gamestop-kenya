@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { PLAYER_PROGRESS_EVENT } from '@/hooks/useSeriesResume';
 
 interface CompatiblePlayerFrameProps {
   src: string;
@@ -100,6 +101,7 @@ export default function CompatiblePlayerFrame({
         }
 
         window.localStorage.setItem(localStorageKey, JSON.stringify(nextRecord));
+        window.dispatchEvent(new CustomEvent(PLAYER_PROGRESS_EVENT, { detail: { storageKey } }));
       } catch {
         return;
       }
@@ -107,7 +109,7 @@ export default function CompatiblePlayerFrame({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [localStorageKey, playerOrigin]);
+  }, [localStorageKey, playerOrigin, storageKey]);
 
   return (
     <div>
