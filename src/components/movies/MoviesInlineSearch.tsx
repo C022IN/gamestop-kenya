@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { LoaderCircle, Search, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { MoviesHubTile } from '@/components/movies/movie-hub-types';
-import { Button } from '@/components/ui/button';
+import { useMediaPrimaryAction } from '@/hooks/useMediaPrimaryAction';
 
 interface MoviesInlineSearchProps {
   onOpenItem: (item: MoviesHubTile) => void;
@@ -25,6 +25,9 @@ function SearchResultRow({
   onOpenItem: (item: MoviesHubTile) => void;
   onQuickView: (item: MoviesHubTile) => void;
 }) {
+  const primaryAction = useMediaPrimaryAction(item);
+  const PrimaryIcon = primaryAction.icon;
+
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-3 transition-colors hover:bg-white/[0.06]">
       <div className="min-w-0 flex-1">
@@ -39,15 +42,27 @@ function SearchResultRow({
           </p>
         </Link>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => onQuickView(item)}
-        className="h-8 rounded-full border-white/10 bg-white/[0.04] px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-white/[0.1]"
+      <Link
+        href={primaryAction.href}
+        onClick={() => onOpenItem(item)}
+        title={primaryAction.label}
+        aria-label={primaryAction.label}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-black transition-colors hover:bg-white/90"
       >
-        <Sparkles className="mr-1 h-3.5 w-3.5" />
-        View
-      </Button>
+        <PrimaryIcon
+          className="h-3.5 w-3.5"
+          {...(primaryAction.filledIcon ? { fill: 'currentColor' } : {})}
+        />
+      </Link>
+      <button
+        type="button"
+        onClick={() => onQuickView(item)}
+        title="Quick view"
+        aria-label={`Quick view ${item.title}`}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white transition-colors hover:bg-white/[0.1]"
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
@@ -184,7 +199,7 @@ export default function MoviesInlineSearch({
 
           <div className="mt-4 min-h-[120px]">
             {query.trim().length < 2 ? (
-              <p className="text-sm text-white/52">Start typing to search movies, series, live TV, and sports.</p>
+              <p className="text-sm text-white/52">Type to search.</p>
             ) : isLoading ? (
               <div className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-200/78">
                 <LoaderCircle className="h-4 w-4 animate-spin" />

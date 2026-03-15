@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import type { MoviesHubTile } from '@/components/movies/movie-hub-types';
+import { upsertContinueWatchingItem } from '@/hooks/useContinueWatching';
 import { PLAYER_PROGRESS_EVENT } from '@/hooks/useSeriesResume';
 
 interface CompatiblePlayerFrameProps {
@@ -8,6 +10,7 @@ interface CompatiblePlayerFrameProps {
   title: string;
   playerOrigin?: string | null;
   storageKey: string;
+  historyItem?: MoviesHubTile | null;
 }
 
 interface StoredProgress {
@@ -35,6 +38,7 @@ export default function CompatiblePlayerFrame({
   title,
   playerOrigin,
   storageKey,
+  historyItem,
 }: CompatiblePlayerFrameProps) {
   const localStorageKey = useMemo(() => `gamestop:player-progress:${storageKey}`, [storageKey]);
   const [iframeSrc, setIframeSrc] = useState(src);
@@ -101,6 +105,9 @@ export default function CompatiblePlayerFrame({
         }
 
         window.localStorage.setItem(localStorageKey, JSON.stringify(nextRecord));
+        if (historyItem) {
+          upsertContinueWatchingItem(historyItem, storageKey, nextRecord);
+        }
         window.dispatchEvent(new CustomEvent(PLAYER_PROGRESS_EVENT, { detail: { storageKey } }));
       } catch {
         return;
@@ -109,7 +116,7 @@ export default function CompatiblePlayerFrame({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [localStorageKey, playerOrigin, storageKey]);
+  }, [historyItem, localStorageKey, playerOrigin, storageKey]);
 
   return (
     <div>

@@ -18,6 +18,7 @@ import {
   getDefaultCompatiblePlayerOptions,
   isCompatiblePlayerConfigured,
 } from '@/lib/compatible-player';
+import { toTmdbDetailsTile } from '@/lib/movie-hub';
 import {
   getCredits,
   getDetails,
@@ -281,6 +282,7 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
   const relatedTitles = (similar?.results ?? []).slice(0, 10);
   const playerEnabled = isCompatiblePlayerConfigured();
   const playerOptions = getDefaultCompatiblePlayerOptions();
+  const historyItem = toTmdbDetailsTile(details, mediaType);
   const requestedSeason = parsePositiveInteger(query.season, availableSeasons[0]?.season_number ?? 1);
   const defaultSeason =
     mediaType === 'tv'
@@ -499,6 +501,7 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
                   : `${title} player`
               }
               playerOrigin={playerOrigin}
+              historyItem={historyItem}
               storageKey={
                 mediaType === 'tv'
                   ? `tv-${tmdbId}-s${defaultSeason}-e${defaultEpisode}`

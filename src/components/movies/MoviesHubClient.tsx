@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState } from 'react';
 import {
   Bell,
-  ChevronRight,
   Radio,
   UserRound,
 } from 'lucide-react';
@@ -15,6 +14,7 @@ import MoviesMediaRail from '@/components/movies/MoviesMediaRail';
 import QuickViewModal from '@/components/movies/QuickViewModal';
 import type { MoviesHubSection, MoviesHubTile } from '@/components/movies/movie-hub-types';
 import { Button } from '@/components/ui/button';
+import { useContinueWatching } from '@/hooks/useContinueWatching';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 interface MoviesHubClientProps {
@@ -34,6 +34,7 @@ export default function MoviesHubClient({
   spotlightItems,
   sections,
 }: MoviesHubClientProps) {
+  const { items: continueWatching } = useContinueWatching();
   const { items: recentlyViewed, remember } = useRecentlyViewed();
   const [selectedItem, setSelectedItem] = useState<MoviesHubTile | null>(null);
 
@@ -50,6 +51,9 @@ export default function MoviesHubClient({
       ? `Subscription active. Ends ${subscriptionEndsLabel}.`
       : 'Subscription active.'
     : 'Renew required.';
+  const recentItems = recentlyViewed.filter(
+    (item) => !continueWatching.some((entry) => entry.id === item.id)
+  );
 
   return (
     <div className="min-h-screen bg-[#040814] text-white">
@@ -133,13 +137,7 @@ export default function MoviesHubClient({
         <div className="mx-auto max-w-[1500px]">
           {!hasActive ? (
             <section className="mt-8 rounded-[26px] border border-amber-200/10 bg-[#071121]/92 p-8 backdrop-blur-xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-amber-200/78">
-                Membership Required
-              </p>
-              <h2 className="mt-4 text-3xl font-black text-white">Renew to unlock playback</h2>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-white/62">
-                Discovery stays open, playback needs an active plan.
-              </p>
+              <h2 className="text-3xl font-black text-white">Renew to unlock playback</h2>
               <div className="mt-6">
                 <Link href="/iptv">
                   <Button className="rounded-full bg-amber-300 px-6 py-6 font-bold text-slate-950 hover:bg-amber-200">
@@ -150,13 +148,26 @@ export default function MoviesHubClient({
             </section>
           ) : (
             <>
-              {recentlyViewed.length > 0 ? (
+              {continueWatching.length > 0 ? (
                 <MoviesMediaRail
                   section={{
-                    id: 'recently-viewed',
-                    title: 'Recently Viewed',
-                    items: recentlyViewed,
-                    eyebrow: 'Continue',
+                    id: 'continue-watching',
+                    title: 'Continue Watching',
+                    items: continueWatching,
+                    eyebrow: 'Resume',
+                  }}
+                  onOpenItem={trackOpen}
+                  onQuickView={openQuickView}
+                />
+              ) : null}
+
+              {recentItems.length > 0 ? (
+                <MoviesMediaRail
+                  section={{
+                    id: 'recent',
+                    title: 'Recent',
+                    items: recentItems,
+                    eyebrow: 'Viewed',
                   }}
                   onOpenItem={trackOpen}
                   onQuickView={openQuickView}
@@ -173,16 +184,16 @@ export default function MoviesHubClient({
               ))}
 
               <section className="mt-10 flex items-center justify-between gap-4 rounded-[24px] border border-white/10 bg-[#071121]/92 px-5 py-4 backdrop-blur-xl">
-                <div className="flex items-center gap-3">
-                  <Radio className="h-5 w-5 text-violet-300" />
-                  <p className="text-sm font-semibold text-white/82">Need live TV? Open the live screen.</p>
+                <div className="flex items-center gap-3 text-violet-300">
+                  <Radio className="h-5 w-5" />
                 </div>
                 <Link
                   href="/live"
-                  className="inline-flex items-center gap-1 text-sm font-semibold text-violet-300 transition-colors hover:text-violet-200"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-violet-300/20 bg-violet-300/[0.08] text-violet-300 transition-colors hover:bg-violet-300/[0.14] hover:text-violet-200"
+                  title="Open Live TV"
+                  aria-label="Open Live TV"
                 >
-                  Open Live TV
-                  <ChevronRight className="h-4 w-4" />
+                  <Radio className="h-4 w-4" />
                 </Link>
               </section>
             </>

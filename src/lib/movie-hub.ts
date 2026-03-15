@@ -4,7 +4,7 @@ import {
   type IptvCatalogEntry,
   type IptvCatalogSections,
 } from '@/lib/iptv-catalog';
-import { tmdbBackdrop, tmdbPoster, type TmdbItem } from '@/lib/tmdb';
+import { tmdbBackdrop, tmdbPoster, type TmdbDetails, type TmdbItem } from '@/lib/tmdb';
 
 export const MOVIE_HUB_LIMIT = 12;
 export const MOVIE_HUB_TOP_10_LIMIT = 10;
@@ -135,6 +135,35 @@ export function toTmdbTiles(
       rank: ranked ? index + 1 : undefined,
     };
   });
+}
+
+export function toTmdbDetailsTile(
+  item: TmdbDetails,
+  mediaType: TmdbHubType
+): MoviesHubTile {
+  return {
+    id: `${mediaType}-${item.id}`,
+    title: tmdbTitle(item),
+    imageUrl:
+      tmdbBackdrop(item.backdrop_path, 'w1280') ||
+      tmdbPoster(item.poster_path, 'w780') ||
+      undefined,
+    heroImageUrl:
+      tmdbBackdrop(item.backdrop_path, 'original') ||
+      tmdbPoster(item.poster_path, 'w780') ||
+      undefined,
+    href: tmdbHref(item, mediaType),
+    meta: tmdbYear(item) || (mediaType === 'tv' ? 'Series' : 'Movie'),
+    ctaLabel: mediaType === 'tv' ? 'Episodes' : 'More Info',
+    playable: false,
+    description: truncate(item.overview, 220),
+    genres: (item.genres ?? []).map((genre) => genre.name).slice(0, 4),
+    rating: item.vote_average ? Number(item.vote_average.toFixed(1)) : undefined,
+    source: 'tmdb',
+    tmdbType: mediaType,
+    kindLabel: mediaType === 'tv' ? 'Series' : 'Movie',
+    secondaryMeta: tmdbYear(item) || undefined,
+  };
 }
 
 export function toCatalogTiles(items: IptvCatalogEntry[], limit = MOVIE_HUB_LIMIT): MoviesHubTile[] {

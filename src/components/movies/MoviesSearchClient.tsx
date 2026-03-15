@@ -18,6 +18,7 @@ import BrandLogo from '@/components/BrandLogo';
 import QuickViewModal from '@/components/movies/QuickViewModal';
 import type { MoviesHubTile } from '@/components/movies/movie-hub-types';
 import { Button } from '@/components/ui/button';
+import { useMediaPrimaryAction } from '@/hooks/useMediaPrimaryAction';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import type { MoviesSearchFilter } from '@/lib/movie-hub';
 
@@ -63,6 +64,9 @@ function SearchResultCard({
   onOpenItem: (item: MoviesHubTile) => void;
   onQuickView: (item: MoviesHubTile) => void;
 }) {
+  const primaryAction = useMediaPrimaryAction(item);
+  const PrimaryIcon = primaryAction.icon;
+
   return (
     <article className="overflow-hidden rounded-[24px] border border-white/10 bg-[#071121]">
       <div className="relative aspect-[16/9] overflow-hidden">
@@ -129,18 +133,29 @@ function SearchResultCard({
         </div>
 
         <div className="mt-5 flex gap-2">
-          <Button asChild className="h-10 flex-1 rounded-full bg-white font-bold text-black hover:bg-white/90">
-            <Link href={item.href} onClick={() => onOpenItem(item)}>
-              {item.ctaLabel ?? 'Open'}
+          <Button asChild className="h-10 w-10 rounded-full bg-white p-0 text-black hover:bg-white/90">
+            <Link
+              href={primaryAction.href}
+              onClick={() => onOpenItem(item)}
+              title={primaryAction.label}
+              aria-label={primaryAction.label}
+              className="inline-flex h-full w-full items-center justify-center"
+            >
+              <PrimaryIcon
+                className="h-4 w-4"
+                {...(primaryAction.filledIcon ? { fill: 'currentColor' } : {})}
+              />
             </Link>
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => onQuickView(item)}
-            className="h-10 rounded-full border-white/12 bg-white/[0.06] px-4 font-bold text-white hover:bg-white/[0.12]"
+            title="Quick view"
+            aria-label={`Quick view ${item.title}`}
+            className="h-10 w-10 rounded-full border-white/12 bg-white/[0.06] p-0 font-bold text-white hover:bg-white/[0.12]"
           >
-            Quick View
+            <Sparkles className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -236,16 +251,17 @@ export default function MoviesSearchClient({
               </Link>
               <Link
                 href="/movies"
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white/72 transition-colors hover:bg-white/[0.08] hover:text-white"
+                title="Back to hub"
+                aria-label="Back to hub"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/72 transition-colors hover:bg-white/[0.08] hover:text-white"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to hub
               </Link>
             </div>
 
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/64">
               <Clapperboard className="h-3.5 w-3.5" />
-              Profile {profileId}
+              {profileId.slice(-4)}
             </div>
           </div>
         </header>
@@ -256,9 +272,7 @@ export default function MoviesSearchClient({
               <Search className="h-3.5 w-3.5" />
               Search
             </div>
-            <h1 className="mt-5 text-4xl font-black leading-tight text-white md:text-6xl">
-              Find movies, series, live TV, and sports fast.
-            </h1>
+            <h1 className="mt-5 text-4xl font-black leading-tight text-white md:text-6xl">Find fast.</h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-white/64">{resultSummary}</p>
 
             <form onSubmit={submitQuery} className="mt-8">
@@ -283,8 +297,13 @@ export default function MoviesSearchClient({
                     </button>
                   ) : null}
                 </div>
-                <Button type="submit" className="h-14 rounded-2xl bg-white px-8 text-base font-black text-black hover:bg-white/90">
-                  Search
+                <Button
+                  type="submit"
+                  title="Search"
+                  aria-label="Search"
+                  className="h-14 w-14 rounded-2xl bg-white p-0 text-black hover:bg-white/90"
+                >
+                  <Search className="h-5 w-5" />
                 </Button>
               </div>
             </form>
@@ -342,15 +361,12 @@ export default function MoviesSearchClient({
               {libraryResults.length > 0 ? (
                 <section className="mt-8">
                   <div className="mb-4 flex items-center justify-between gap-4">
-                    <div>
+                  <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/38">
                         GameStop library
                       </p>
                       <h2 className="text-[1.75rem] font-black tracking-tight text-white">Local results</h2>
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/32">
-                      {libraryResults.length} titles
-                    </span>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -375,9 +391,6 @@ export default function MoviesSearchClient({
                       </p>
                       <h2 className="text-[1.75rem] font-black tracking-tight text-white">More matches</h2>
                     </div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/32">
-                      {tmdbResults.length} titles
-                    </span>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

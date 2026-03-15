@@ -2,10 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Info, Play, Star, Tv2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Star, Tv2, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import type { MoviesHubTile } from '@/components/movies/movie-hub-types';
+import { useMediaPrimaryAction } from '@/hooks/useMediaPrimaryAction';
 import { useSeriesResume } from '@/hooks/useSeriesResume';
 import type { TmdbEpisodeDetails, TmdbSeasonDetails, TmdbSeasonSummary } from '@/lib/tmdb';
 
@@ -17,10 +17,6 @@ interface QuickViewModalProps {
 
 function hasEpisodePicker(item: MoviesHubTile) {
   return item.tmdbType === 'tv';
-}
-
-function hasDirectMoviePlayback(item: MoviesHubTile) {
-  return item.tmdbType === 'movie';
 }
 
 function getSeriesTmdbId(item: MoviesHubTile | null) {
@@ -41,8 +37,53 @@ function buildEpisodeHref(href: string, seasonNumber: number, episodeNumber: num
   return `${href}?play=1&season=${seasonNumber}&episode=${episodeNumber}#player`;
 }
 
+const seriesCache = new Map<number, TmdbSeasonSummary[]>();
+const seasonCache = new Map<string, TmdbEpisodeDetails[]>();
+
+async function fetchSeriesSeasons(showId: number) {
+  if (seriesCache.has(showId)) {
+    return seriesCache.get(showId) ?? [];
+  }
+
+  const response = await fetch(`/api/tmdb?action=details&type=tv&id=${showId}`, {
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to load series details');
+  }
+
+  const data = (await response.json()) as { seasons?: TmdbSeasonSummary[] };
+  const seasons = [...(data.seasons ?? [])]
+    .filter((season) => season.episode_count > 0)
+    .sort((left, right) => left.season_number - right.season_number);
+
+  seriesCache.set(showId, seasons);
+  return seasons;
+}
+
+async function fetchSeasonEpisodes(showId: number, seasonNumber: number) {
+  const cacheKey = `${showId}:${seasonNumber}`;
+  if (seasonCache.has(cacheKey)) {
+    return seasonCache.get(cacheKey) ?? [];
+  }
+
+  const response = await fetch(`/api/tmdb?action=season&id=${showId}&season=${seasonNumber}`, {
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to load episodes');
+  }
+
+  const data = (await response.json()) as TmdbSeasonDetails;
+  const episodes = data.episodes ?? [];
+  seasonCache.set(cacheKey, episodes);
+  return episodes;
+}
+
 export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewModalProps) {
   const seriesResume = useSeriesResume(item);
+  const primaryAction = useMediaPrimaryAction(item);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [seasons, setSeasons] = useState<TmdbSeasonSummary[]>([]);
   const [episodes, setEpisodes] = useState<TmdbEpisodeDetails[]>([]);
   const [selectedSeason, setSelectedSeason] = useState(1);
@@ -51,6 +92,7 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   const seriesItem = item ? hasEpisodePicker(item) : false;
   const showId = getSeriesTmdbId(item);
+  const PrimaryIcon = primaryAction.icon;
 
   useEffect(() => {
     if (!item) {
@@ -66,6 +108,7 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
+    window.setTimeout(() => closeButtonRef.current?.focus(), 10);
 
     return () => {
       document.body.style.overflow = previousOverflow;
@@ -92,22 +135,11 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
     setSelectedSeason(fallbackSeason);
     setSelectedEpisode(fallbackEpisode);
 
-    void fetch(`/api/tmdb?action=details&type=tv&id=${showId}`, { cache: 'no-store' })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error('Failed to load series details');
-        }
-
-        return (await response.json()) as { seasons?: TmdbSeasonSummary[] };
-      })
-      .then((data) => {
+    void fetchSeriesSeasons(showId)
+      .then((nextSeasons) => {
         if (cancelled) {
           return;
         }
-
-        const nextSeasons = [...(data.seasons ?? [])]
-          .filter((season) => season.episode_count > 0)
-          .sort((left, right) => left.season_number - right.season_number);
 
         setSeasons(nextSeasons);
 
@@ -155,20 +187,12 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
     setIsLoadingEpisodes(true);
     setEpisodes([]);
 
-    void fetch(`/api/tmdb?action=season&id=${showId}&season=${selectedSeason}`, { cache: 'no-store' })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error('Failed to load episodes');
-        }
-
-        return (await response.json()) as TmdbSeasonDetails;
-      })
-      .then((data) => {
+    void fetchSeasonEpisodes(showId, selectedSeason)
+      .then((nextEpisodes) => {
         if (cancelled) {
           return;
         }
 
-        const nextEpisodes = data.episodes ?? [];
         setEpisodes(nextEpisodes);
         setSelectedEpisode((current) => {
           if (nextEpisodes.some((episode) => episode.episode_number === current)) {
@@ -198,12 +222,9 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
     return null;
   }
 
-  const movieItem = hasDirectMoviePlayback(item);
   const primaryHref = seriesItem
     ? buildEpisodeHref(item.href, selectedSeason, selectedEpisode)
-    : movieItem
-      ? `${item.href}?play=1#player`
-      : item.href;
+    : primaryAction.href;
   const isSelectedResume =
     seriesItem &&
     seriesResume.hasResume &&
@@ -213,9 +234,7 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
     ? isSelectedResume
       ? seriesResume.primaryLabel
       : 'Play'
-    : movieItem || item.playable
-      ? 'Play'
-      : item.ctaLabel ?? 'Open';
+    : primaryAction.label;
   const openSeriesHref = seriesItem
     ? `${item.href}?season=${selectedSeason}&episode=${selectedEpisode}#episodes`
     : item.href;
@@ -229,8 +248,14 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
         aria-label="Close quick view"
       />
 
-      <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-[28px] border border-white/10 bg-[#071121] shadow-[0_40px_120px_-32px_rgba(2,12,27,0.95)]">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={item.title}
+        className="relative z-10 w-full max-w-5xl overflow-hidden rounded-[28px] border border-white/10 bg-[#071121] shadow-[0_40px_120px_-32px_rgba(2,12,27,0.95)]"
+      >
         <button
+          ref={closeButtonRef}
           type="button"
           onClick={onClose}
           className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white/80 transition-colors hover:bg-black/65 hover:text-white"
@@ -277,7 +302,7 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
                   {item.badge}
                 </span>
               ) : null}
-              {item.genres.slice(0, 4).map((genre) => (
+              {item.genres.slice(0, 2).map((genre) => (
                 <span
                   key={`${item.id}-${genre}`}
                   className="rounded-full border border-white/12 bg-white/6 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70"
@@ -290,25 +315,6 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
             <p className="mt-6 text-sm leading-7 text-white/72 sm:text-base">
               {item.description?.trim() || 'Open this title to view details and playback options.'}
             </p>
-
-            <div className="mt-6 grid gap-3 text-sm text-white/70 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                  Source
-                </p>
-                <p className="mt-2 font-semibold text-white/82">
-                  {item.source === 'tmdb' ? 'TMDB Discovery' : 'GameStop Library'}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">
-                  Type
-                </p>
-                <p className="mt-2 font-semibold text-white/82">
-                  {item.kindLabel ?? item.tmdbType?.toUpperCase() ?? 'Title'}
-                </p>
-              </div>
-            </div>
 
             {seriesItem ? (
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -363,35 +369,38 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
             ) : null}
 
             <div className="mt-auto flex flex-wrap gap-3 pt-8">
-              <Button asChild className="h-12 rounded-xl bg-white px-5 font-bold text-black hover:bg-white/90">
-                <Link href={primaryHref} onClick={() => onOpenItem(item)}>
-                  {seriesItem || movieItem || item.playable ? (
-                    <Play className="mr-2 h-4 w-4" fill="currentColor" />
-                  ) : (
-                    <Info className="mr-2 h-4 w-4" />
-                  )}
-                  {primaryLabel}
-                </Link>
-              </Button>
-              {seriesItem ? (
-                <Button
-                  asChild
-                  variant="outline"
-                  className="h-12 rounded-xl border-white/12 bg-white/[0.06] px-5 font-bold text-white hover:bg-white/[0.12]"
-                >
-                  <Link href={openSeriesHref} onClick={() => onOpenItem(item)}>
-                    Open Series
-                  </Link>
-                </Button>
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="h-12 rounded-xl border-white/12 bg-white/[0.06] px-5 font-bold text-white hover:bg-white/[0.12]"
+              <Link
+                href={primaryHref}
+                onClick={() => onOpenItem(item)}
+                title={primaryLabel}
+                aria-label={primaryLabel}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white text-black transition-colors hover:bg-white/90"
               >
-                Close
-              </Button>
+                <PrimaryIcon
+                  className="h-4 w-4"
+                  {...(primaryAction.filledIcon ? { fill: 'currentColor' } : {})}
+                />
+              </Link>
+              {seriesItem ? (
+                <Link
+                  href={openSeriesHref}
+                  onClick={() => onOpenItem(item)}
+                  title="Open series"
+                  aria-label="Open series"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.06] text-white transition-colors hover:bg-white/[0.12]"
+                >
+                  <Tv2 className="h-4 w-4" />
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                onClick={onClose}
+                title="Close"
+                aria-label="Close"
+                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.06] text-white transition-colors hover:bg-white/[0.12]"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>

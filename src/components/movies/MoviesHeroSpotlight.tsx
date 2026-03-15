@@ -2,10 +2,10 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Clapperboard, Info, Play, Star, Tv2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clapperboard, Info, ShieldCheck, Star, Tv2, UserRound } from 'lucide-react';
 import type { MoviesHubTile } from '@/components/movies/movie-hub-types';
+import { useMediaPrimaryAction } from '@/hooks/useMediaPrimaryAction';
 import { useHeroRotation } from '@/hooks/useHeroRotation';
-import { useSeriesResume } from '@/hooks/useSeriesResume';
 
 interface MoviesHeroSpotlightProps {
   items: MoviesHubTile[];
@@ -26,14 +26,6 @@ const FALLBACK_ITEM: MoviesHubTile = {
   source: 'catalog',
 };
 
-function hasEpisodePicker(item: MoviesHubTile) {
-  return item.tmdbType === 'tv';
-}
-
-function hasDirectMoviePlayback(item: MoviesHubTile) {
-  return item.tmdbType === 'movie';
-}
-
 export default function MoviesHeroSpotlight({
   items,
   profileId,
@@ -44,16 +36,8 @@ export default function MoviesHeroSpotlight({
   const heroItems = items.length > 0 ? items : [FALLBACK_ITEM];
   const { activeIndex, goNext, goPrev, goTo } = useHeroRotation(heroItems.length);
   const activeItem = heroItems[activeIndex] ?? FALLBACK_ITEM;
-  const seriesItem = hasEpisodePicker(activeItem);
-  const movieItem = hasDirectMoviePlayback(activeItem);
-  const seriesResume = useSeriesResume(activeItem);
-  const primaryHref = seriesItem ? seriesResume.primaryHref : activeItem.href;
-  const resolvedPrimaryHref = movieItem ? `${activeItem.href}?play=1#player` : primaryHref;
-  const primaryLabel = seriesItem
-    ? seriesResume.primaryLabel
-    : movieItem || activeItem.playable
-      ? 'Play'
-      : activeItem.ctaLabel ?? 'Open';
+  const primaryAction = useMediaPrimaryAction(activeItem);
+  const PrimaryIcon = primaryAction.icon;
 
   return (
     <>
@@ -117,19 +101,18 @@ export default function MoviesHeroSpotlight({
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
-              href={resolvedPrimaryHref}
+              href={primaryAction.href}
               onClick={() => onOpenItem(activeItem)}
-              title={primaryLabel}
-              aria-label={primaryLabel}
+              title={primaryAction.label}
+              aria-label={primaryAction.label}
               className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white text-black transition-colors hover:bg-white/90"
             >
-              {seriesItem || movieItem || activeItem.playable ? (
-                <Play className="h-5 w-5" fill="currentColor" />
-              ) : (
-                <Info className="h-5 w-5" />
-              )}
+              <PrimaryIcon
+                className="h-5 w-5"
+                {...(primaryAction.filledIcon ? { fill: 'currentColor' } : {})}
+              />
             </Link>
-            {seriesItem ? (
+            {primaryAction.isSeries ? (
               <Link
                 href={activeItem.href}
                 onClick={() => onOpenItem(activeItem)}
@@ -149,19 +132,28 @@ export default function MoviesHeroSpotlight({
             >
               <Info className="h-5 w-5" />
             </button>
-            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-white/72">
-              {primaryLabel}
-            </div>
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold text-white/72">
-            <span className="rounded-full bg-black/30 px-3 py-1">Profile {profileId}</span>
+            <span
+              title={`Profile ${profileId}`}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/30"
+            >
+              <UserRound className="h-4 w-4" />
+            </span>
             {subscriptionLabel ? (
-              <span className="rounded-full bg-black/30 px-3 py-1">{subscriptionLabel}</span>
+              <span
+                title={subscriptionLabel}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/30"
+              >
+                <ShieldCheck className="h-4 w-4" />
+              </span>
             ) : null}
-            <span className="rounded-full bg-black/30 px-3 py-1">
-              <Clapperboard className="mr-1 inline h-4 w-4" />
-              Curated spotlight
+            <span
+              title="Curated spotlight"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/30"
+            >
+              <Clapperboard className="h-4 w-4" />
             </span>
           </div>
         </div>

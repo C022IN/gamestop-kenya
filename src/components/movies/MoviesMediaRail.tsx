@@ -2,24 +2,16 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Info, Play, Star, Tv2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, Star, Tv2 } from 'lucide-react';
 import type { MoviesHubSection, MoviesHubTile } from '@/components/movies/movie-hub-types';
 import { useCarouselControls } from '@/hooks/useCarouselControls';
 import { useHoverPreview } from '@/hooks/useHoverPreview';
-import { useSeriesResume } from '@/hooks/useSeriesResume';
+import { useMediaPrimaryAction } from '@/hooks/useMediaPrimaryAction';
 
 interface MoviesMediaRailProps {
   section: MoviesHubSection;
   onOpenItem: (item: MoviesHubTile) => void;
   onQuickView: (item: MoviesHubTile) => void;
-}
-
-function hasEpisodePicker(item: MoviesHubTile) {
-  return item.tmdbType === 'tv';
-}
-
-function hasDirectMoviePlayback(item: MoviesHubTile) {
-  return item.tmdbType === 'movie';
 }
 
 function RailCard({
@@ -41,24 +33,12 @@ function RailCard({
   onPreviewStart: () => void;
   onPreviewEnd: () => void;
 }) {
-  const seriesItem = hasEpisodePicker(item);
-  const movieItem = hasDirectMoviePlayback(item);
-  const seriesResume = useSeriesResume(item);
-  const primaryHref = seriesItem
-    ? seriesResume.primaryHref
-    : movieItem
-      ? `${item.href}?play=1#player`
-      : item.href;
-  const primaryLabel = seriesItem
-    ? seriesResume.primaryLabel
-    : movieItem || item.playable
-      ? 'Play'
-      : item.ctaLabel ?? 'Open';
+  const primaryAction = useMediaPrimaryAction(item);
+  const PrimaryIcon = primaryAction.icon;
   const previewAttributes = [
     item.maturityRating ?? item.secondaryMeta ?? item.meta,
     item.genres[0],
   ].filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index);
-  const primaryActionLabel = movieItem || item.playable ? 'Play now' : primaryLabel;
 
   return (
     <article
@@ -124,15 +104,14 @@ function RailCard({
 
         <div className="absolute bottom-0 left-0 right-0 z-20 p-4">
           <p className="line-clamp-2 text-lg font-black text-white md:text-xl">{item.title}</p>
-          <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-white/88 backdrop-blur-sm">
-            {seriesItem ? (
-              <Tv2 className="h-3.5 w-3.5" />
-            ) : item.playable ? (
-              <Play className="h-3.5 w-3.5" fill="currentColor" />
-            ) : (
-              <Info className="h-3.5 w-3.5" />
-            )}
-            {seriesItem ? 'Episodes' : item.ctaLabel ?? 'Open'}
+          <span
+            title={primaryAction.label}
+            className="mt-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white/88 backdrop-blur-sm"
+          >
+            <PrimaryIcon
+              className="h-4 w-4"
+              {...(primaryAction.filledIcon ? { fill: 'currentColor' } : {})}
+            />
           </span>
         </div>
 
@@ -160,19 +139,18 @@ function RailCard({
             <div className="mt-auto pt-4">
               <div className="flex items-center gap-2">
                 <Link
-                  href={primaryHref}
+                  href={primaryAction.href}
                   onClick={() => onOpenItem(item)}
-                  title={primaryLabel}
-                  aria-label={primaryLabel}
+                  title={primaryAction.label}
+                  aria-label={primaryAction.label}
                   className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-black transition-colors hover:bg-white/90"
                 >
-                  {seriesItem || movieItem || item.playable ? (
-                    <Play className="h-4 w-4" fill="currentColor" />
-                  ) : (
-                    <Info className="h-4 w-4" />
-                  )}
+                  <PrimaryIcon
+                    className="h-4 w-4"
+                    {...(primaryAction.filledIcon ? { fill: 'currentColor' } : {})}
+                  />
                 </Link>
-                {seriesItem ? (
+                {primaryAction.isSeries ? (
                   <Link
                     href={item.href}
                     onClick={() => onOpenItem(item)}
@@ -194,13 +172,10 @@ function RailCard({
                 </button>
               </div>
 
-              <div className="mt-3 flex min-h-[1rem] items-center gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/58">
-                  {primaryActionLabel}
-                </p>
-                {seriesItem && seriesResume.hasResume ? (
+              <div className="mt-3 min-h-[1rem]">
+                {primaryAction.hasResume ? (
                   <span className="rounded-full border border-cyan-400/16 bg-cyan-400/[0.1] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100">
-                    {primaryLabel}
+                    {primaryAction.label}
                   </span>
                 ) : null}
               </div>
@@ -246,9 +221,6 @@ export default function MoviesMediaRail({
           ) : null}
           <h2 className="text-[1.75rem] font-black tracking-tight text-white">{section.title}</h2>
         </div>
-        <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/32">
-          {section.items.length} titles
-        </span>
       </div>
 
       <div className="relative">
