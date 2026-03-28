@@ -1,4 +1,4 @@
-import type { RoutePageContent } from '@/components/RouteContentPage';
+import type { RoutePageContent } from '@/domains/storefront/components/RouteContentPage';
 import { gamingVisuals } from '@/data/gaming-visuals';
 
 export const aboutPageContent: RoutePageContent = {

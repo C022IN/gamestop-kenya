@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, User, ShoppingCart, Menu, Globe, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BrandLogo from '@/components/BrandLogo';
-import { useCart } from '@/context/CartContext';
+import { useOptionalCart } from '@/context/CartContext';
 import Link from 'next/link';
 
 interface Currency {
@@ -31,7 +31,8 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
   const [announcementIndex, setAnnouncementIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNavBadges, setShowNavBadges] = useState(false);
-  const { itemCount } = useCart();
+  const cart = useOptionalCart();
+  const itemCount = cart?.itemCount ?? 0;
 
   useEffect(() => {
     const timer = setInterval(() => {

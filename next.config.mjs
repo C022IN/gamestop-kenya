@@ -1,5 +1,7 @@
-const path = require('path');
-const { PHASE_DEVELOPMENT_SERVER } = require('next/constants');
+import { fileURLToPath } from 'node:url';
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants.js';
+
+const rootDir = fileURLToPath(new URL('.', import.meta.url));
 
 /** @type {(phase: string) => import('next').NextConfig} */
 const nextConfig = (phase) => ({
@@ -7,7 +9,7 @@ const nextConfig = (phase) => ({
   distDir: phase === PHASE_DEVELOPMENT_SERVER ? '.next-dev' : '.next',
   allowedDevOrigins: ['*.preview.same-app.com'],
   turbopack: {
-    root: path.resolve(__dirname),
+    root: rootDir,
   },
   images: {
     unoptimized: true,
@@ -54,4 +56,4 @@ const nextConfig = (phase) => ({
   },
 });
 
-module.exports = nextConfig;
+export default nextConfig;
