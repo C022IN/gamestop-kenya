@@ -1,4 +1,4 @@
-import type { CartItem } from '@/context/CartContext';
+import type { CartItem } from '@/domains/storefront/cart/CartContext';
 
 export const SHIPPING_THRESHOLD = 5000;
 export const STANDARD_SHIPPING_FEE = 500;

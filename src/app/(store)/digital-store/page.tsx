@@ -1,4 +1,4 @@
-import RouteContentPage from '@/components/RouteContentPage';
+import RouteContentPage from '@/domains/storefront/components/RouteContentPage';
 import { digitalStorePageContent } from '@/data/route-page-content';
 import { getMergedGiftCardShowcaseCards } from '@/lib/storefront-media';
 

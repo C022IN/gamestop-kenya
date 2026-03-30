@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import MoviesHubClient from '@/components/movies/MoviesHubClient';
 import type { MoviesHubSection } from '@/components/movies/movie-hub-types';
 import { getIptvCatalogSections } from '@/lib/iptv-catalog';
-import { getActiveSubscriptionsForProfile } from '@/lib/movie-platform';
+import { getMovieMembershipState } from '@/lib/movie-platform';
 import { getCurrentMovieMember } from '@/lib/movie-session';
 import {
   discoverByGenre,
@@ -43,7 +43,7 @@ export default async function MoviesPage() {
   const { profile } = memberState;
   const [
     catalog,
-    activeSubscriptions,
+    membership,
     trendingMovies,
     popularMovies,
     popularTv,
@@ -52,7 +52,7 @@ export default async function MoviesPage() {
     ...genreResults
   ] = await Promise.all([
     getIptvCatalogSections(),
-    getActiveSubscriptionsForProfile(profile.profileId),
+    getMovieMembershipState(profile.profileId),
     getTrending('movie'),
     getPopular('movie'),
     getPopular('tv'),
@@ -61,8 +61,9 @@ export default async function MoviesPage() {
     ...MOVIE_GENRE_CONFIG.map((genre) => discoverByGenre('movie', genre.genreId)),
   ]);
 
-  const hasActive = activeSubscriptions.length > 0;
-  const primarySubscription = activeSubscriptions[0] ?? null;
+  const hasActive = membership.hasActiveSubscription;
+  const primarySubscription = membership.latestSubscription;
+  const accessState = hasActive ? 'active' : primarySubscription ? 'expired' : 'none';
   const featuredTiles = toCatalogTiles(catalog.featured);
   const sportsTiles = toCatalogTiles(catalog.sportsEvents);
   const liveTiles = toCatalogTiles(catalog.liveChannels);
@@ -145,6 +146,8 @@ export default async function MoviesPage() {
     <MoviesHubClient
       profileId={profile.profileId}
       hasActive={hasActive}
+      playbackLocked={!hasActive}
+      accessState={accessState}
       subscriptionLabel={primarySubscription?.planName ?? null}
       subscriptionEndsLabel={
         primarySubscription?.expiresAt

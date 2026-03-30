@@ -10,6 +10,7 @@ import {
   type MoviesSearchFilter,
 } from '@/lib/movie-hub';
 import { getIptvCatalogSections } from '@/lib/iptv-catalog';
+import { getMovieMembershipState } from '@/lib/movie-platform';
 import { getCurrentMovieMember } from '@/lib/movie-session';
 import { searchMulti } from '@/lib/tmdb';
 
@@ -50,6 +51,13 @@ export default async function MoviesSearchPage({ searchParams }: MoviesSearchPag
   const filter = parseFilter(toSingleValue(params.type));
   const catalog = await getIptvCatalogSections();
   const flattenedCatalog = flattenCatalogEntries(catalog);
+  const membership = await getMovieMembershipState(memberState.profile.profileId);
+  const playbackLocked = !membership.hasActiveSubscription;
+  const accessState = membership.hasActiveSubscription
+    ? 'active'
+    : membership.latestSubscription
+      ? 'expired'
+      : 'none';
 
   const [tmdbData] = await Promise.all([
     initialQuery.length >= 2 ? searchMulti(initialQuery) : Promise.resolve(null),
@@ -73,6 +81,8 @@ export default async function MoviesSearchPage({ searchParams }: MoviesSearchPag
   return (
     <MoviesSearchClient
       profileId={memberState.profile.profileId}
+      playbackLocked={playbackLocked}
+      accessState={accessState}
       initialQuery={initialQuery}
       filter={filter}
       libraryResults={libraryResults}

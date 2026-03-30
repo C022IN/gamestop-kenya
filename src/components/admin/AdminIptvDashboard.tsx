@@ -62,6 +62,10 @@ interface Subscription {
 }
 
 interface Overview {
+  customerCount: number;
+  activeCustomerCount: number;
+  pendingCustomerCount: number;
+  expiredCustomerCount: number;
   totalSubscriptions: number;
   activeSubscriptions: number;
   pendingSubscriptions: number;
@@ -76,6 +80,39 @@ interface Overview {
     count: number;
     revenueKes: number;
   }>;
+}
+
+interface SubscriptionCoveragePeriod {
+  startedAt: string;
+  endedAt: string;
+  subscriptionIds: string[];
+  planNames: string[];
+}
+
+interface SubscriptionGap {
+  startedAt: string;
+  endedAt: string;
+  durationDays: number;
+}
+
+interface SubscriptionBundle {
+  key: string;
+  profileId: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  member?: {
+    profileId: string;
+    accessCode: string;
+  };
+  status: 'pending' | 'active' | 'expired';
+  startedAt: string;
+  latestActivityAt: string;
+  latestSubscription: Subscription;
+  subscriptions: Subscription[];
+  periods: SubscriptionCoveragePeriod[];
+  gaps: SubscriptionGap[];
+  totalRevenueKes: number;
 }
 
 interface AuditEntry {
@@ -109,7 +146,7 @@ interface HierarchyNode {
     phone: string | null;
   };
   stats: Overview;
-  subscriptions: Subscription[];
+  bundles: SubscriptionBundle[];
 }
 
 const STATUS_STYLE = {
@@ -136,6 +173,18 @@ function formatAuditTime(at: string) {
     hour: 'numeric',
     minute: '2-digit',
   });
+}
+
+function formatDateLabel(value: string) {
+  return new Date(value).toLocaleDateString('en-KE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function roleLabel(role: AdminRole) {
@@ -204,7 +253,8 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
 
     const nextSelections: Record<string, string> = {};
     for (const node of data.hierarchy ?? []) {
-      for (const subscription of node.subscriptions) {
+      for (const bundle of node.bundles) {
+        const subscription = bundle.latestSubscription;
         nextSelections[subscription.id] = subscription.assignedAdmin?.id ?? admin.id;
       }
     }
@@ -445,8 +495,8 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
     [admins]
   );
 
-  const renderSubscriptionRows = (subscriptions: Subscription[]) => {
-    if (subscriptions.length === 0) {
+  const renderSubscriptionRows = (bundles: SubscriptionBundle[]) => {
+    if (bundles.length === 0) {
       return (
         <div className="rounded-xl border border-dashed border-gray-800 bg-gray-950 p-5 text-sm text-gray-500">
           No users in this group.
@@ -460,50 +510,112 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
           <thead className="bg-gray-900 text-xs uppercase tracking-wide text-gray-400">
             <tr>
               <th className="px-4 py-3 text-left">User</th>
-              <th className="px-4 py-3 text-left">Plan</th>
+              <th className="px-4 py-3 text-left">Journey</th>
               <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Receipt</th>
+              <th className="px-4 py-3 text-left">Latest receipt</th>
               <th className="px-4 py-3 text-left">Owner</th>
               <th className="px-4 py-3 text-left">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800 bg-gray-950">
-            {subscriptions.map((subscription) => (
-              <tr key={subscription.id} className="transition hover:bg-gray-900/60">
+            {bundles.map((bundle) => {
+              const subscription = bundle.latestSubscription;
+              const latestCoveredPeriod = bundle.periods[bundle.periods.length - 1];
+              const assignmentKey = subscription.id;
+
+              return (
+              <tr key={bundle.key} className="transition hover:bg-gray-900/60">
                 <td className="px-4 py-3 align-top">
-                  <p className="font-semibold text-white">{subscription.customerName}</p>
-                  <p className="text-xs text-gray-400">{subscription.email}</p>
-                  <p className="text-xs text-gray-500">{subscription.phone}</p>
-                  {subscription.member && (
+                  <p className="font-semibold text-white">{bundle.customerName}</p>
+                  <p className="text-xs text-gray-400">{bundle.email}</p>
+                  <p className="text-xs text-gray-500">{bundle.phone}</p>
+                  {bundle.member && (
                     <>
-                      <p className="text-xs text-red-300">Phone: {subscription.member.profileId}</p>
-                      <p className="font-mono text-xs text-red-200">Movie code: {subscription.member.accessCode}</p>
+                      <p className="text-xs text-red-300">Member ID: {bundle.member.profileId}</p>
+                      <p className="font-mono text-xs text-red-200">Movie code: {bundle.member.accessCode}</p>
                     </>
                   )}
-                  <p className="font-mono text-xs text-gray-600">{subscription.id}</p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Started {formatDateLabel(bundle.startedAt)} | {pluralize(bundle.subscriptions.length, 'subscription period')}
+                  </p>
+                  <p className="font-mono text-xs text-gray-600">{bundle.profileId}</p>
                 </td>
                 <td className="px-4 py-3 align-top">
                   <p className="font-semibold">{subscription.planName}</p>
-                  <p className="text-xs text-gray-400">{formatKes(subscription.amountKes)}</p>
-                  <p className="text-xs text-gray-500">
-                    Created{' '}
-                    {new Date(subscription.createdAt).toLocaleDateString('en-KE', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
+                  <p className="text-xs text-gray-400">
+                    {formatKes(subscription.amountKes)} latest | {formatKes(bundle.totalRevenueKes)} total
                   </p>
+                  <p className="text-xs text-gray-500">
+                    Latest created {formatDateLabel(subscription.createdAt)} | Expires {formatDateLabel(subscription.expiresAt)}
+                  </p>
+                  <div className="mt-3 space-y-3">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">Coverage periods</p>
+                      <div className="mt-1 space-y-1">
+                        {bundle.periods.length > 0 ? (
+                          <>
+                            {bundle.periods.slice(0, 3).map((period) => (
+                              <p key={`${period.startedAt}-${period.endedAt}`} className="text-xs text-gray-300">
+                                {formatDateLabel(period.startedAt)} - {formatDateLabel(period.endedAt)} | {pluralize(period.subscriptionIds.length, 'renewal')}
+                              </p>
+                            ))}
+                            {bundle.periods.length > 3 && (
+                              <p className="text-xs text-gray-500">
+                                +{bundle.periods.length - 3} more coverage {bundle.periods.length - 3 === 1 ? 'block' : 'blocks'}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-xs text-gray-500">Pending only. No active coverage tracked yet.</p>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">Skipped periods</p>
+                      <div className="mt-1 space-y-1">
+                        {bundle.gaps.length > 0 ? (
+                          <>
+                            {bundle.gaps.slice(0, 2).map((gap) => (
+                              <p key={`${gap.startedAt}-${gap.endedAt}`} className="text-xs text-amber-300">
+                                {formatDateLabel(gap.startedAt)} - {formatDateLabel(gap.endedAt)} | {pluralize(gap.durationDays, 'day')} skipped
+                              </p>
+                            ))}
+                            {bundle.gaps.length > 2 && (
+                              <p className="text-xs text-gray-500">
+                                +{bundle.gaps.length - 2} more skipped {bundle.gaps.length - 2 === 1 ? 'period' : 'periods'}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-xs text-emerald-400">No skipped renewal periods.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-3 align-top">
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_STYLE[subscription.status]}`}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_STYLE[bundle.status]}`}
                   >
-                    {STATUS_ICON[subscription.status]}
-                    {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                    {STATUS_ICON[bundle.status]}
+                    {bundle.status.charAt(0).toUpperCase() + bundle.status.slice(1)}
                   </span>
+                  <p className="mt-2 text-xs text-gray-500">
+                    {bundle.status === 'active'
+                      ? latestCoveredPeriod
+                        ? `Access tracked through ${formatDateLabel(latestCoveredPeriod.endedAt)}.`
+                        : 'Access is currently live.'
+                      : bundle.status === 'pending'
+                        ? 'Latest period is waiting for activation.'
+                        : latestCoveredPeriod
+                          ? `Last access ended ${formatDateLabel(latestCoveredPeriod.endedAt)}.`
+                          : 'No active coverage on record.'}
+                  </p>
                 </td>
                 <td className="px-4 py-3 align-top font-mono text-xs text-emerald-400">
-                  {subscription.mpesaReceipt ?? '-'}
+                  <p>{subscription.mpesaReceipt ?? '-'}</p>
+                  <p className="mt-2 text-gray-500">{pluralize(bundle.subscriptions.length, 'receipt')} tracked</p>
+                  <p className="mt-1 text-gray-600">{subscription.id}</p>
                 </td>
                 <td className="px-4 py-3 align-top">
                   <p className="text-xs font-semibold text-white">
@@ -515,11 +627,11 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                   {isSuper && visibleAdminOptions.length > 0 && (
                     <div className="mt-3 space-y-2">
                       <select
-                        value={assignmentSelections[subscription.id] ?? subscription.assignedAdmin?.id ?? ''}
+                        value={assignmentSelections[assignmentKey] ?? subscription.assignedAdmin?.id ?? ''}
                         onChange={(event) =>
                           setAssignmentSelections((prev) => ({
                             ...prev,
-                            [subscription.id]: event.target.value,
+                            [assignmentKey]: event.target.value,
                           }))
                         }
                         className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-xs text-white focus:border-violet-500 focus:outline-none"
@@ -534,44 +646,47 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                         type="button"
                         size="sm"
                         variant="outline"
-                        disabled={assigning === subscription.id}
+                        disabled={assigning === assignmentKey}
                         onClick={() => handleAssign(subscription)}
                         className="rounded-lg border-violet-500/40 bg-transparent text-violet-200 hover:bg-violet-950"
                       >
-                        {assigning === subscription.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Assign'}
+                        {assigning === assignmentKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Assign'}
                       </Button>
-                      {assignmentMsg[subscription.id] && (
-                        <p className="text-xs text-emerald-400">{assignmentMsg[subscription.id]}</p>
+                      {assignmentMsg[assignmentKey] && (
+                        <p className="text-xs text-emerald-400">{assignmentMsg[assignmentKey]}</p>
                       )}
                     </div>
                   )}
                 </td>
                 <td className="px-4 py-3 align-top">
-                  {subscription.status !== 'active' ? (
+                  {bundle.status !== 'active' && subscription.status === 'pending' ? (
                     <div>
                       <button
                         type="button"
                         onClick={() => handleActivate(subscription)}
-                        disabled={activating === subscription.id}
+                        disabled={activating === assignmentKey}
                         className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50"
                       >
-                        {activating === subscription.id ? (
+                        {activating === assignmentKey ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
                           <Zap className="h-3.5 w-3.5" />
                         )}
                         Activate
                       </button>
-                      {activateMsg[subscription.id] && (
-                        <p className="mt-1 text-xs text-emerald-400">{activateMsg[subscription.id]}</p>
+                      {activateMsg[assignmentKey] && (
+                        <p className="mt-1 text-xs text-emerald-400">{activateMsg[assignmentKey]}</p>
                       )}
                     </div>
+                  ) : bundle.status === 'expired' ? (
+                    <span className="text-xs text-amber-300">Renew required</span>
                   ) : (
                     <span className="text-xs text-gray-600">Active</span>
                   )}
                 </td>
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>
@@ -591,8 +706,8 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-gray-400">
               {isSuper
-                ? 'See every admin, every onboarded user, and the phone-plus-code format under each admin.'
-                : 'See only the users assigned to you, with their phone numbers, codes, and payment status.'}
+                ? 'See every admin, grouped customer histories, and the phone-plus-code format under each admin.'
+                : 'See the grouped customer histories assigned to you, with phone numbers, codes, and payment status.'}
             </p>
           </div>
 
@@ -770,9 +885,9 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
           <section className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
               {
-                label: isSuper ? 'All Onboarded Users' : 'Your Users',
-                value: overview.totalSubscriptions.toLocaleString(),
-                note: `${overview.activeSubscriptions} active / ${overview.pendingSubscriptions} pending`,
+                label: isSuper ? 'All Users' : 'Your Users',
+                value: overview.customerCount.toLocaleString(),
+                note: `${overview.totalSubscriptions} subscription periods tracked | ${overview.activeCustomerCount} active`,
                 icon: Users,
               },
               {
@@ -790,7 +905,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
               {
                 label: 'Visible Results',
                 value: filteredCount.toLocaleString(),
-                note: query.trim() ? 'Filtered hierarchy' : 'Current scope',
+                note: query.trim() ? 'Bundled user histories' : 'Current user scope',
                 icon: Search,
               },
             ].map(({ label, value, note, icon: Icon }) => (
@@ -1054,8 +1169,8 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
             </h2>
             <p className="text-sm text-gray-400">
               {isSuper
-                ? 'Each section shows the admin and the users assigned under them.'
-                : 'These are the users assigned to your account.'}
+                ? 'Each section shows the admin and the bundled customer histories assigned under them.'
+                : 'These are the bundled customer histories assigned to your account.'}
             </p>
           </div>
 
@@ -1072,11 +1187,11 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                   <div className="grid grid-cols-3 gap-2 text-xs md:min-w-72">
                     <div className="rounded-lg bg-gray-900 p-3">
                       <p className="text-gray-500">Users</p>
-                      <p className="mt-1 font-bold text-white">{node.stats.totalSubscriptions}</p>
+                      <p className="mt-1 font-bold text-white">{node.stats.customerCount}</p>
                     </div>
                     <div className="rounded-lg bg-gray-900 p-3">
                       <p className="text-gray-500">Active</p>
-                      <p className="mt-1 font-bold text-white">{node.stats.activeSubscriptions}</p>
+                      <p className="mt-1 font-bold text-white">{node.stats.activeCustomerCount}</p>
                     </div>
                     <div className="rounded-lg bg-gray-900 p-3">
                       <p className="text-gray-500">Revenue</p>
@@ -1085,7 +1200,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                   </div>
                 </div>
 
-                {renderSubscriptionRows(node.subscriptions)}
+                {renderSubscriptionRows(node.bundles)}
               </div>
             ))}
           </div>

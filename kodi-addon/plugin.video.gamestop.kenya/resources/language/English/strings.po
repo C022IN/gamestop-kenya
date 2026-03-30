@@ -1,0 +1,34 @@
+msgid ""
+msgstr ""
+
+msgctxt "#32000"
+msgid "GameStop Kenya Movies"
+msgstr ""
+
+msgctxt "#32001"
+msgid "Movies"
+msgstr ""
+
+msgctxt "#32002"
+msgid "Series"
+msgstr ""
+
+msgctxt "#32003"
+msgid "Live TV"
+msgstr ""
+
+msgctxt "#32004"
+msgid "Search"
+msgstr ""
+
+msgctxt "#32010"
+msgid "Could not load content. Check your connection."
+msgstr ""
+
+msgctxt "#32011"
+msgid "Stream not available. Membership required."
+msgstr ""
+
+msgctxt "#32012"
+msgid "Search GameStop Kenya Movies"
+msgstr ""

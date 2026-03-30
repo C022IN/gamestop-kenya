@@ -10,6 +10,7 @@ import { useMediaPrimaryAction } from '@/hooks/useMediaPrimaryAction';
 
 interface MoviesMediaRailProps {
   section: MoviesHubSection;
+  playbackLocked: boolean;
   onOpenItem: (item: MoviesHubTile) => void;
   onQuickView: (item: MoviesHubTile) => void;
 }
@@ -17,6 +18,7 @@ interface MoviesMediaRailProps {
 function RailCard({
   item,
   accent,
+  playbackLocked,
   previewActive,
   previewEnabled,
   onOpenItem,
@@ -26,6 +28,7 @@ function RailCard({
 }: {
   item: MoviesHubTile;
   accent?: string;
+  playbackLocked: boolean;
   previewActive: boolean;
   previewEnabled: boolean;
   onOpenItem: (item: MoviesHubTile) => void;
@@ -33,7 +36,7 @@ function RailCard({
   onPreviewStart: () => void;
   onPreviewEnd: () => void;
 }) {
-  const primaryAction = useMediaPrimaryAction(item);
+  const primaryAction = useMediaPrimaryAction(item, { playbackLocked });
   const PrimaryIcon = primaryAction.icon;
   const previewAttributes = [
     item.maturityRating ?? item.secondaryMeta ?? item.meta,
@@ -200,6 +203,7 @@ function RailCard({
 
 export default function MoviesMediaRail({
   section,
+  playbackLocked,
   onOpenItem,
   onQuickView,
 }: MoviesMediaRailProps) {
@@ -241,6 +245,7 @@ export default function MoviesMediaRail({
               key={item.id}
               item={item}
               accent={section.accent}
+              playbackLocked={playbackLocked}
               previewActive={hoverPreview.activeId === item.id}
               previewEnabled={hoverPreview.enabled}
               onOpenItem={onOpenItem}

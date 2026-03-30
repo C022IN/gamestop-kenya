@@ -1,4 +1,4 @@
-import RouteContentPage from '@/components/RouteContentPage';
+import RouteContentPage from '@/domains/storefront/components/RouteContentPage';
 import { aboutPageContent } from '@/data/route-page-content';
 
 export default function AboutPage() {

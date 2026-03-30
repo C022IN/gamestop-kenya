@@ -7,6 +7,7 @@ import type { MoviesHubTile } from '@/components/movies/movie-hub-types';
 import { useMediaPrimaryAction } from '@/hooks/useMediaPrimaryAction';
 
 interface MoviesInlineSearchProps {
+  playbackLocked: boolean;
   onOpenItem: (item: MoviesHubTile) => void;
   onQuickView: (item: MoviesHubTile) => void;
 }
@@ -18,14 +19,16 @@ interface SearchResponse {
 
 function SearchResultRow({
   item,
+  playbackLocked,
   onOpenItem,
   onQuickView,
 }: {
   item: MoviesHubTile;
+  playbackLocked: boolean;
   onOpenItem: (item: MoviesHubTile) => void;
   onQuickView: (item: MoviesHubTile) => void;
 }) {
-  const primaryAction = useMediaPrimaryAction(item);
+  const primaryAction = useMediaPrimaryAction(item, { playbackLocked });
   const PrimaryIcon = primaryAction.icon;
 
   return (
@@ -68,6 +71,7 @@ function SearchResultRow({
 }
 
 export default function MoviesInlineSearch({
+  playbackLocked,
   onOpenItem,
   onQuickView,
 }: MoviesInlineSearchProps) {
@@ -219,6 +223,7 @@ export default function MoviesInlineSearch({
                         <SearchResultRow
                           key={item.id}
                           item={item}
+                          playbackLocked={playbackLocked}
                           onOpenItem={(nextItem) => {
                             onOpenItem(nextItem);
                             setIsOpen(false);
@@ -240,6 +245,7 @@ export default function MoviesInlineSearch({
                         <SearchResultRow
                           key={item.id}
                           item={item}
+                          playbackLocked={playbackLocked}
                           onOpenItem={(nextItem) => {
                             onOpenItem(nextItem);
                             setIsOpen(false);

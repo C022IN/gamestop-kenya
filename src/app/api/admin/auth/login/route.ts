@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  ADMIN_SESSION_COOKIE,
-  authenticateAdmin,
-  createAdminSession,
-  recordAdminAudit,
-} from '@/lib/admin-auth';
-
-function getRequestIp(req: NextRequest): string | null {
-  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
-}
+import { ADMIN_SESSION_COOKIE } from '@/lib/admin-auth';
+import { getAdminRequestMetadata } from '@/domains/admin/api/request-context';
+import { signInAdminSession } from '@/domains/admin/services/session-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,57 +11,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'email and password are required' }, { status: 400 });
     }
 
-    const auth = await authenticateAdmin(email, password);
+    const signIn = await signInAdminSession({
+      email: String(email),
+      password: String(password),
+      metadata: getAdminRequestMetadata(req),
+    });
 
-    if (!auth.ok || !auth.admin) {
-      await recordAdminAudit({
-        action: 'admin_sign_in',
-        status: 'failed',
-        actorId: null,
-        actorLabel: String(email).trim() || 'Unknown',
-        summary: auth.error ?? 'Failed admin sign-in attempt.',
-        target: null,
-        ipAddress: getRequestIp(req),
-        userAgent: req.headers.get('user-agent'),
-      });
-
-      const status = auth.error?.includes('not configured') ? 503 : 401;
-      return NextResponse.json({ error: auth.error ?? 'Invalid login details.' }, { status });
+    if (!signIn.ok) {
+      return NextResponse.json({ error: signIn.error }, { status: signIn.status });
     }
-
-    const session = await createAdminSession(auth.admin.id, {
-      ipAddress: getRequestIp(req),
-      userAgent: req.headers.get('user-agent'),
-    });
-
-    await recordAdminAudit({
-      action: 'admin_sign_in',
-      status: 'success',
-      actorId: auth.admin.id,
-      actorLabel: auth.admin.name,
-      summary: 'Signed in to the IPTV admin dashboard.',
-      target: null,
-      ipAddress: getRequestIp(req),
-      userAgent: req.headers.get('user-agent'),
-    });
 
     const response = NextResponse.json({
       ok: true,
       admin: {
-        id: auth.admin.id,
-        role: auth.admin.role,
-        name: auth.admin.name,
-        email: auth.admin.email,
-        phone: auth.admin.phone,
+        id: signIn.admin.id,
+        role: signIn.admin.role,
+        name: signIn.admin.name,
+        email: signIn.admin.email,
+        phone: signIn.admin.phone,
       },
     });
 
-    response.cookies.set(ADMIN_SESSION_COOKIE, session.token, {
+    response.cookies.set(ADMIN_SESSION_COOKIE, signIn.session.token, {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
-      expires: new Date(session.expiresAt),
+      expires: new Date(signIn.session.expiresAt),
     });
 
     return response;

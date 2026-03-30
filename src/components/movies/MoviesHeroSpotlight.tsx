@@ -10,6 +10,7 @@ import { useHeroRotation } from '@/hooks/useHeroRotation';
 interface MoviesHeroSpotlightProps {
   items: MoviesHubTile[];
   profileId: string;
+  playbackLocked: boolean;
   subscriptionLabel?: string | null;
   onOpenItem: (item: MoviesHubTile) => void;
   onQuickView: (item: MoviesHubTile) => void;
@@ -29,6 +30,7 @@ const FALLBACK_ITEM: MoviesHubTile = {
 export default function MoviesHeroSpotlight({
   items,
   profileId,
+  playbackLocked,
   subscriptionLabel,
   onOpenItem,
   onQuickView,
@@ -36,7 +38,7 @@ export default function MoviesHeroSpotlight({
   const heroItems = items.length > 0 ? items : [FALLBACK_ITEM];
   const { activeIndex, goNext, goPrev, goTo } = useHeroRotation(heroItems.length);
   const activeItem = heroItems[activeIndex] ?? FALLBACK_ITEM;
-  const primaryAction = useMediaPrimaryAction(activeItem);
+  const primaryAction = useMediaPrimaryAction(activeItem, { playbackLocked });
   const PrimaryIcon = primaryAction.icon;
 
   return (
@@ -133,6 +135,12 @@ export default function MoviesHeroSpotlight({
               <Info className="h-5 w-5" />
             </button>
           </div>
+
+          {playbackLocked ? (
+            <p className="mt-4 text-sm font-semibold text-amber-200/82">
+              Browse titles freely. Renew your plan to restore playback.
+            </p>
+          ) : null}
 
           <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold text-white/72">
             <span

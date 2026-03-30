@@ -21,8 +21,8 @@ import {
   giftCardBrands,
   giftCardProducts,
 } from '@/data/gift-cards';
-import { useStoreCurrency } from '@/hooks/useStoreCurrency';
-import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
+import { useStorefrontProducts } from '@/domains/storefront/hooks/useStorefrontProducts';
 
 const categoryFilters = [
   { id: 'all', label: 'All Gift Cards' },

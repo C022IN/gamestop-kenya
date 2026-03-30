@@ -17,7 +17,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "jsxImportSource": "same-runtime/dist",
-    "incremental": true,
+    "incremental": false,
     "plugins": [
       {
         "name": "next"

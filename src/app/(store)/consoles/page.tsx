@@ -16,8 +16,8 @@ import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { hardwareCatalog } from '@/data/hardware-catalog';
-import { useStoreCurrency } from '@/hooks/useStoreCurrency';
-import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
+import { useStorefrontProducts } from '@/domains/storefront/hooks/useStorefrontProducts';
 
 const platformFilters = ['All', 'PlayStation', 'Xbox', 'Nintendo'] as const;
 const heroIds = [

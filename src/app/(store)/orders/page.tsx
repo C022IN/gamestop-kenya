@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useStoreCurrency } from '@/hooks/useStoreCurrency';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
 import { Search, Package, Truck, CheckCircle, Clock, ArrowLeft } from 'lucide-react';
 
 interface Order {

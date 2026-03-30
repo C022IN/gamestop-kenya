@@ -6,8 +6,8 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { useStoreCurrency } from '@/hooks/useStoreCurrency';
-import { DEVICE_ONBOARDING_GUIDES } from '@/lib/iptv-product';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
+import { DEVICE_ONBOARDING_GUIDES } from '@/lib/iptv-guides';
 import {
   ArrowLeft,
   Check,

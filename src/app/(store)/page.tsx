@@ -14,8 +14,8 @@ import {
   getFlashDeals,
 } from '@/data/game-catalog';
 import { giftCardProducts } from '@/data/gift-cards';
-import { useStoreCurrency } from '@/hooks/useStoreCurrency';
-import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
+import { useStorefrontProducts } from '@/domains/storefront/hooks/useStorefrontProducts';
 import {
   ShoppingBag,
   Gamepad2,

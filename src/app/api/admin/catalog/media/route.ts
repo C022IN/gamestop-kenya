@@ -5,37 +5,13 @@ import {
   listCatalogMediaEntries,
   upsertCatalogMediaEntry,
 } from '@/lib/catalog-media-admin';
-import {
-  ADMIN_SESSION_COOKIE,
-  getAdminContextByToken,
-  isAdminConfigured,
-  recordAdminAudit,
-} from '@/lib/admin-auth';
 import type { StorefrontKind } from '@/lib/storefront-types';
+import {
+  recordAdminRequestAudit,
+  requireAdminRequest,
+} from '@/domains/admin/api/request-context';
 
 export const dynamic = 'force-dynamic';
-
-function getRequestIp(req: NextRequest): string | null {
-  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
-}
-
-async function getAuthorizedAdmin(req: NextRequest) {
-  if (!(await isAdminConfigured())) {
-    return { error: 'Admin login is not configured yet.', status: 503 as const };
-  }
-
-  const token = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  if (!token) {
-    return { error: 'Unauthorized', status: 401 as const };
-  }
-
-  const current = await getAdminContextByToken(token);
-  if (!current) {
-    return { error: 'Unauthorized', status: 401 as const };
-  }
-
-  return { current };
-}
 
 function parseKind(value: string | null): StorefrontKind | undefined {
   if (value === 'games' || value === 'gift-cards' || value === 'hardware') {
@@ -46,9 +22,9 @@ function parseKind(value: string | null): StorefrontKind | undefined {
 }
 
 export async function GET(req: NextRequest) {
-  const auth = await getAuthorizedAdmin(req);
-  if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const auth = await requireAdminRequest(req);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   const kind = parseKind(req.nextUrl.searchParams.get('kind'));
@@ -56,20 +32,20 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     hasSupabase: hasCatalogMediaPersistence(),
     currentAdmin: {
-      id: auth.current.admin.id,
-      role: auth.current.admin.role,
-      name: auth.current.admin.name,
-      email: auth.current.admin.email,
-      phone: auth.current.admin.phone,
+      id: auth.context.current.admin.id,
+      role: auth.context.current.admin.role,
+      name: auth.context.current.admin.name,
+      email: auth.context.current.admin.email,
+      phone: auth.context.current.admin.phone,
     },
     products: await listCatalogMediaEntries(kind),
   });
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await getAuthorizedAdmin(req);
-  if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const auth = await requireAdminRequest(req);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   try {
@@ -95,35 +71,27 @@ export async function POST(req: NextRequest) {
         notes: typeof body.notes === 'string' ? body.notes : undefined,
       },
       {
-        id: auth.current.admin.id,
-        name: auth.current.admin.name,
+        id: auth.context.current.admin.id,
+        name: auth.context.current.admin.name,
       }
     );
 
     if (!result.ok) {
-      await recordAdminAudit({
+      await recordAdminRequestAudit(auth.context, {
         action: 'catalog_media_upsert',
         status: 'failed',
-        actorId: auth.current.admin.id,
-        actorLabel: auth.current.admin.name,
         summary: result.error,
         target: typeof body.productId === 'string' ? body.productId : null,
-        ipAddress: getRequestIp(req),
-        userAgent: req.headers.get('user-agent'),
       });
 
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    await recordAdminAudit({
+    await recordAdminRequestAudit(auth.context, {
       action: 'catalog_media_upsert',
       status: 'success',
-      actorId: auth.current.admin.id,
-      actorLabel: auth.current.admin.name,
       summary: `Updated licensed media for ${result.entry?.title ?? body.productId}.`,
       target: result.entry?.id ?? (typeof body.productId === 'string' ? body.productId : null),
-      ipAddress: getRequestIp(req),
-      userAgent: req.headers.get('user-agent'),
     });
 
     return NextResponse.json({
@@ -137,43 +105,35 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const auth = await getAuthorizedAdmin(req);
-  if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const auth = await requireAdminRequest(req);
+  if (!auth.ok) {
+    return auth.response;
   }
 
   try {
     const body = await req.json();
     const productId = String(body.productId ?? '');
     const result = await clearCatalogMediaEntry(productId, {
-      id: auth.current.admin.id,
-      name: auth.current.admin.name,
+      id: auth.context.current.admin.id,
+      name: auth.context.current.admin.name,
     });
 
     if (!result.ok) {
-      await recordAdminAudit({
+      await recordAdminRequestAudit(auth.context, {
         action: 'catalog_media_clear',
         status: 'failed',
-        actorId: auth.current.admin.id,
-        actorLabel: auth.current.admin.name,
         summary: result.error,
         target: productId || null,
-        ipAddress: getRequestIp(req),
-        userAgent: req.headers.get('user-agent'),
       });
 
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    await recordAdminAudit({
+    await recordAdminRequestAudit(auth.context, {
       action: 'catalog_media_clear',
       status: 'success',
-      actorId: auth.current.admin.id,
-      actorLabel: auth.current.admin.name,
       summary: `Cleared licensed media overrides for ${result.entry?.title ?? productId}.`,
       target: result.entry?.id ?? productId,
-      ipAddress: getRequestIp(req),
-      userAgent: req.headers.get('user-agent'),
     });
 
     return NextResponse.json({

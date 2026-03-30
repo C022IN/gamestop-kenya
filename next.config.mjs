@@ -1,7 +1,19 @@
 import { fileURLToPath } from 'node:url';
 import { PHASE_DEVELOPMENT_SERVER } from 'next/constants.js';
+import withPWAInit from '@ducanh2912/next-pwa';
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
+
+const withPWA = withPWAInit({
+  dest: 'public',
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === 'development',
+  workboxOptions: {
+    disableDevLogs: true,
+  },
+});
 
 /** @type {(phase: string) => import('next').NextConfig} */
 const nextConfig = (phase) => ({
@@ -10,6 +22,13 @@ const nextConfig = (phase) => ({
   allowedDevOrigins: ['*.preview.same-app.com'],
   turbopack: {
     root: rootDir,
+  },
+  webpack: (config, { dev }) => {
+    if (!dev) {
+      config.cache = false;
+    }
+
+    return config;
   },
   images: {
     unoptimized: true,
@@ -56,4 +75,4 @@ const nextConfig = (phase) => ({
   },
 });
 
-export default nextConfig;
+export default (phase) => withPWA(nextConfig(phase));

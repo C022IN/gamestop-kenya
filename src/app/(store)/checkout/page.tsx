@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useCart } from '@/context/CartContext';
+import { useCart } from '@/domains/storefront/cart/CartContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -13,7 +13,7 @@ import {
   getCheckoutCountryLabel,
   isStateRequiredForCheckout,
 } from '@/lib/checkout-countries';
-import { useStoreCurrency } from '@/hooks/useStoreCurrency';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
 import {
   AlertCircle,
   ArrowLeft,

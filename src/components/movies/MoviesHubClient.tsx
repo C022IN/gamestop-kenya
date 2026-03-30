@@ -20,6 +20,8 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 interface MoviesHubClientProps {
   profileId: string;
   hasActive: boolean;
+  playbackLocked: boolean;
+  accessState: 'active' | 'expired' | 'none';
   subscriptionLabel?: string | null;
   subscriptionEndsLabel?: string | null;
   spotlightItems: MoviesHubTile[];
@@ -29,6 +31,8 @@ interface MoviesHubClientProps {
 export default function MoviesHubClient({
   profileId,
   hasActive,
+  playbackLocked,
+  accessState,
   subscriptionLabel,
   subscriptionEndsLabel,
   spotlightItems,
@@ -46,11 +50,16 @@ export default function MoviesHubClient({
     remember(item);
   };
 
-  const subscriptionStatusText = hasActive
-    ? subscriptionEndsLabel
-      ? `Subscription active. Ends ${subscriptionEndsLabel}.`
-      : 'Subscription active.'
-    : 'Renew required.';
+  const subscriptionStatusText =
+    accessState === 'active'
+      ? subscriptionEndsLabel
+        ? `Subscription active. Ends ${subscriptionEndsLabel}.`
+        : 'Subscription active.'
+      : accessState === 'expired'
+        ? subscriptionEndsLabel
+          ? `Subscription ended ${subscriptionEndsLabel}. Browse only until you renew.`
+          : 'Subscription expired. Browse only until you renew.'
+        : 'Browse-only mode. Sign in with an active plan to unlock playback.';
   const recentItems = recentlyViewed.filter(
     (item) => !continueWatching.some((entry) => entry.id === item.id)
   );
@@ -86,7 +95,11 @@ export default function MoviesHubClient({
             </nav>
 
             <div className="ml-auto flex items-center gap-3">
-              <MoviesInlineSearch onOpenItem={trackOpen} onQuickView={openQuickView} />
+              <MoviesInlineSearch
+                playbackLocked={playbackLocked}
+                onOpenItem={trackOpen}
+                onQuickView={openQuickView}
+              />
               <button
                 type="button"
                 className="hidden h-9 w-9 items-center justify-center rounded-full bg-black/25 text-white/80 transition-colors hover:bg-black/40 hover:text-white md:inline-flex"
@@ -127,6 +140,7 @@ export default function MoviesHubClient({
         <MoviesHeroSpotlight
           items={spotlightItems}
           profileId={profileId}
+          playbackLocked={playbackLocked}
           subscriptionLabel={subscriptionLabel}
           onOpenItem={trackOpen}
           onQuickView={openQuickView}
@@ -135,73 +149,86 @@ export default function MoviesHubClient({
 
       <main className="relative z-10 -mt-28 px-4 pb-16 md:px-6 xl:px-8">
         <div className="mx-auto max-w-[1500px]">
-          {!hasActive ? (
+          {playbackLocked ? (
             <section className="mt-8 rounded-[26px] border border-amber-200/10 bg-[#071121]/92 p-8 backdrop-blur-xl">
-              <h2 className="text-3xl font-black text-white">Renew to unlock playback</h2>
+              <h2 className="text-3xl font-black text-white">
+                {accessState === 'expired' ? 'Playback locked until you renew' : 'Unlock playback'}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-white/64">
+                {accessState === 'expired'
+                  ? 'You can keep browsing the catalog, searching titles, and opening details pages, but playback stays disabled until the subscription is renewed.'
+                  : 'Browse the catalog now, then sign in with an active plan to start playback.'}
+              </p>
               <div className="mt-6">
                 <Link href="/iptv">
                   <Button className="rounded-full bg-amber-300 px-6 py-6 font-bold text-slate-950 hover:bg-amber-200">
-                    View plans
+                    {accessState === 'expired' ? 'Renew plan' : 'View plans'}
                   </Button>
                 </Link>
               </div>
             </section>
-          ) : (
-            <>
-              {continueWatching.length > 0 ? (
-                <MoviesMediaRail
-                  section={{
-                    id: 'continue-watching',
-                    title: 'Continue Watching',
-                    items: continueWatching,
-                    eyebrow: 'Resume',
-                  }}
-                  onOpenItem={trackOpen}
-                  onQuickView={openQuickView}
-                />
-              ) : null}
+          ) : null}
 
-              {recentItems.length > 0 ? (
-                <MoviesMediaRail
-                  section={{
-                    id: 'recent',
-                    title: 'Recent',
-                    items: recentItems,
-                    eyebrow: 'Viewed',
-                  }}
-                  onOpenItem={trackOpen}
-                  onQuickView={openQuickView}
-                />
-              ) : null}
+          {continueWatching.length > 0 ? (
+            <MoviesMediaRail
+              section={{
+                id: 'continue-watching',
+                title: 'Continue Watching',
+                items: continueWatching,
+                eyebrow: 'Resume',
+              }}
+              playbackLocked={playbackLocked}
+              onOpenItem={trackOpen}
+              onQuickView={openQuickView}
+            />
+          ) : null}
 
-              {sections.map((section) => (
-                <MoviesMediaRail
-                  key={section.id}
-                  section={section}
-                  onOpenItem={trackOpen}
-                  onQuickView={openQuickView}
-                />
-              ))}
+          {recentItems.length > 0 ? (
+            <MoviesMediaRail
+              section={{
+                id: 'recent',
+                title: 'Recent',
+                items: recentItems,
+                eyebrow: 'Viewed',
+              }}
+              playbackLocked={playbackLocked}
+              onOpenItem={trackOpen}
+              onQuickView={openQuickView}
+            />
+          ) : null}
 
-              <section className="mt-10 flex items-center justify-between gap-4 rounded-[24px] border border-white/10 bg-[#071121]/92 px-5 py-4 backdrop-blur-xl">
-                <div className="flex items-center gap-3 text-violet-300">
-                  <Radio className="h-5 w-5" />
-                </div>
-                <Link
-                  href="/live"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-violet-300/20 bg-violet-300/[0.08] text-violet-300 transition-colors hover:bg-violet-300/[0.14] hover:text-violet-200"
-                  title="Open Live TV"
-                  aria-label="Open Live TV"
-                >
-                  <Radio className="h-4 w-4" />
-                </Link>
-              </section>
-            </>
-          )}
+          {sections.map((section) => (
+            <MoviesMediaRail
+              key={section.id}
+              section={section}
+              playbackLocked={playbackLocked}
+              onOpenItem={trackOpen}
+              onQuickView={openQuickView}
+            />
+          ))}
+
+          <section className="mt-10 flex items-center justify-between gap-4 rounded-[24px] border border-white/10 bg-[#071121]/92 px-5 py-4 backdrop-blur-xl">
+            <div className="flex items-center gap-3 text-violet-300">
+              <Radio className="h-5 w-5" />
+            </div>
+            <Link
+              href={playbackLocked ? '/iptv' : '/live'}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-violet-300/20 bg-violet-300/[0.08] text-violet-300 transition-colors hover:bg-violet-300/[0.14] hover:text-violet-200"
+              title={playbackLocked ? 'Renew to restore live TV' : 'Open Live TV'}
+              aria-label={playbackLocked ? 'Renew to restore live TV' : 'Open Live TV'}
+            >
+              <Radio className="h-4 w-4" />
+            </Link>
+          </section>
         </div>
       </main>
 
-      <QuickViewModal item={selectedItem} onClose={() => setSelectedItem(null)} onOpenItem={trackOpen} />
+      <QuickViewModal
+        item={selectedItem}
+        playbackLocked={playbackLocked}
+        onClose={() => setSelectedItem(null)}
+        onOpenItem={trackOpen}
+      />
     </div>
   );
 }

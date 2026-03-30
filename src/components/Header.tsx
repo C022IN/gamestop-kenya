@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, User, ShoppingCart, Menu, Globe, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BrandLogo from '@/components/BrandLogo';
-import { useOptionalCart } from '@/context/CartContext';
+import { useOptionalCart } from '@/domains/storefront/cart/CartContext';
 import Link from 'next/link';
 
 interface Currency {

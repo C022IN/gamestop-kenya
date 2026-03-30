@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useCart } from '@/context/CartContext';
+import { useCart } from '@/domains/storefront/cart/CartContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { getCartRecommendations } from '@/data/game-catalog';
-import { useStoreCurrency } from '@/hooks/useStoreCurrency';
-import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
+import { useStorefrontProducts } from '@/domains/storefront/hooks/useStorefrontProducts';
 import { getCartPricing, getPromoDetails, normalizePromoCode } from '@/lib/cart-pricing';
 import {
   Minus,

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Gift, Mail, MessageSquareText, Package, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCart } from '@/context/CartContext';
+import { useCart } from '@/domains/storefront/cart/CartContext';
 
 const presetAmounts = [1000, 2500, 5000, 10000];
 

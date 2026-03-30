@@ -14,7 +14,7 @@ import {
   Waves,
 } from 'lucide-react';
 import { getCatalogWatchContext } from '@/lib/iptv-catalog';
-import { hasActiveSubscriptionForProfile } from '@/lib/movie-platform';
+import { getMovieMembershipState } from '@/lib/movie-platform';
 import { getCurrentMovieMember } from '@/lib/movie-session';
 
 export const dynamic = 'force-dynamic';
@@ -58,9 +58,16 @@ export default async function WatchPage({ params }: WatchPageProps) {
     redirect('/movies/login');
   }
 
-  if (!(await hasActiveSubscriptionForProfile(memberState.profile.profileId))) {
-    redirect('/movies');
-  }
+  const membership = await getMovieMembershipState(memberState.profile.profileId);
+  const playbackLocked = !membership.hasActiveSubscription;
+  const latestSubscription = membership.latestSubscription;
+  const subscriptionEndsLabel = latestSubscription?.expiresAt
+    ? new Date(latestSubscription.expiresAt).toLocaleDateString('en-KE', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : null;
 
   const { slug } = await params;
   const watchContext = await getCatalogWatchContext(slug);
@@ -113,7 +120,25 @@ export default async function WatchPage({ params }: WatchPageProps) {
         <div className="grid gap-8 lg:grid-cols-[1.4fr,0.6fr]">
           <section>
             <div className="overflow-hidden rounded-[32px] border border-white/10 bg-[#071121]">
-              {playback?.playbackMode === 'iframe' && playback.iframeUrl ? (
+              {playbackLocked ? (
+                <div className="flex aspect-video items-center justify-center bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.18),transparent_30%),linear-gradient(180deg,#091120_0%,#040814_100%)] p-8 text-center">
+                  <div className="max-w-xl">
+                    <LockKeyhole className="mx-auto h-12 w-12 text-amber-200" />
+                    <h1 className="mt-4 text-2xl font-black">Playback locked</h1>
+                    <p className="mt-3 text-sm leading-6 text-white/[0.66]">
+                      {subscriptionEndsLabel
+                        ? `This plan ended on ${subscriptionEndsLabel}. Browse the title details, then renew to keep watching.`
+                        : 'This title is available to browse, but playback is disabled until the subscription is active again.'}
+                    </p>
+                    <Link
+                      href="/iptv"
+                      className="mt-6 inline-flex items-center justify-center rounded-2xl border border-amber-200/20 bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
+                    >
+                      Renew subscription
+                    </Link>
+                  </div>
+                </div>
+              ) : playback?.playbackMode === 'iframe' && playback.iframeUrl ? (
                 <div className="aspect-video w-full bg-black">
                   <iframe
                     src={playback.iframeUrl}
@@ -256,8 +281,18 @@ export default async function WatchPage({ params }: WatchPageProps) {
 
             <div className="mt-6 space-y-3 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-sm text-white/[0.72]">
               <div className="flex items-start gap-3">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-                <p>Subscription check passed.</p>
+                <ShieldCheck
+                  className={`mt-0.5 h-4 w-4 shrink-0 ${
+                    playbackLocked ? 'text-amber-200' : 'text-emerald-300'
+                  }`}
+                />
+                <p>
+                  {playbackLocked
+                    ? subscriptionEndsLabel
+                      ? `Playback locked. Plan ended ${subscriptionEndsLabel}.`
+                      : 'Playback locked until the subscription is renewed.'
+                    : 'Subscription check passed.'}
+                </p>
               </div>
               <div className="flex items-start gap-3">
                 <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" />
@@ -265,17 +300,17 @@ export default async function WatchPage({ params }: WatchPageProps) {
                   Member ID: <span className="font-mono text-white">{memberState.profile.profileId}</span>
                 </p>
               </div>
-              {playback && (
+              {playback && !playbackLocked ? (
                 <div className="flex items-start gap-3">
                   <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" />
                   <p>
                     Provider: <span className="text-white">{playback.provider}</span>
                   </p>
                 </div>
-              )}
+              ) : null}
             </div>
 
-            {playback?.playbackMode === 'external' && playback.externalUrl && (
+            {playback?.playbackMode === 'external' && playback.externalUrl && !playbackLocked && (
               <a
                 href={playback.externalUrl}
                 target="_blank"

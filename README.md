@@ -14,16 +14,23 @@ Operational notes for the current Next.js application in this repository.
 
 ## Repository Layout
 
-- `src/app`: App Router pages, layouts, and API routes
-- `src/components`: shared UI and feature components
-- `src/context`: client-side React context providers
+- `src/app`: App Router entrypoints grouped by audience, with route groups for `(store)`, `(media)`, `(admin)`, plus `api`
+- `src/domains`: domain-owned logic that is being split out by capability such as `storefront`, `iptv`, `payments`, and `admin`
+- `src/components`: shared UI and feature components that are still used across route groups
 - `src/data`: local catalog and content seed data
 - `src/hooks`: client hooks for storefront and media UX
-- `src/lib`: server/domain/integration logic
+- `src/lib`: shared utilities and older integration logic that has not been moved into `src/domains` yet
+- `src/context`: legacy/shared React providers that may still exist during the current refactor
 - `public`: static brand, product, and category assets
 - `supabase`: schema and platform setup SQL
 - `scripts`: operational scripts such as env auditing
 - `docs`: longer operational/provider setup notes
+
+Current architectural direction:
+
+- Keep the app as one deployable Next.js codebase.
+- Continue moving business logic out of the route layer and into `src/domains`.
+- Keep `src/lib` for shared helpers and transition code only.
 
 ## Requirements
 
@@ -57,6 +64,7 @@ Useful scripts:
 npm run dev:turbo
 npm run clean
 npm run typecheck
+npm run lint:eslint
 npm run lint
 npm run env:example:check
 npm run env:audit
@@ -91,8 +99,8 @@ Recommended order:
 
 ```bash
 npm run clean
-node .\node_modules\typescript\bin\tsc --noEmit
-node .\node_modules\eslint\bin\eslint.js .
+npm run typecheck
+npm run lint:eslint
 npm run lint
 node scripts/vercel-env.mjs --check-example
 npm run build
@@ -100,9 +108,19 @@ npm run build
 
 Notes:
 
-- `npm run lint` now uses the ESLint CLI directly rather than deprecated `next lint`.
+- `npm run lint` now runs `typecheck` followed by a narrowed ESLint target set instead of linting the entire repo root.
+- `npm run lint:eslint` exists so lint failures can be isolated without rerunning TypeScript.
 - `npm run clean` removes `.next`, `.next-dev`, and `tsconfig.tsbuildinfo`.
 - If build or lint fail with `ENOSPC`, free disk space first and rerun after `npm run clean`.
+
+## Phase 1 Status
+
+The repo is in an active stability-and-architecture pass. The current focus is:
+
+- serial verification instead of parallel checks that race on generated Next artifacts
+- route-group and domain boundary cleanup
+- README and operational runbook alignment
+- reducing validation failures caused by deprecated tooling, low disk space, or broad lint targets
 
 ## Deployment and CI
 

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ArrowLeft, Radio, Search, ShieldCheck, Tv2, Waves } from 'lucide-react';
 import { getCurrentMovieMember } from '@/lib/movie-session';
-import { hasActiveSubscriptionForProfile } from '@/lib/movie-platform';
+import { getMovieMembershipState } from '@/lib/movie-platform';
 import { CHANNEL_CATEGORIES } from '@/lib/iptv-org';
 import ChannelBrowser from '@/components/iptv/ChannelBrowser';
 
@@ -13,8 +13,16 @@ export default async function LiveTvPage() {
   const memberState = await getCurrentMovieMember();
   if (!memberState) redirect('/movies/login');
 
-  const hasActive = await hasActiveSubscriptionForProfile(memberState.profile.profileId);
-  if (!hasActive) redirect('/movies');
+  const membership = await getMovieMembershipState(memberState.profile.profileId);
+  const playbackLocked = !membership.hasActiveSubscription;
+  const latestSubscription = membership.latestSubscription;
+  const endedLabel = latestSubscription?.expiresAt
+    ? new Date(latestSubscription.expiresAt).toLocaleDateString('en-KE', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : null;
 
   const categories = Object.entries(CHANNEL_CATEGORIES).map(([key, value]) => ({
     key,
@@ -70,7 +78,9 @@ export default async function LiveTvPage() {
                 Browse live channels and switch fast.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-white/62 md:text-lg">
-                Pick a category and keep the player open while you switch.
+                {playbackLocked
+                  ? 'Browse categories freely. Renew the plan to restore live playback and channel switching.'
+                  : 'Pick a category and keep the player open while you switch.'}
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
@@ -91,7 +101,7 @@ export default async function LiveTvPage() {
             </article>
 
             <div className="grid gap-5">
-              {[
+              {[ 
                 {
                   title: 'Sports focus',
                   copy: 'Big fixtures stay easy to find.',
@@ -99,7 +109,11 @@ export default async function LiveTvPage() {
                 },
                 {
                   title: 'Session ready',
-                  copy: `Signed in as ${memberState.profile.profileId}. Access follows your active plan.`,
+                  copy: playbackLocked
+                    ? endedLabel
+                      ? `Signed in as ${memberState.profile.profileId}. Live playback is locked because the plan ended ${endedLabel}.`
+                      : `Signed in as ${memberState.profile.profileId}. Live playback is locked until the plan is active again.`
+                    : `Signed in as ${memberState.profile.profileId}. Access follows your active plan.`,
                   icon: ShieldCheck,
                 },
               ].map(({ title, copy, icon: Icon }) => (
@@ -122,7 +136,27 @@ export default async function LiveTvPage() {
           </section>
 
           <section className="mt-10 rounded-[36px] border border-white/10 bg-black/18 p-5 md:p-6">
-            <ChannelBrowser initialCategories={categories} />
+            {playbackLocked ? (
+              <div className="rounded-[28px] border border-amber-200/10 bg-[#071121]/92 p-8">
+                <h2 className="text-3xl font-black text-white">Live playback locked</h2>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-white/64">
+                  {endedLabel
+                    ? `The current subscription ended on ${endedLabel}. Renew to restore channel playback and live switching.`
+                    : 'Renew the subscription to restore channel playback and live switching.'}
+                </p>
+                <div className="mt-6">
+                  <Link
+                    href="/iptv"
+                    className="inline-flex items-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Renew plan
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <ChannelBrowser initialCategories={categories} />
+            )}
           </section>
         </main>
       </div>

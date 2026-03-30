@@ -1,4 +1,4 @@
-import RouteContentPage from '@/components/RouteContentPage';
+import RouteContentPage from '@/domains/storefront/components/RouteContentPage';
 import { pcGamingPageContent } from '@/data/route-page-content';
 import { getMergedHardwareShowcaseCards } from '@/lib/storefront-media';
 

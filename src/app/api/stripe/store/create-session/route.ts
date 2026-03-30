@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { CartItem } from '@/context/CartContext';
+import type { CartItem } from '@/domains/storefront/cart/CartContext';
 import { getAppUrl } from '@/lib/app-url';
 import { createBillingLink } from '@/lib/billing-links';
 import { getCartPricing } from '@/lib/cart-pricing';

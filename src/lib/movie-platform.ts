@@ -1,5 +1,9 @@
 import { createHmac } from 'node:crypto';
-import { getSubscription, type IptvSubscription } from '@/lib/iptv-subscriptions';
+import {
+  getSubscription,
+  hasSubscriptionPlaybackAccess,
+  type IptvSubscription,
+} from '@/lib/iptv-subscriptions';
 import { normaliseMpesaPhone } from '@/lib/mpesa';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 
@@ -48,6 +52,13 @@ export interface PlaybackSource {
   dashUrl: string;
   signed: boolean;
   streamUid: string;
+}
+
+export interface MovieMembershipState {
+  subscriptions: IptvSubscription[];
+  activeSubscriptions: IptvSubscription[];
+  latestSubscription: IptvSubscription | null;
+  hasActiveSubscription: boolean;
 }
 
 interface ContentItemRow {
@@ -551,6 +562,12 @@ export async function getAccessibleContentForProfile(profileId: string): Promise
 export async function getActiveSubscriptionsForProfile(
   profileId: string
 ): Promise<IptvSubscription[]> {
+  return (await getMovieMembershipState(profileId)).activeSubscriptions;
+}
+
+export async function getSubscriptionsForProfile(
+  profileId: string
+): Promise<IptvSubscription[]> {
   const profile = await getProfileById(profileId);
   if (!profile) {
     return [];
@@ -560,18 +577,38 @@ export async function getActiveSubscriptionsForProfile(
     profile.subscriptionIds.map((subscriptionId) => getSubscription(subscriptionId))
   );
 
-  const now = Date.now();
-  return subscriptions.filter((subscription): subscription is IptvSubscription => {
-    if (!subscription || subscription.status !== 'active') {
-      return false;
-    }
+  return subscriptions
+    .filter((subscription): subscription is IptvSubscription => Boolean(subscription))
+    .sort((left, right) => {
+      const leftExpiry = new Date(left.expiresAt).getTime();
+      const rightExpiry = new Date(right.expiresAt).getTime();
 
-    return new Date(subscription.expiresAt).getTime() > now;
-  });
+      if (!Number.isNaN(rightExpiry) && !Number.isNaN(leftExpiry) && rightExpiry !== leftExpiry) {
+        return rightExpiry - leftExpiry;
+      }
+
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+    });
+}
+
+export async function getMovieMembershipState(
+  profileId: string
+): Promise<MovieMembershipState> {
+  const subscriptions = await getSubscriptionsForProfile(profileId);
+  const activeSubscriptions = subscriptions.filter((subscription) =>
+    hasSubscriptionPlaybackAccess(subscription)
+  );
+
+  return {
+    subscriptions,
+    activeSubscriptions,
+    latestSubscription: activeSubscriptions[0] ?? subscriptions[0] ?? null,
+    hasActiveSubscription: activeSubscriptions.length > 0,
+  };
 }
 
 export async function hasActiveSubscriptionForProfile(profileId: string): Promise<boolean> {
-  return (await getActiveSubscriptionsForProfile(profileId)).length > 0;
+  return (await getMovieMembershipState(profileId)).hasActiveSubscription;
 }
 
 export async function canAccessContent(

@@ -21,6 +21,10 @@ interface MediaPrimaryAction {
   isPlayable: boolean;
 }
 
+interface MediaPrimaryActionOptions {
+  playbackLocked?: boolean;
+}
+
 function getMovieId(item: MoviesHubTile) {
   if (item.tmdbType !== 'movie') {
     return null;
@@ -49,13 +53,17 @@ function hasMovieResume(movieId: number) {
   }
 }
 
-export function useMediaPrimaryAction(item: MoviesHubTile | null): MediaPrimaryAction {
+export function useMediaPrimaryAction(
+  item: MoviesHubTile | null,
+  options?: MediaPrimaryActionOptions
+): MediaPrimaryAction {
   const seriesResume = useSeriesResume(item);
   const [movieHasResume, setMovieHasResume] = useState(false);
   const movieId = item ? getMovieId(item) : null;
   const isSeries = item?.tmdbType === 'tv';
   const isMovie = item?.tmdbType === 'movie';
   const isPlayable = Boolean(item?.playable) || isSeries || isMovie;
+  const playbackLocked = options?.playbackLocked ?? false;
 
   useEffect(() => {
     if (!movieId) {
@@ -90,6 +98,19 @@ export function useMediaPrimaryAction(item: MoviesHubTile | null): MediaPrimaryA
       filledIcon: false,
       isSeries: false,
       isMovie: false,
+      isPlayable: false,
+    };
+  }
+
+  if (playbackLocked && isPlayable) {
+    return {
+      hasResume: false,
+      href: item.href,
+      label: 'View details',
+      icon: Info,
+      filledIcon: false,
+      isSeries,
+      isMovie,
       isPlayable: false,
     };
   }

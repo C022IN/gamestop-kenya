@@ -2,7 +2,7 @@
 
 import { ShoppingCart, Heart, Star, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useCart } from '@/context/CartContext';
+import { useCart } from '@/domains/storefront/cart/CartContext';
 import type { StorefrontProduct } from '@/lib/storefront-types';
 
 interface ProductCardProps {

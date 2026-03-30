@@ -15,8 +15,8 @@ import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { gamingVisuals } from '@/data/gaming-visuals';
 import { gameCatalog } from '@/data/game-catalog';
-import { useStoreCurrency } from '@/hooks/useStoreCurrency';
-import { useStorefrontProducts } from '@/hooks/useStorefrontProducts';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
+import { useStorefrontProducts } from '@/domains/storefront/hooks/useStorefrontProducts';
 
 const platformFilters = ['All Platforms', 'PS5', 'Xbox', 'Switch', 'PC'] as const;
 const categoryFilters = ['all', 'story', 'sports', 'fighters', 'family', 'racing', 'pre-owned'] as const;

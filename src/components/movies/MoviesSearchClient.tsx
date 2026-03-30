@@ -24,6 +24,8 @@ import type { MoviesSearchFilter } from '@/lib/movie-hub';
 
 interface MoviesSearchClientProps {
   profileId: string;
+  playbackLocked: boolean;
+  accessState: 'active' | 'expired' | 'none';
   initialQuery: string;
   filter: MoviesSearchFilter;
   libraryResults: MoviesHubTile[];
@@ -57,14 +59,16 @@ function buildSearchHref(pathname: string, query: string, filter: MoviesSearchFi
 
 function SearchResultCard({
   item,
+  playbackLocked,
   onOpenItem,
   onQuickView,
 }: {
   item: MoviesHubTile;
+  playbackLocked: boolean;
   onOpenItem: (item: MoviesHubTile) => void;
   onQuickView: (item: MoviesHubTile) => void;
 }) {
-  const primaryAction = useMediaPrimaryAction(item);
+  const primaryAction = useMediaPrimaryAction(item, { playbackLocked });
   const PrimaryIcon = primaryAction.icon;
 
   return (
@@ -165,6 +169,8 @@ function SearchResultCard({
 
 export default function MoviesSearchClient({
   profileId,
+  playbackLocked,
+  accessState,
   initialQuery,
   filter,
   libraryResults,
@@ -334,6 +340,17 @@ export default function MoviesSearchClient({
             ) : null}
           </section>
 
+          {playbackLocked ? (
+            <section className="mt-8 rounded-[28px] border border-amber-200/10 bg-[#071121]/92 p-8">
+              <h2 className="text-2xl font-black text-white">
+                {accessState === 'expired' ? 'Playback is locked until renewal' : 'Browse-only mode'}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/62">
+                Search and open title details as much as you want. Play actions stay disabled until there is an active subscription again.
+              </p>
+            </section>
+          ) : null}
+
           {!hasQuery ? (
             <section className="mt-8">
               <div className="mb-4 flex items-center justify-between gap-4">
@@ -350,6 +367,7 @@ export default function MoviesSearchClient({
                   <SearchResultCard
                     key={item.id}
                     item={item}
+                    playbackLocked={playbackLocked}
                     onOpenItem={openItem}
                     onQuickView={setSelectedItem}
                   />
@@ -374,6 +392,7 @@ export default function MoviesSearchClient({
                       <SearchResultCard
                         key={item.id}
                         item={item}
+                        playbackLocked={playbackLocked}
                         onOpenItem={openItem}
                         onQuickView={setSelectedItem}
                       />
@@ -398,6 +417,7 @@ export default function MoviesSearchClient({
                       <SearchResultCard
                         key={item.id}
                         item={item}
+                        playbackLocked={playbackLocked}
                         onOpenItem={openItem}
                         onQuickView={setSelectedItem}
                       />
@@ -426,7 +446,12 @@ export default function MoviesSearchClient({
         </main>
       </div>
 
-      <QuickViewModal item={selectedItem} onClose={() => setSelectedItem(null)} onOpenItem={openItem} />
+      <QuickViewModal
+        item={selectedItem}
+        playbackLocked={playbackLocked}
+        onClose={() => setSelectedItem(null)}
+        onOpenItem={openItem}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import 'server-only';
-import type { CartItem } from '@/context/CartContext';
+import type { CartItem } from '@/domains/storefront/cart/CartContext';
 import {
   getStorefrontCatalogSeed,
   syncStorefrontCatalogProducts,

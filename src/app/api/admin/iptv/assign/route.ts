@@ -1,44 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  ADMIN_SESSION_COOKIE,
-  getAdminById,
-  getAdminContextByToken,
-  isAdminConfigured,
-  isSuperAdmin,
-  recordAdminAudit,
-} from '@/lib/admin-auth';
+import { getAdminById } from '@/lib/admin-auth';
 import { assignSubscriptionToAdmin, getSubscription } from '@/lib/iptv-subscriptions';
-
-function getRequestIp(req: NextRequest): string | null {
-  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
-}
-
-async function getAuthorizedAdmin(req: NextRequest) {
-  if (!(await isAdminConfigured())) {
-    return { error: 'Admin login is not configured yet.', status: 503 as const };
-  }
-
-  const token = req.cookies.get(ADMIN_SESSION_COOKIE)?.value;
-  if (!token) {
-    return { error: 'Unauthorized', status: 401 as const };
-  }
-
-  const current = await getAdminContextByToken(token);
-  if (!current) {
-    return { error: 'Unauthorized', status: 401 as const };
-  }
-
-  return { current };
-}
+import {
+  recordAdminRequestAudit,
+  requireSuperAdminRequest,
+} from '@/domains/admin/api/request-context';
 
 export async function POST(req: NextRequest) {
-  const auth = await getAuthorizedAdmin(req);
-  if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
-  }
-
-  if (!isSuperAdmin(auth.current.admin)) {
-    return NextResponse.json({ error: 'Only the super admin can reassign users.' }, { status: 403 });
+  const auth = await requireSuperAdminRequest(req, {
+    forbiddenMessage: 'Only the super admin can reassign users.',
+  });
+  if (!auth.ok) {
+    return auth.response;
   }
 
   try {
@@ -47,8 +20,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'subscriptionId and adminId are required' }, { status: 400 });
     }
 
-    const subscription = await getSubscription(subscriptionId);
-    if (!subscription) {
+    if (!(await getSubscription(subscriptionId))) {
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
 
@@ -57,17 +29,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Admin not found' }, { status: 404 });
     }
 
-    const updated = await assignSubscriptionToAdmin(subscriptionId, adminId, auth.current.admin.id);
+    const updated = await assignSubscriptionToAdmin(
+      subscriptionId,
+      adminId,
+      auth.context.current.admin.id
+    );
 
-    await recordAdminAudit({
+    await recordAdminRequestAudit(auth.context, {
       action: 'subscription_reassign',
       status: 'success',
-      actorId: auth.current.admin.id,
-      actorLabel: auth.current.admin.name,
       summary: `Assigned ${subscriptionId} to ${targetAdmin.name}.`,
       target: subscriptionId,
-      ipAddress: getRequestIp(req),
-      userAgent: req.headers.get('user-agent'),
     });
 
     return NextResponse.json({ subscription: updated, assignedAdmin: targetAdmin });

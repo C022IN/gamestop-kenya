@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { CartItem } from '@/context/CartContext';
+import type { CartItem } from '@/domains/storefront/cart/CartContext';
 import { getCartPricing } from '@/lib/cart-pricing';
 import { isStateRequiredForCheckout } from '@/lib/checkout-countries';
 import { initiateStkPush } from '@/lib/mpesa';

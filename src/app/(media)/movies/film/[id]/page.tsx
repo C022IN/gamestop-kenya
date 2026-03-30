@@ -6,8 +6,10 @@ import {
   Calendar,
   Clock,
   Info,
+  LockKeyhole,
   PlayCircle,
   Star,
+  ShieldCheck,
   Tv2,
 } from 'lucide-react';
 import CompatiblePlayerFrame from '@/components/movies/CompatiblePlayerFrame';
@@ -31,6 +33,8 @@ import {
   type TmdbItem,
   type TmdbSeasonSummary,
 } from '@/lib/tmdb';
+import { getMovieMembershipState } from '@/lib/movie-platform';
+import { getCurrentMovieMember } from '@/lib/movie-session';
 
 export const dynamic = 'force-dynamic';
 
@@ -143,23 +147,32 @@ function EpisodeCard({
   id,
   seasonNumber,
   episode,
+  playbackLocked,
   selected,
 }: {
   id: string;
   seasonNumber: number;
   episode: TmdbEpisodeDetails;
+  playbackLocked: boolean;
   selected: boolean;
 }) {
   const stillUrl = tmdbBackdrop(episode.still_path, 'w780');
-
-  return (
-    <Link
-      href={buildFilmHref(id, {
+  const episodeHref = playbackLocked
+    ? buildFilmHref(id, {
+        season: seasonNumber,
+        episode: episode.episode_number,
+        anchor: 'episodes',
+      })
+    : buildFilmHref(id, {
         play: true,
         season: seasonNumber,
         episode: episode.episode_number,
         anchor: 'player',
-      })}
+      });
+
+  return (
+    <Link
+      href={episodeHref}
       className={`group overflow-hidden rounded-[24px] border transition-all duration-300 ${
         selected
           ? 'border-cyan-300/70 bg-cyan-400/[0.08] shadow-[0_24px_60px_-36px_rgba(34,211,238,0.4)]'
@@ -206,7 +219,13 @@ function EpisodeCard({
           </p>
 
           <div className="mt-auto pt-5 text-sm font-bold text-cyan-100">
-            {selected ? 'Selected for playback' : 'Play episode'}
+            {selected
+              ? playbackLocked
+                ? 'Selected episode'
+                : 'Selected for playback'
+              : playbackLocked
+                ? 'View episode'
+                : 'Play episode'}
           </div>
         </div>
       </div>
@@ -266,6 +285,26 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
     notFound();
   }
 
+  const memberState = await getCurrentMovieMember();
+  const membership = memberState
+    ? await getMovieMembershipState(memberState.profile.profileId)
+    : null;
+  const playbackLocked = !(membership?.hasActiveSubscription ?? false);
+  const latestSubscription = membership?.latestSubscription ?? null;
+  const subscriptionEndsLabel = latestSubscription?.expiresAt
+    ? new Date(latestSubscription.expiresAt).toLocaleDateString('en-KE', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : null;
+  const playbackPromptHref = memberState ? '/iptv' : '/movies/login';
+  const playbackPromptLabel = memberState
+    ? latestSubscription
+      ? 'Renew to watch'
+      : 'View plans'
+    : 'Sign in to watch';
+
   const title = titleFromItem(details);
   const year = yearFromItem(details);
   const rating = details.vote_average ? details.vote_average.toFixed(1) : null;
@@ -301,7 +340,7 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
         null
       : null;
   const defaultEpisode = selectedEpisode?.episode_number ?? 1;
-  const shouldPlay = query.play === '1';
+  const shouldPlay = query.play === '1' && !playbackLocked;
   const playerOrigin = getCompatiblePlayerOrigin();
   const playerUrl =
     mediaType === 'movie'
@@ -438,7 +477,7 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
               )}
 
               <div className="mt-8 flex flex-wrap gap-3">
-                {playerEnabled && playerUrl && (
+                {!playbackLocked && playerEnabled && playerUrl ? (
                   <a
                     href={playHref}
                     className="inline-flex h-14 items-center rounded-xl bg-white px-7 text-lg font-bold text-black transition-colors hover:bg-white/90"
@@ -446,6 +485,14 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
                     <PlayCircle className="mr-2 h-5 w-5" />
                     {playLabel}
                   </a>
+                ) : (
+                  <Link
+                    href={playbackPromptHref}
+                    className="inline-flex h-14 items-center rounded-xl bg-amber-300 px-7 text-lg font-bold text-slate-950 transition-colors hover:bg-amber-200"
+                  >
+                    <LockKeyhole className="mr-2 h-5 w-5" />
+                    {playbackPromptLabel}
+                  </Link>
                 )}
                 {browseEpisodesHref ? (
                   <a
@@ -473,13 +520,45 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
                   Search More
                 </Link>
               </div>
+
+              {playbackLocked ? (
+                <p className="mt-4 max-w-3xl text-sm leading-7 text-amber-200/82">
+                  {memberState
+                    ? subscriptionEndsLabel
+                      ? `Your subscription ended ${subscriptionEndsLabel}. Browse title details and episodes, then renew to restore playback.`
+                      : 'Your subscription is not active right now. Browse title details, then renew to restore playback.'
+                    : 'Browse title details now, then sign in with an active subscription to unlock playback.'}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>
       </section>
 
       <main className="mx-auto max-w-[1500px] px-4 pb-16 md:px-6 xl:px-8">
-        {playerEnabled && playerUrl && shouldPlay && (
+        {playbackLocked ? (
+          <section id="player" className="mt-6">
+            <div className="rounded-[28px] border border-amber-200/12 bg-[#071121] p-8">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-300/12 text-amber-200">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-[1.75rem] font-black tracking-tight text-white">Playback locked</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-7 text-white/64">
+                    {memberState
+                      ? subscriptionEndsLabel
+                        ? `Playback is disabled because the last active subscription ended on ${subscriptionEndsLabel}. Renew to resume watching instantly.`
+                        : 'Playback is disabled until the subscription is active again.'
+                      : 'Sign in with an active subscription to watch this title.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {!playbackLocked && playerEnabled && playerUrl && shouldPlay && (
           <section id="player" className="mt-6">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
@@ -557,6 +636,7 @@ export default async function FilmPage({ params, searchParams }: FilmPageProps) 
                     id={id}
                     seasonNumber={defaultSeason}
                     episode={episode}
+                    playbackLocked={playbackLocked}
                     selected={episode.episode_number === defaultEpisode}
                   />
                 ))}

@@ -112,6 +112,62 @@ function addPlanDuration(baseDate: Date, plan: IptvPlan) {
   return next;
 }
 
+function getExpiryTimestamp(expiresAt: string): number | null {
+  const value = new Date(expiresAt).getTime();
+  return Number.isNaN(value) ? null : value;
+}
+
+export function isSubscriptionExpired(
+  subscription: Pick<IptvSubscription, 'status' | 'expiresAt'>,
+  now = Date.now()
+): boolean {
+  if (subscription.status === 'pending') {
+    return false;
+  }
+
+  const expiryTime = getExpiryTimestamp(subscription.expiresAt);
+  return expiryTime !== null && expiryTime <= now;
+}
+
+export function hasSubscriptionPlaybackAccess(
+  subscription: Pick<IptvSubscription, 'status' | 'expiresAt'>,
+  now = Date.now()
+): boolean {
+  return subscription.status === 'active' && !isSubscriptionExpired(subscription, now);
+}
+
+function normalizeSubscriptionStatus(subscription: IptvSubscription): IptvSubscription {
+  if (!isSubscriptionExpired(subscription)) {
+    return subscription;
+  }
+
+  return {
+    ...subscription,
+    status: 'expired',
+  };
+}
+
+async function persistNormalizedSubscription(
+  subscription: IptvSubscription
+): Promise<IptvSubscription> {
+  const normalized = normalizeSubscriptionStatus(subscription);
+  if (normalized.status === subscription.status) {
+    indexSubscription(subscription);
+    return subscription;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  if (supabase) {
+    await supabase
+      .from('iptv_subscriptions')
+      .update({ status: normalized.status })
+      .eq('id', normalized.id);
+  }
+
+  indexSubscription(normalized);
+  return normalized;
+}
+
 function fromCredentialsRow(row: CredentialsRow): IptvCredentials {
   return {
     m3uUrl: row.m3u_url,
@@ -206,7 +262,7 @@ async function waitForActivationResult(subscriptionId: string): Promise<IptvSubs
       return null;
     }
 
-    if (current.status === 'active' && current.credentials) {
+    if (hasSubscriptionPlaybackAccess(current) && current.credentials) {
       return current;
     }
 
@@ -282,13 +338,14 @@ export async function getSubscription(
 ): Promise<IptvSubscription | null> {
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
-    return subscriptions.get(id) ?? null;
+    const cached = subscriptions.get(id) ?? null;
+    return cached ? await persistNormalizedSubscription(cached) : null;
   }
 
   if (!options?.fresh) {
     const cached = subscriptions.get(id);
     if (cached) {
-      return cached;
+      return await persistNormalizedSubscription(cached);
     }
   }
 
@@ -307,15 +364,15 @@ export async function getSubscription(
     data as SubscriptionRow,
     credentialsMap.get(id) ?? null
   );
-  indexSubscription(subscription);
-  return subscription;
+  return await persistNormalizedSubscription(subscription);
 }
 
 export async function getSubscriptionByCheckout(checkoutRequestId: string): Promise<IptvSubscription | null> {
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
     const id = byCheckoutId.get(checkoutRequestId);
-    return id ? (subscriptions.get(id) ?? null) : null;
+    const cached = id ? (subscriptions.get(id) ?? null) : null;
+    return cached ? await persistNormalizedSubscription(cached) : null;
   }
 
   const { data, error } = await supabase
@@ -334,8 +391,7 @@ export async function getSubscriptionByCheckout(checkoutRequestId: string): Prom
     data as SubscriptionRow,
     credentialsMap.get(id) ?? null
   );
-  indexSubscription(subscription);
-  return subscription;
+  return await persistNormalizedSubscription(subscription);
 }
 
 export async function activateSubscription(
@@ -350,7 +406,7 @@ export async function activateSubscription(
   const existing = await getSubscription(subscriptionId);
   if (!existing) return null;
 
-  if (existing.status === 'active' && existing.credentials) {
+  if (hasSubscriptionPlaybackAccess(existing) && existing.credentials) {
     return existing;
   }
 
@@ -383,14 +439,14 @@ export async function activateSubscription(
       }
 
       const ready = await waitForActivationResult(subscriptionId);
-      if (ready?.status === 'active' && ready.credentials) {
+      if (ready && hasSubscriptionPlaybackAccess(ready) && ready.credentials) {
         return ready;
       }
     }
   } else {
     if (activationLocks.has(subscriptionId)) {
       const ready = await waitForActivationResult(subscriptionId);
-      if (ready?.status === 'active' && ready.credentials) {
+      if (ready && hasSubscriptionPlaybackAccess(ready) && ready.credentials) {
         return ready;
       }
     }
@@ -407,7 +463,7 @@ export async function activateSubscription(
 
   if (!claim) {
     const settled = await waitForActivationResult(subscriptionId);
-    if (settled?.status === 'active' && settled.credentials) {
+    if (settled && hasSubscriptionPlaybackAccess(settled) && settled.credentials) {
       return settled;
     }
 
@@ -538,9 +594,12 @@ export async function extendSubscription(
 export async function getAllSubscriptions(): Promise<IptvSubscription[]> {
   const supabase = getSupabaseAdminClient();
   if (!supabase) {
-    return Array.from(subscriptions.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    const normalized = await Promise.all(
+      Array.from(subscriptions.values()).map((subscription) =>
+        persistNormalizedSubscription(subscription)
+      )
     );
+    return normalized.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   const { data, error } = await supabase
@@ -557,10 +616,7 @@ export async function getAllSubscriptions(): Promise<IptvSubscription[]> {
   const mapped = rows.map((row) =>
     fromSubscriptionRow(row, credentialsMap.get(row.id) ?? null)
   );
-  for (const subscription of mapped) {
-    indexSubscription(subscription);
-  }
-  return mapped;
+  return await Promise.all(mapped.map((subscription) => persistNormalizedSubscription(subscription)));
 }
 
 export function searchSubscriptions(

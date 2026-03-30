@@ -144,3 +144,37 @@
     background-position: 0 0, 1px 1px;
   }
 }
+
+/* ── TV / Remote control styles ────────────────────────────────────────────── */
+/* Targets Android TV, Fire TV, and any device using a d-pad / remote.        */
+/* "coarse" pointer = remote/gamepad; "none" hover = no mouse.                */
+
+@media (hover: none) and (pointer: coarse) {
+  /* Larger base font for 10-foot viewing */
+  html {
+    font-size: 18px;
+  }
+
+  /* Hide elements that only make sense on touch/mouse interfaces */
+  .hide-on-tv {
+    display: none !important;
+  }
+}
+
+/* Visible focus ring for all focusable elements (TV remotes navigate via focus) */
+@layer base {
+  :focus-visible {
+    outline: 3px solid hsl(var(--primary));
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  /* Movies/media cards get a more prominent glow on TV */
+  [data-tv-card]:focus-visible {
+    outline: 3px solid white;
+    outline-offset: 6px;
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.2);
+    transform: scale(1.04);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+}

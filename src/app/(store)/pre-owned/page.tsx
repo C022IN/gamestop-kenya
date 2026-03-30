@@ -1,4 +1,4 @@
-import RouteContentPage from '@/components/RouteContentPage';
+import RouteContentPage from '@/domains/storefront/components/RouteContentPage';
 import { preOwnedPageContent } from '@/data/route-page-content';
 import { getMergedGameShowcaseCards } from '@/lib/storefront-media';
 

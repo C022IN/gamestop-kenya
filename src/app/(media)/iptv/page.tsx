@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { useStoreCurrency, type StoreCurrency } from '@/hooks/useStoreCurrency';
+import { useStoreCurrency, type StoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
 import {
   Check,
   CheckCircle2,

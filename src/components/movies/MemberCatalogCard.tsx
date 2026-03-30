@@ -14,6 +14,7 @@ import {
 
 interface MemberCatalogCardProps {
   item: IptvCatalogEntry;
+  playbackLocked?: boolean;
 }
 
 function getAccentClasses(kind: IptvCatalogEntry['kind']) {
@@ -100,12 +101,17 @@ function formatMeta(item: IptvCatalogEntry) {
   return parts.filter(Boolean).join(' | ') || getKindLabel(item.kind);
 }
 
-export default function MemberCatalogCard({ item }: MemberCatalogCardProps) {
+export default function MemberCatalogCard({
+  item,
+  playbackLocked = false,
+}: MemberCatalogCardProps) {
   const Icon = getKindIcon(item.kind);
   const ready = hasConfiguredPlayback(item);
   const artworkUrl = item.backdropUrl ?? item.posterUrl;
   const actionLabel =
-    item.kind === 'series'
+    playbackLocked
+      ? 'View details'
+      : item.kind === 'series'
       ? 'Open series'
       : item.kind === 'sports_event' || item.kind === 'live_channel'
         ? 'Watch live'

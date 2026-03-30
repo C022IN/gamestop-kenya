@@ -11,6 +11,7 @@ import type { TmdbEpisodeDetails, TmdbSeasonDetails, TmdbSeasonSummary } from '@
 
 interface QuickViewModalProps {
   item: MoviesHubTile | null;
+  playbackLocked: boolean;
   onClose: () => void;
   onOpenItem: (item: MoviesHubTile) => void;
 }
@@ -80,9 +81,14 @@ async function fetchSeasonEpisodes(showId: number, seasonNumber: number) {
   return episodes;
 }
 
-export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewModalProps) {
+export default function QuickViewModal({
+  item,
+  playbackLocked,
+  onClose,
+  onOpenItem,
+}: QuickViewModalProps) {
   const seriesResume = useSeriesResume(item);
-  const primaryAction = useMediaPrimaryAction(item);
+  const primaryAction = useMediaPrimaryAction(item, { playbackLocked });
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [seasons, setSeasons] = useState<TmdbSeasonSummary[]>([]);
   const [episodes, setEpisodes] = useState<TmdbEpisodeDetails[]>([]);
@@ -222,18 +228,22 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
     return null;
   }
 
-  const primaryHref = seriesItem
-    ? buildEpisodeHref(item.href, selectedSeason, selectedEpisode)
-    : primaryAction.href;
+  const primaryHref =
+    seriesItem && !playbackLocked
+      ? buildEpisodeHref(item.href, selectedSeason, selectedEpisode)
+      : primaryAction.href;
   const isSelectedResume =
     seriesItem &&
+    !playbackLocked &&
     seriesResume.hasResume &&
     selectedSeason === seriesResume.resumeSeasonNumber &&
     selectedEpisode === seriesResume.resumeEpisodeNumber;
   const primaryLabel = seriesItem
     ? isSelectedResume
       ? seriesResume.primaryLabel
-      : 'Play'
+      : playbackLocked
+        ? primaryAction.label
+        : 'Play'
     : primaryAction.label;
   const openSeriesHref = seriesItem
     ? `${item.href}?season=${selectedSeason}&episode=${selectedEpisode}#episodes`
@@ -315,6 +325,12 @@ export default function QuickViewModal({ item, onClose, onOpenItem }: QuickViewM
             <p className="mt-6 text-sm leading-7 text-white/72 sm:text-base">
               {item.description?.trim() || 'Open this title to view details and playback options.'}
             </p>
+
+            {playbackLocked ? (
+              <p className="mt-4 text-sm font-semibold text-amber-200/82">
+                Playback is locked until the subscription is renewed.
+              </p>
+            ) : null}
 
             {seriesItem ? (
               <div className="mt-6 grid gap-3 sm:grid-cols-2">

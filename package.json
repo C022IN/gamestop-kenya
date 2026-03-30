@@ -12,12 +12,14 @@
     "start": "next start",
     "clean": "node -e \"const fs=require('fs');['.next','.next-dev','tsconfig.tsbuildinfo'].forEach((target)=>fs.rmSync(target,{ recursive:true, force:true }))\"",
     "typecheck": "tsc --noEmit",
-    "lint": "npm run typecheck && node ./node_modules/eslint/bin/eslint.js .",
+    "lint:eslint": "node ./node_modules/eslint/bin/eslint.js src scripts next.config.mjs tailwind.config.ts eslint.config.mjs postcss.config.mjs --no-error-on-unmatched-pattern",
+    "lint": "npm run typecheck && npm run lint:eslint",
     "format": "biome format --write",
     "env:audit": "node scripts/vercel-env.mjs --audit",
     "env:example:check": "node scripts/vercel-env.mjs --check-example"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@radix-ui/react-slot": "^1.2.3",
     "@supabase/supabase-js": "^2.98.0",
     "class-variance-authority": "^0.7.1",

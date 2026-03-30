@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CompactSocialShare } from '@/components/SocialShare';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { useStoreCurrency } from '@/hooks/useStoreCurrency';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
 import { Calendar, Clock, User } from 'lucide-react';
 import type { BlogCategory, BlogPost } from '@/types/blog';
 
