@@ -20,6 +20,10 @@ export interface ContentItem {
   maturityRating: string;
   cloudflareStreamUid?: string;
   requiresSignedPlayback?: boolean;
+  playbackSourceType?: 'iframe' | 'hls' | 'dash' | 'external_link';
+  playbackUrl?: string;
+  playbackEmbedUrl?: string;
+  playbackProvider?: string;
 }
 
 export interface MemberProfile {
@@ -47,11 +51,16 @@ export interface Entitlement {
 }
 
 export interface PlaybackSource {
+  provider: string;
+  sourceType: 'iframe' | 'hls' | 'dash' | 'external_link' | 'cloudflare_stream';
+  playbackMode: 'iframe' | 'video' | 'external';
   iframeUrl: string;
-  hlsUrl: string;
-  dashUrl: string;
+  hlsUrl?: string;
+  dashUrl?: string;
+  videoUrl?: string;
+  externalUrl?: string;
   signed: boolean;
-  streamUid: string;
+  streamUid?: string;
 }
 
 export interface MovieMembershipState {
@@ -104,6 +113,61 @@ const memberEntitlements = new Map<string, Entitlement[]>();
 
 function generateAccessCode(length = 8): string {
   return Math.random().toString(36).slice(2, 2 + length).toUpperCase();
+}
+
+function trimEnv(value: string | undefined): string | undefined {
+  const next = value?.trim();
+  return next ? next : undefined;
+}
+
+function parseMoviePlaybackSourceType(
+  value: string | undefined
+): ContentItem['playbackSourceType'] | undefined {
+  switch (value?.trim().toLowerCase()) {
+    case 'iframe':
+    case 'hls':
+    case 'dash':
+    case 'external_link':
+      return value.trim().toLowerCase() as ContentItem['playbackSourceType'];
+    default:
+      return undefined;
+  }
+}
+
+function inferMoviePlaybackSourceType(
+  url: string | undefined
+): ContentItem['playbackSourceType'] | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  const normalizedUrl = url.toLowerCase();
+  if (normalizedUrl.includes('.m3u8')) {
+    return 'hls';
+  }
+  if (normalizedUrl.includes('.mpd')) {
+    return 'dash';
+  }
+  return 'external_link';
+}
+
+function moviePlaybackConfigFromEnv(
+  sourceTypeEnv: string,
+  urlEnv: string,
+  embedEnv: string,
+  providerEnv: string
+): Pick<ContentItem, 'playbackSourceType' | 'playbackUrl' | 'playbackEmbedUrl' | 'playbackProvider'> {
+  const playbackUrl = trimEnv(process.env[urlEnv]);
+  const playbackSourceType =
+    parseMoviePlaybackSourceType(process.env[sourceTypeEnv]) ??
+    inferMoviePlaybackSourceType(playbackUrl);
+
+  return {
+    playbackSourceType,
+    playbackUrl,
+    playbackEmbedUrl: trimEnv(process.env[embedEnv]),
+    playbackProvider: trimEnv(process.env[providerEnv]) ?? (playbackUrl ? 'Direct' : undefined),
+  };
 }
 
 function getMovieTokenSecret(): string {
@@ -178,6 +242,12 @@ const CONTENT_ITEMS: ContentItem[] = [
     maturityRating: '13+',
     cloudflareStreamUid: process.env.CF_STREAM_UID_LAST_KICKOFF,
     requiresSignedPlayback: process.env.CF_STREAM_SIGNED_PLAYBACK === 'true',
+    ...moviePlaybackConfigFromEnv(
+      'MOVIE_PLAYBACK_TYPE_LAST_KICKOFF',
+      'MOVIE_PLAYBACK_URL_LAST_KICKOFF',
+      'MOVIE_PLAYBACK_EMBED_URL_LAST_KICKOFF',
+      'MOVIE_PLAYBACK_PROVIDER_LAST_KICKOFF'
+    ),
   },
   {
     id: 'content-002',
@@ -191,6 +261,12 @@ const CONTENT_ITEMS: ContentItem[] = [
     maturityRating: '16+',
     cloudflareStreamUid: process.env.CF_STREAM_UID_SILENT_GRID,
     requiresSignedPlayback: process.env.CF_STREAM_SIGNED_PLAYBACK === 'true',
+    ...moviePlaybackConfigFromEnv(
+      'MOVIE_PLAYBACK_TYPE_SILENT_GRID',
+      'MOVIE_PLAYBACK_URL_SILENT_GRID',
+      'MOVIE_PLAYBACK_EMBED_URL_SILENT_GRID',
+      'MOVIE_PLAYBACK_PROVIDER_SILENT_GRID'
+    ),
   },
   {
     id: 'content-003',
@@ -204,6 +280,12 @@ const CONTENT_ITEMS: ContentItem[] = [
     maturityRating: '13+',
     cloudflareStreamUid: process.env.CF_STREAM_UID_MARKET_DAY,
     requiresSignedPlayback: process.env.CF_STREAM_SIGNED_PLAYBACK === 'true',
+    ...moviePlaybackConfigFromEnv(
+      'MOVIE_PLAYBACK_TYPE_MARKET_DAY',
+      'MOVIE_PLAYBACK_URL_MARKET_DAY',
+      'MOVIE_PLAYBACK_EMBED_URL_MARKET_DAY',
+      'MOVIE_PLAYBACK_PROVIDER_MARKET_DAY'
+    ),
   },
 ];
 
@@ -220,6 +302,10 @@ function fromContentRow(row: ContentItemRow): ContentItem {
     maturityRating: row.maturity_rating,
     cloudflareStreamUid: row.cloudflare_stream_uid ?? fallback?.cloudflareStreamUid ?? undefined,
     requiresSignedPlayback: row.requires_signed_playback ?? fallback?.requiresSignedPlayback ?? false,
+    playbackSourceType: fallback?.playbackSourceType,
+    playbackUrl: fallback?.playbackUrl,
+    playbackEmbedUrl: fallback?.playbackEmbedUrl,
+    playbackProvider: fallback?.playbackProvider,
   };
 }
 
@@ -620,6 +706,57 @@ export async function canAccessContent(
 }
 
 export async function buildPlaybackSource(content: ContentItem): Promise<PlaybackSource | null> {
+  if (content.playbackUrl) {
+    const sourceType = content.playbackSourceType ?? inferMoviePlaybackSourceType(content.playbackUrl);
+    if (!sourceType) {
+      return null;
+    }
+
+    if (sourceType === 'iframe') {
+      return {
+        provider: content.playbackProvider ?? 'Direct',
+        sourceType,
+        playbackMode: 'iframe',
+        iframeUrl: content.playbackEmbedUrl ?? content.playbackUrl,
+        externalUrl: content.playbackUrl,
+        signed: false,
+      };
+    }
+
+    if (sourceType === 'hls') {
+      return {
+        provider: content.playbackProvider ?? 'Direct',
+        sourceType,
+        playbackMode: 'video',
+        iframeUrl: content.playbackEmbedUrl ?? content.playbackUrl,
+        hlsUrl: content.playbackUrl,
+        videoUrl: content.playbackUrl,
+        signed: false,
+      };
+    }
+
+    if (sourceType === 'dash') {
+      return {
+        provider: content.playbackProvider ?? 'Direct',
+        sourceType,
+        playbackMode: 'external',
+        iframeUrl: content.playbackEmbedUrl ?? content.playbackUrl,
+        dashUrl: content.playbackUrl,
+        externalUrl: content.playbackUrl,
+        signed: false,
+      };
+    }
+
+    return {
+      provider: content.playbackProvider ?? 'Direct',
+      sourceType,
+      playbackMode: content.playbackEmbedUrl ? 'iframe' : 'external',
+      iframeUrl: content.playbackEmbedUrl ?? content.playbackUrl,
+      externalUrl: content.playbackUrl,
+      signed: false,
+    };
+  }
+
   const streamUid = content.cloudflareStreamUid;
   const customerCode = getCustomerCode();
   if (!streamUid || !customerCode) return null;
@@ -635,6 +772,9 @@ export async function buildPlaybackSource(content: ContentItem): Promise<Playbac
   }
 
   return {
+    provider: 'Cloudflare Stream',
+    sourceType: 'cloudflare_stream',
+    playbackMode: 'iframe',
     iframeUrl: `https://customer-${customerCode}.cloudflarestream.com/${playerKey}/iframe`,
     hlsUrl: `https://customer-${customerCode}.cloudflarestream.com/${playerKey}/manifest/video.m3u8`,
     dashUrl: `https://customer-${customerCode}.cloudflarestream.com/${playerKey}/manifest/video.mpd`,

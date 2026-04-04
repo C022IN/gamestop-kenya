@@ -189,6 +189,57 @@ function trimEnv(value: string | undefined): string | undefined {
   return next ? next : undefined;
 }
 
+function parsePlaybackSourceType(value: string | undefined): IptvSourceType | undefined {
+  switch (value?.trim().toLowerCase()) {
+    case 'iframe':
+    case 'hls':
+    case 'dash':
+    case 'external_link':
+    case 'cloudflare_stream':
+      return value.trim().toLowerCase() as IptvSourceType;
+    default:
+      return undefined;
+  }
+}
+
+function inferPlaybackSourceType(url: string | undefined): IptvSourceType | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  const normalizedUrl = url.toLowerCase();
+  if (normalizedUrl.includes('.m3u8')) {
+    return 'hls';
+  }
+  if (normalizedUrl.includes('.mpd')) {
+    return 'dash';
+  }
+  return 'external_link';
+}
+
+function envPlaybackConfig(
+  sourceTypeEnv: string,
+  urlEnv: string,
+  embedEnv: string,
+  providerEnv: string
+): {
+  sourceType?: IptvSourceType;
+  streamUrl?: string;
+  embedUrl?: string;
+  provider?: string;
+} {
+  const streamUrl = trimEnv(process.env[urlEnv]);
+  const sourceType =
+    parsePlaybackSourceType(process.env[sourceTypeEnv]) ?? inferPlaybackSourceType(streamUrl);
+
+  return {
+    sourceType,
+    streamUrl,
+    embedUrl: trimEnv(process.env[embedEnv]),
+    provider: trimEnv(process.env[providerEnv]) ?? (streamUrl ? getProviderName() : undefined),
+  };
+}
+
 function stringFromUnknown(value: unknown): string | undefined {
   if (typeof value !== 'string') {
     return undefined;
@@ -630,60 +681,110 @@ function makeFallbackSources(): IptvPlaybackSource[] {
   const marketDayUid = trimEnv(process.env.CF_STREAM_UID_MARKET_DAY);
   const pulseEpisodeOneUid = trimEnv(process.env.IPTV_PULSE_CITY_EP1_STREAM_UID);
   const pulseEpisodeTwoUid = trimEnv(process.env.IPTV_PULSE_CITY_EP2_STREAM_UID);
+  const lastKickoffPlayback = envPlaybackConfig(
+    'MOVIE_PLAYBACK_TYPE_LAST_KICKOFF',
+    'MOVIE_PLAYBACK_URL_LAST_KICKOFF',
+    'MOVIE_PLAYBACK_EMBED_URL_LAST_KICKOFF',
+    'MOVIE_PLAYBACK_PROVIDER_LAST_KICKOFF'
+  );
+  const silentGridPlayback = envPlaybackConfig(
+    'MOVIE_PLAYBACK_TYPE_SILENT_GRID',
+    'MOVIE_PLAYBACK_URL_SILENT_GRID',
+    'MOVIE_PLAYBACK_EMBED_URL_SILENT_GRID',
+    'MOVIE_PLAYBACK_PROVIDER_SILENT_GRID'
+  );
+  const marketDayPlayback = envPlaybackConfig(
+    'MOVIE_PLAYBACK_TYPE_MARKET_DAY',
+    'MOVIE_PLAYBACK_URL_MARKET_DAY',
+    'MOVIE_PLAYBACK_EMBED_URL_MARKET_DAY',
+    'MOVIE_PLAYBACK_PROVIDER_MARKET_DAY'
+  );
+  const pulseEpisodeOnePlayback = envPlaybackConfig(
+    'IPTV_PULSE_CITY_EP1_PLAYBACK_TYPE',
+    'IPTV_PULSE_CITY_EP1_PLAYBACK_URL',
+    'IPTV_PULSE_CITY_EP1_PLAYBACK_EMBED_URL',
+    'IPTV_PULSE_CITY_EP1_PLAYBACK_PROVIDER'
+  );
+  const pulseEpisodeTwoPlayback = envPlaybackConfig(
+    'IPTV_PULSE_CITY_EP2_PLAYBACK_TYPE',
+    'IPTV_PULSE_CITY_EP2_PLAYBACK_URL',
+    'IPTV_PULSE_CITY_EP2_PLAYBACK_EMBED_URL',
+    'IPTV_PULSE_CITY_EP2_PLAYBACK_PROVIDER'
+  );
 
   maybePushSource(sources, {
     itemId: 'movie-last-kickoff',
-    provider: 'Cloudflare Stream',
-    sourceType: 'cloudflare_stream',
-    streamUrl: lastKickoffUid,
+    provider: lastKickoffPlayback.provider ?? 'Cloudflare Stream',
+    sourceType: lastKickoffPlayback.sourceType ?? 'cloudflare_stream',
+    streamUrl: lastKickoffPlayback.streamUrl ?? lastKickoffUid,
+    embedUrl: lastKickoffPlayback.embedUrl,
     isLive: false,
-    metadata: {
-      requiresSignedPlayback: signedPlayback,
-    },
+    metadata:
+      lastKickoffPlayback.sourceType && lastKickoffPlayback.sourceType !== 'cloudflare_stream'
+        ? {}
+        : {
+            requiresSignedPlayback: signedPlayback,
+          },
   });
 
   maybePushSource(sources, {
     itemId: 'movie-silent-grid',
-    provider: 'Cloudflare Stream',
-    sourceType: 'cloudflare_stream',
-    streamUrl: silentGridUid,
+    provider: silentGridPlayback.provider ?? 'Cloudflare Stream',
+    sourceType: silentGridPlayback.sourceType ?? 'cloudflare_stream',
+    streamUrl: silentGridPlayback.streamUrl ?? silentGridUid,
+    embedUrl: silentGridPlayback.embedUrl,
     isLive: false,
-    metadata: {
-      requiresSignedPlayback: signedPlayback,
-    },
+    metadata:
+      silentGridPlayback.sourceType && silentGridPlayback.sourceType !== 'cloudflare_stream'
+        ? {}
+        : {
+            requiresSignedPlayback: signedPlayback,
+          },
   });
 
   maybePushSource(sources, {
     itemId: 'movie-market-day',
-    provider: 'Cloudflare Stream',
-    sourceType: 'cloudflare_stream',
-    streamUrl: marketDayUid,
+    provider: marketDayPlayback.provider ?? 'Cloudflare Stream',
+    sourceType: marketDayPlayback.sourceType ?? 'cloudflare_stream',
+    streamUrl: marketDayPlayback.streamUrl ?? marketDayUid,
+    embedUrl: marketDayPlayback.embedUrl,
     isLive: false,
-    metadata: {
-      requiresSignedPlayback: signedPlayback,
-    },
+    metadata:
+      marketDayPlayback.sourceType && marketDayPlayback.sourceType !== 'cloudflare_stream'
+        ? {}
+        : {
+            requiresSignedPlayback: signedPlayback,
+          },
   });
 
   maybePushSource(sources, {
     itemId: 'pulse-city-s1e1',
-    provider: 'Cloudflare Stream',
-    sourceType: 'cloudflare_stream',
-    streamUrl: pulseEpisodeOneUid,
+    provider: pulseEpisodeOnePlayback.provider ?? 'Cloudflare Stream',
+    sourceType: pulseEpisodeOnePlayback.sourceType ?? 'cloudflare_stream',
+    streamUrl: pulseEpisodeOnePlayback.streamUrl ?? pulseEpisodeOneUid,
+    embedUrl: pulseEpisodeOnePlayback.embedUrl,
     isLive: false,
-    metadata: {
-      requiresSignedPlayback: signedPlayback,
-    },
+    metadata:
+      pulseEpisodeOnePlayback.sourceType && pulseEpisodeOnePlayback.sourceType !== 'cloudflare_stream'
+        ? {}
+        : {
+            requiresSignedPlayback: signedPlayback,
+          },
   });
 
   maybePushSource(sources, {
     itemId: 'pulse-city-s1e2',
-    provider: 'Cloudflare Stream',
-    sourceType: 'cloudflare_stream',
-    streamUrl: pulseEpisodeTwoUid,
+    provider: pulseEpisodeTwoPlayback.provider ?? 'Cloudflare Stream',
+    sourceType: pulseEpisodeTwoPlayback.sourceType ?? 'cloudflare_stream',
+    streamUrl: pulseEpisodeTwoPlayback.streamUrl ?? pulseEpisodeTwoUid,
+    embedUrl: pulseEpisodeTwoPlayback.embedUrl,
     isLive: false,
-    metadata: {
-      requiresSignedPlayback: signedPlayback,
-    },
+    metadata:
+      pulseEpisodeTwoPlayback.sourceType && pulseEpisodeTwoPlayback.sourceType !== 'cloudflare_stream'
+        ? {}
+        : {
+            requiresSignedPlayback: signedPlayback,
+          },
   });
 
   return sources;

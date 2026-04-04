@@ -7,7 +7,15 @@ import {
 
 export async function POST(req: NextRequest) {
   try {
-    const { phone, accessCode } = await req.json();
+    let body: { phone?: unknown; accessCode?: unknown };
+
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { phone, accessCode } = body;
 
     if (!phone || !accessCode) {
       return NextResponse.json({ error: 'phone and accessCode are required' }, { status: 400 });
@@ -33,6 +41,7 @@ export async function POST(req: NextRequest) {
     response.cookies.set(MOVIE_SESSION_COOKIE, session.token, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
       path: '/',
       expires: new Date(session.expiresAt),
     });

@@ -15,6 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.gamestop.co.ke'),
   title: {
     default: 'GameStop Kenya - Consoles, Games & Digital Content | Nairobi',
     template: '%s | GameStop Kenya',
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_KE',
-    url: 'https://gamestop.co.ke',
+    url: 'https://www.gamestop.co.ke',
     siteName: 'GameStop Kenya',
     title: 'GameStop Kenya - Consoles, Games & Digital Content',
     description:

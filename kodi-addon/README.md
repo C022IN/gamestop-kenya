@@ -7,7 +7,8 @@
    - **Linux:** `~/.kodi/addons/`
    - **Windows:** `%APPDATA%\Kodi\addons\`
 2. In Kodi go to **Settings → Add-ons → Install from zip** and select the folder, or enable **Unknown Sources** and install from file manager.
-3. After installing, go to **Add-on settings** and enter your **API Token** (from your GameStop Kenya account).
+3. After installing, go to **Add-on settings** and confirm **Site URL** is `https://www.gamestop.co.ke`.
+4. Open the addon and sign in with your **phone number** and **access code**.
 
 ## Structure
 

@@ -7,7 +7,6 @@
 
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
-    <import addon="xbmc.gui" version="5.14.0"/>
   </requires>
 
   <extension point="xbmc.python.pluginsource" library="addon.py">
@@ -24,7 +23,7 @@
     <platform>all</platform>
     <language>en</language>
     <license>MIT</license>
-    <website>https://gamestop.co.ke/movies</website>
+    <website>https://www.gamestop.co.ke/movies/</website>
   </extension>
 
 </addon>

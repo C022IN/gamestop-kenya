@@ -1,31 +1,49 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings version="2">
   <section id="general">
+
     <category id="account" label="Account">
       <group id="1">
-        <setting id="api_token" type="string" label="API Token">
-          <default></default>
-          <constraints>
-            <allow_empty>true</allow_empty>
-          </constraints>
-        </setting>
+
         <setting id="base_url" type="string" label="Site URL">
-          <default>https://gamestop.co.ke</default>
+          <default>https://www.gamestop.co.ke</default>
+          <control type="edit" format="string"/>
         </setting>
+
+        <setting id="phone_number" type="string" label="Phone Number">
+          <default></default>
+          <control type="edit" format="string"/>
+        </setting>
+
+        <setting id="access_code" type="string" label="Access Code">
+          <default></default>
+          <control type="edit" format="password"/>
+        </setting>
+
+        <setting id="auth_token" type="string" label="Auth Token" visible="false">
+          <default></default>
+          <control type="edit" format="string"/>
+        </setting>
+
       </group>
     </category>
+
     <category id="playback" label="Playback">
       <group id="2">
+
         <setting id="preferred_quality" type="select" label="Preferred Quality">
+          <default>auto</default>
           <options>
             <option label="Auto">auto</option>
             <option label="1080p">1080</option>
             <option label="720p">720</option>
             <option label="480p">480</option>
           </options>
-          <default>auto</default>
+          <control type="list" format="string"/>
         </setting>
+
       </group>
     </category>
+
   </section>
 </settings>
