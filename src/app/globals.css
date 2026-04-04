@@ -169,8 +169,24 @@
     border-radius: 4px;
   }
 
+  body[data-tv-mode='true'] {
+    scroll-behavior: smooth;
+  }
+
+  body[data-tv-mode='true'] a[href]:focus-visible,
+  body[data-tv-mode='true'] button:focus-visible,
+  body[data-tv-mode='true'] input:focus-visible,
+  body[data-tv-mode='true'] select:focus-visible,
+  body[data-tv-mode='true'] textarea:focus-visible,
+  body[data-tv-mode='true'] [tabindex]:focus-visible {
+    outline: 3px solid #f8fafc;
+    outline-offset: 5px;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.28);
+  }
+
   /* Movies/media cards get a more prominent glow on TV */
-  [data-tv-card]:focus-visible {
+  [data-tv-card]:focus-visible,
+  [data-tv-card]:focus-within {
     outline: 3px solid white;
     outline-offset: 6px;
     box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.2);

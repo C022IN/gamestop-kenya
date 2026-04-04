@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'GameStop Kenya Movies',
     short_name: 'GS Movies',
-    description: 'Stream movies, series, and live TV — GameStop Kenya',
+    description: 'Stream movies, series, and live TV - GameStop Kenya',
     start_url: '/movies',
     scope: '/movies',
     display: 'fullscreen',
@@ -43,7 +43,6 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/icons/screenshot-wide.png',
         sizes: '1280x720',
         type: 'image/png',
-        // @ts-ignore — form_factor is valid in the spec but not yet in Next.js types
         form_factor: 'wide',
         label: 'GameStop Kenya Movies on TV',
       },

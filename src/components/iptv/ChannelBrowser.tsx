@@ -38,6 +38,8 @@ function ChannelCard({
     <button
       type="button"
       onClick={onClick}
+      data-tv-card
+      data-tv-focusable="true"
       className={`group relative flex flex-col items-center gap-2 rounded-[22px] border p-3 text-center transition-all ${
         isActive
           ? 'border-violet-500 bg-violet-950/65 ring-2 ring-violet-500/35'
@@ -162,6 +164,8 @@ export default function ChannelBrowser({ initialCategories }: ChannelBrowserProp
             <button
               key={category.key}
               type="button"
+              data-tv-focusable="true"
+              data-tv-autofocus={category.key === 'sports' ? 'true' : undefined}
               onClick={() => {
                 void loadCategory(category.key);
               }}
@@ -294,7 +298,10 @@ export default function ChannelBrowser({ initialCategories }: ChannelBrowserProp
               <Loader2 className="h-6 w-6 animate-spin text-violet-300" />
             </div>
           ) : channels.length > 0 ? (
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8">
+          <div
+            className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8"
+            data-tv-group="live-channel-grid"
+          >
               {channels.map((channel) => (
                 <ChannelCard
                   key={channel.id + channel.streamUrl}
@@ -357,6 +364,7 @@ export function ChannelRailSection({
         </h2>
         <a
           href={`/live?cat=${categoryKey}`}
+          data-tv-focusable="true"
           className="flex items-center gap-1 text-xs font-semibold text-violet-300 transition-colors hover:text-violet-200"
         >
           See all

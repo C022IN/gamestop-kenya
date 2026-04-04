@@ -20,8 +20,8 @@ export const DEVICE_ONBOARDING_GUIDES: DeviceOnboardingGuide[] = [
     summary: 'Use Xtream or the protected playlist on Android TV, Google TV, Fire TV, Samsung, and LG players.',
     steps: [
       'Open TiviMate or IPTV Smarters on the TV or streaming stick.',
-      'Choose Xtream Codes if the app supports it, then enter the portal host, username, and password.',
-      'If you prefer, use the protected playlist URL instead and save it as an M3U playlist.',
+      'Use the protected playlist URL first for the most reliable import path.',
+      'If your subscription includes provider-issued Xtream login details, you can enter the portal host, username, and password instead.',
     ],
   },
   {
@@ -33,7 +33,8 @@ export const DEVICE_ONBOARDING_GUIDES: DeviceOnboardingGuide[] = [
     summary: 'Good for testing the subscription fast before moving to a TV, box, or shared household device.',
     steps: [
       'Install IPTV Smarters, VLC, or another M3U-compatible player.',
-      'Paste the protected playlist URL or use Xtream credentials if the app offers that option.',
+      'Paste the protected playlist URL for the fastest test.',
+      'Use player login details only when the app specifically asks for them.',
       'Confirm playback once, then save the app for later support checks.',
     ],
   },
@@ -59,7 +60,8 @@ export const DEVICE_ONBOARDING_GUIDES: DeviceOnboardingGuide[] = [
     summary: 'Best when the customer wants full control over playlist import, playback settings, or a box-based install.',
     steps: [
       'Open Kodi, VLC, or another compatible player on the box or PC.',
-      'Use the protected playlist URL for the fastest import path, or enter Xtream credentials manually.',
+      'In Kodi, enable PVR IPTV Simple Client and paste the protected playlist URL as the remote M3U path.',
+      'Use provider-issued player login details only if the target app supports them.',
       'Run one playback test, then keep the credentials saved for future reprovision support.',
     ],
   },

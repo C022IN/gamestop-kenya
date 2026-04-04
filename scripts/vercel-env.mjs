@@ -40,8 +40,11 @@ const manualEnvEntries = [
   { key: 'COMPATIBLE_PLAYER_OVERLAY', group: 'IPTV and Movies', level: 'optional', note: 'Compatible player toggle.' },
 
   { key: 'IPTV_PROVISIONING_MODE', group: 'IPTV and Movies', level: 'recommended', note: 'Use local or webhook.' },
-  { key: 'IPTV_PROVISIONING_URL', group: 'IPTV and Movies', level: 'optional', note: 'Required only when IPTV_PROVISIONING_MODE=webhook.' },
-  { key: 'IPTV_PROVISIONING_TOKEN', group: 'IPTV and Movies', level: 'optional', note: 'Optional bearer token for webhook provisioning.' },
+  { key: 'IPTV_PROVISIONING_URL', group: 'IPTV and Movies', level: 'optional', note: 'Optional override. If omitted in webhook mode, the app uses its own internal provisioning route.' },
+  { key: 'IPTV_PROVISIONING_TOKEN', group: 'IPTV and Movies', level: 'recommended', note: 'Recommended dedicated bearer token for internal or external webhook provisioning.' },
+  { key: 'IPTV_PROVIDER_API_URL', group: 'IPTV and Movies', level: 'optional', note: 'Optional upstream provider API used by the internal provisioning route.' },
+  { key: 'IPTV_PROVIDER_API_TOKEN', group: 'IPTV and Movies', level: 'optional', note: 'Optional upstream provider API token.' },
+  { key: 'IPTV_PROVIDER_API_AUTH_SCHEME', group: 'IPTV and Movies', level: 'optional', note: 'Defaults to Bearer.' },
   { key: 'IPTV_PROVIDER_NAME', group: 'IPTV and Movies', level: 'optional', note: 'Defaults in code.' },
   { key: 'IPTV_PROVIDER_PLAYLISTS_JSON', group: 'IPTV and Movies', level: 'optional', note: 'Optional repo-playlists payload.' },
   { key: 'IPTV_SAMPLE_LIVE_HLS_URL', group: 'IPTV and Movies', level: 'optional', note: 'Optional sample live stream.' },
@@ -165,8 +168,8 @@ function auditEnv(env) {
   const mpesaDerivedCallbackUrl = siteUrl ? `${siteUrl}/api/mpesa/callback` : null;
   const configuredMpesaCallbackUrl = normalizeUrl(env.MPESA_CALLBACK_URL);
 
-  if ((env.IPTV_PROVISIONING_MODE ?? '').trim().toLowerCase() === 'webhook' && !hasValue(env, 'IPTV_PROVISIONING_URL')) {
-    missingRequired.push('IPTV_PROVISIONING_URL');
+  if ((env.IPTV_PROVISIONING_MODE ?? '').trim().toLowerCase() === 'webhook' && !hasValue(env, 'IPTV_PROVISIONING_TOKEN')) {
+    warnings.push('IPTV_PROVISIONING_TOKEN');
   }
 
   if (siteUrl?.includes('netlify.app') || siteUrl?.includes('ntl.app')) {

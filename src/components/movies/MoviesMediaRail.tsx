@@ -46,15 +46,19 @@ function RailCard({
   return (
     <article
       data-rail-card
-      className="group relative block min-w-[280px] shrink-0 overflow-hidden rounded-[22px] border border-white/10 bg-[#071121] transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_24px_60px_-34px_rgba(34,211,238,0.25)] md:min-w-[320px]"
+      className="group relative block min-w-[280px] shrink-0 overflow-hidden rounded-[22px] border border-white/10 bg-[#071121] transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:shadow-[0_24px_60px_-34px_rgba(34,211,238,0.25)] focus-within:-translate-y-1 focus-within:border-white/20 focus-within:shadow-[0_24px_60px_-34px_rgba(34,211,238,0.25)] md:min-w-[320px]"
       onMouseEnter={onPreviewStart}
       onMouseLeave={onPreviewEnd}
     >
       <Link
         href={item.href}
-        className="absolute inset-0 z-10"
+        data-tv-card
+        data-tv-focusable="true"
+        className="absolute inset-0 z-10 rounded-[22px]"
         aria-label={`Open ${item.title}`}
         onClick={() => onOpenItem(item)}
+        onFocus={onPreviewStart}
+        onBlur={onPreviewEnd}
       />
 
       <div className="relative aspect-[16/9]">
@@ -119,7 +123,7 @@ function RailCard({
         </div>
 
         <div
-          className={`absolute inset-0 z-30 hidden bg-[linear-gradient(180deg,rgba(4,8,20,0.2)_0%,rgba(4,8,20,0.84)_46%,rgba(4,8,20,0.98)_100%)] p-4 transition-all duration-300 md:block ${
+          className={`absolute inset-0 z-30 hidden bg-[linear-gradient(180deg,rgba(4,8,20,0.2)_0%,rgba(4,8,20,0.84)_46%,rgba(4,8,20,0.98)_100%)] p-4 transition-all duration-300 group-focus-within:pointer-events-auto group-focus-within:opacity-100 md:block ${
             previewEnabled && previewActive ? 'opacity-100' : 'pointer-events-none opacity-0'
           }`}
         >
@@ -215,7 +219,7 @@ export default function MoviesMediaRail({
   }
 
   return (
-    <section id={section.id} className="mt-8 scroll-mt-24">
+    <section id={section.id} className="mt-8 scroll-mt-24" data-tv-group={section.id}>
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
           {section.eyebrow ? (

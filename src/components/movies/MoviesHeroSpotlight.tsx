@@ -104,6 +104,8 @@ export default function MoviesHeroSpotlight({
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href={primaryAction.href}
+              data-tv-autofocus="true"
+              data-tv-focusable="true"
               onClick={() => onOpenItem(activeItem)}
               title={primaryAction.label}
               aria-label={primaryAction.label}
@@ -117,6 +119,7 @@ export default function MoviesHeroSpotlight({
             {primaryAction.isSeries ? (
               <Link
                 href={activeItem.href}
+                data-tv-focusable="true"
                 onClick={() => onOpenItem(activeItem)}
                 title="Choose episodes"
                 aria-label="Choose episodes"
@@ -127,6 +130,7 @@ export default function MoviesHeroSpotlight({
             ) : null}
             <button
               type="button"
+              data-tv-focusable="true"
               onClick={() => onQuickView(activeItem)}
               title="Quick view"
               aria-label={`Quick view ${activeItem.title}`}
@@ -171,6 +175,7 @@ export default function MoviesHeroSpotlight({
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-2 py-2 backdrop-blur-sm">
               <button
                 type="button"
+                data-tv-focusable="true"
                 onClick={goPrev}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/8 text-white/82 transition-colors hover:bg-white/16 hover:text-white"
                 aria-label="Previous spotlight"
@@ -179,6 +184,7 @@ export default function MoviesHeroSpotlight({
               </button>
               <button
                 type="button"
+                data-tv-focusable="true"
                 onClick={goNext}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/8 text-white/82 transition-colors hover:bg-white/16 hover:text-white"
                 aria-label="Next spotlight"
@@ -191,6 +197,7 @@ export default function MoviesHeroSpotlight({
                 <button
                   key={item.id}
                   type="button"
+                  data-tv-focusable="true"
                   onClick={() => goTo(index)}
                   aria-label={`Show ${item.title}`}
                   className={`h-2.5 rounded-full transition-all ${

@@ -1,84 +1,22 @@
 import type { IptvCredentials, IptvSubscription } from '@/lib/iptv-subscriptions';
-import { getAppUrl } from '@/lib/app-url';
-
-function getSiteHost(): string {
-  return getAppUrl();
-}
-
-function buildLocalCredentials(subscriptionId: string): IptvCredentials {
-  const rand = (len: number) => Math.random().toString(36).slice(2, 2 + len).toLowerCase();
-  const username = 'gsk_' + rand(8);
-  const password = rand(6) + '_' + rand(6);
-  const host = getSiteHost();
-  const port = host.startsWith('https://') ? 443 : 80;
-
-  return {
-    xtreamHost: host,
-    xtreamPort: port,
-    xtreamUsername: username,
-    xtreamPassword: password,
-    m3uUrl: `${host}/api/iptv/stream/${subscriptionId}/playlist.m3u?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
-  };
-}
-
-function assertCredentials(value: unknown): IptvCredentials {
-  if (!value || typeof value !== 'object') {
-    throw new Error('Provisioning response was empty');
-  }
-
-  const candidate = value as Partial<IptvCredentials>;
-  if (
-    !candidate.xtreamHost ||
-    !candidate.xtreamUsername ||
-    !candidate.xtreamPassword
-  ) {
-    throw new Error('Provisioning response did not include Xtream credentials');
-  }
-
-  const xtreamPort =
-    typeof candidate.xtreamPort === 'number' && Number.isFinite(candidate.xtreamPort)
-      ? candidate.xtreamPort
-      : 8080;
-
-  const m3uUrl =
-    candidate.m3uUrl ??
-    `${candidate.xtreamHost.replace(/\/+$/, '')}/get.php?username=${encodeURIComponent(candidate.xtreamUsername)}&password=${encodeURIComponent(candidate.xtreamPassword)}&type=m3u_plus&output=ts`;
-
-  return {
-    xtreamHost: candidate.xtreamHost,
-    xtreamPort,
-    xtreamUsername: candidate.xtreamUsername,
-    xtreamPassword: candidate.xtreamPassword,
-    m3uUrl,
-  };
-}
+import {
+  assertIptvCredentials,
+  buildInternalCredentials,
+  buildProvisioningPayload,
+  getInternalProvisioningUrl,
+  getIptvProvisioningToken,
+} from '@/lib/iptv-provisioning-core';
 
 async function provisionViaWebhook(subscription: IptvSubscription): Promise<IptvCredentials> {
-  const url = process.env.IPTV_PROVISIONING_URL;
-  if (!url) {
-    throw new Error('IPTV_PROVISIONING_URL is required when webhook provisioning is enabled');
-  }
-
-  const token = process.env.IPTV_PROVISIONING_TOKEN;
+  const url = process.env.IPTV_PROVISIONING_URL?.trim() || getInternalProvisioningUrl();
+  const token = getIptvProvisioningToken();
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({
-      subscriptionId: subscription.id,
-      planId: subscription.planId,
-      planName: subscription.planName,
-      months: subscription.months,
-      amountKes: subscription.amountKes,
-      phone: subscription.phone,
-      customerName: subscription.customerName,
-      email: subscription.email,
-      mpesaReceipt: subscription.mpesaReceipt,
-      expiresAt: subscription.expiresAt,
-      requestedFormat: 'xtream',
-    }),
+    body: JSON.stringify(buildProvisioningPayload(subscription)),
     cache: 'no-store',
   });
 
@@ -88,15 +26,19 @@ async function provisionViaWebhook(subscription: IptvSubscription): Promise<Iptv
   }
 
   const data = await res.json();
-  return assertCredentials(data.credentials ?? data);
+  return assertIptvCredentials((data as { credentials?: unknown }).credentials ?? data);
 }
 
 export async function provisionCredentials(subscription: IptvSubscription): Promise<IptvCredentials> {
+  const vercelEnv = process.env.VERCEL_ENV?.trim().toLowerCase();
+  const requiresWebhookProvisioning = vercelEnv
+    ? vercelEnv === 'production'
+    : process.env.NODE_ENV === 'production';
   const mode =
     process.env.IPTV_PROVISIONING_MODE ??
-    (process.env.NODE_ENV === 'production' ? 'webhook' : 'local');
+    (requiresWebhookProvisioning ? 'webhook' : 'local');
 
-  if (process.env.NODE_ENV === 'production' && mode !== 'webhook') {
+  if (requiresWebhookProvisioning && mode !== 'webhook') {
     throw new Error('Production requires IPTV_PROVISIONING_MODE=webhook.');
   }
 
@@ -104,5 +46,5 @@ export async function provisionCredentials(subscription: IptvSubscription): Prom
     return provisionViaWebhook(subscription);
   }
 
-  return buildLocalCredentials(subscription.id);
+  return buildInternalCredentials(subscription.id);
 }

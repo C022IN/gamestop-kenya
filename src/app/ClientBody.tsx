@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Script from "next/script";
+import TvRemoteNavigation from "@/components/tv/TvRemoteNavigation";
 
 export default function ClientBody({
   children,
@@ -27,6 +28,7 @@ export default function ClientBody({
         />
       </head>
       <body suppressHydrationWarning className={className}>
+        <TvRemoteNavigation />
         {children}
       </body>
     </>

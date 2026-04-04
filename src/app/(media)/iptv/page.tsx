@@ -116,6 +116,7 @@ export default function IPTVPage() {
                 <div className="mt-8 flex flex-wrap gap-4">
                   <Button
                     asChild
+                    data-tv-autofocus="true"
                     className="rounded-2xl bg-white px-8 py-6 text-base font-bold text-slate-950 hover:bg-slate-100"
                   >
                     <a href="#plans">See Plans</a>
@@ -254,6 +255,7 @@ export default function IPTVPage() {
             {plans.map((plan) => (
               <article
                 key={plan.id}
+                data-tv-card
                 className={`rounded-[30px] border p-6 ${
                   plan.popular
                     ? 'border-amber-300/40 bg-[linear-gradient(180deg,rgba(251,191,36,0.14),rgba(255,255,255,0.04))]'

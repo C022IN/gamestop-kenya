@@ -391,6 +391,44 @@ export async function getSubscription(
   return await persistNormalizedSubscription(subscription);
 }
 
+export async function getSubscriptionByCredentials(
+  username: string,
+  password: string,
+  options?: { fresh?: boolean }
+): Promise<IptvSubscription | null> {
+  const normalizedUsername = username.trim();
+  const normalizedPassword = password.trim();
+  if (!normalizedUsername || !normalizedPassword) {
+    return null;
+  }
+
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) {
+    const cached =
+      Array.from(subscriptions.values()).find(
+        (subscription) =>
+          subscription.credentials?.xtreamUsername === normalizedUsername &&
+          subscription.credentials?.xtreamPassword === normalizedPassword
+      ) ?? null;
+
+    return cached ? await persistNormalizedSubscription(cached) : null;
+  }
+
+  const { data, error } = await supabase
+    .from('iptv_credentials')
+    .select('subscription_id')
+    .eq('xtream_username', normalizedUsername)
+    .eq('xtream_password', normalizedPassword)
+    .maybeSingle();
+
+  const subscriptionId = (data as { subscription_id?: string } | null)?.subscription_id;
+  if (error || !subscriptionId) {
+    return null;
+  }
+
+  return getSubscription(subscriptionId, options ?? { fresh: true });
+}
+
 export async function getSubscriptionByCheckout(checkoutRequestId: string): Promise<IptvSubscription | null> {
   const supabase = getSupabaseAdminClient();
   if (!supabase) {

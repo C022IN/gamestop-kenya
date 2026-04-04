@@ -179,7 +179,7 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
                 key={item.label}
                 href={item.href}
                 onClick={() => setIsMenuOpen(false)}
-                className="relative flex items-center gap-2 whitespace-nowrap px-3 py-3 text-sm transition-colors hover:bg-gray-800 hover:text-red-400"
+                className="relative flex items-center gap-2 whitespace-nowrap px-3 py-3 text-sm transition-colors hover:bg-gray-800 hover:text-red-400 focus-visible:bg-gray-800 focus-visible:text-red-400"
               >
                 {item.label}
                 {showNavBadges && item.badge && (
