@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import QRCode from 'qrcode';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -582,10 +583,10 @@ function IPTVSubscribePageContent() {
                 <ul className="mb-5 space-y-2">
                   {[
                     'M-Pesa or card checkout',
-                    'Protected playlist',
-                    'Phone + code sign-in',
-                    'Live TV, movies, and sports',
-                    'Setup help',
+                    'Protected playlist + Xtream login',
+                    'Smart TV / box setup first',
+                    'Browser member hub included',
+                    'Setup help after payment',
                   ].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm">
                       <Check className="h-4 w-4 shrink-0 text-emerald-400" />
@@ -603,15 +604,15 @@ function IPTVSubscribePageContent() {
           </div>
         ) : (
           /* ─── SUCCESS STATE ─── */
-          <div className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-4xl">
             <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
               <div className="mb-5 flex flex-col items-center text-center">
                 <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
                   <CheckCircle2 className="h-10 w-10 text-emerald-600" />
                 </div>
-                <h1 className="text-3xl font-black text-gray-900">Access ready</h1>
+                <h1 className="text-3xl font-black text-gray-900">TV setup ready</h1>
                 <p className="mt-2 text-gray-500">
-                  Save these details before leaving.
+                  Save these playlist and Xtream details first. Your browser member hub still works as a secondary option.
                 </p>
               </div>
 
@@ -657,61 +658,66 @@ function IPTVSubscribePageContent() {
                 </div>
               </div>
 
-              <div className="mb-6">
-                <h2 className="mb-3 text-lg font-bold">Sign-in details</h2>
-                <div className="space-y-2 rounded-xl border border-red-200 bg-red-50 p-4">
-                  {[
-                    { label: 'Phone Number', value: member!.profileId },
-                    { label: 'Access Code', value: member!.accessCode },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="rounded-lg bg-white p-3">
-                      <p className="mb-0.5 text-xs font-semibold text-gray-500">{label}</p>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="break-all font-mono text-xs text-red-800">{value}</span>
-                        <CopyBtn value={value} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs text-gray-400">
-                  You are signed in on this device.
-                </p>
-              </div>
-
-              {/* Credentials */}
-              {sub!.credentials && (
-                <div className="mb-6">
-                  <h2 className="mb-3 text-lg font-bold">Playlist details</h2>
-                  <div className="space-y-2 rounded-xl border border-violet-200 bg-violet-50 p-4">
-                    {[
-                      { label: 'Playlist Link', value: sub!.credentials.m3uUrl },
-                      { label: 'Portal / Host', value: sub!.credentials.xtreamHost },
-                      { label: 'Username', value: sub!.credentials.xtreamUsername },
-                      { label: 'Password', value: sub!.credentials.xtreamPassword },
-                    ].map(({ label, value }) => (
-                      <div key={label} className="rounded-lg bg-white p-3">
-                        <p className="mb-0.5 text-xs font-semibold text-gray-500">{label}</p>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="break-all font-mono text-xs text-violet-800">{value}</span>
-                          <CopyBtn value={value} />
+              <div className="mb-6 grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="mb-3 text-lg font-bold">Browser member hub</h2>
+                    <div className="space-y-2 rounded-xl border border-red-200 bg-red-50 p-4">
+                      {[
+                        { label: 'Phone Number', value: member!.profileId },
+                        { label: 'Access Code', value: member!.accessCode },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="rounded-lg bg-white p-3">
+                          <p className="mb-0.5 text-xs font-semibold text-gray-500">{label}</p>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="break-all font-mono text-xs text-red-800">{value}</span>
+                            <CopyBtn value={value} />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-400">
+                      Use these for the browser hub now or later from the sign-in page.
+                    </p>
                   </div>
-                  <p className="mt-2 text-xs text-gray-400">
-                    Save these details now. Contact support with your phone or reference if needed.
-                  </p>
+
+                  {sub!.credentials && (
+                    <div>
+                      <h2 className="mb-3 text-lg font-bold">TV setup details</h2>
+                      <div className="space-y-2 rounded-xl border border-violet-200 bg-violet-50 p-4">
+                        {[
+                          { label: 'Playlist Link', value: sub!.credentials.m3uUrl },
+                          { label: 'Portal / Host', value: sub!.credentials.xtreamHost },
+                          { label: 'Username', value: sub!.credentials.xtreamUsername },
+                          { label: 'Password', value: sub!.credentials.xtreamPassword },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="rounded-lg bg-white p-3">
+                            <p className="mb-0.5 text-xs font-semibold text-gray-500">{label}</p>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="break-all font-mono text-xs text-violet-800">{value}</span>
+                              <CopyBtn value={value} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-xs text-gray-400">
+                        Save these details now. Contact support with your phone or reference if needed.
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {sub!.credentials ? <PlaylistQrCode value={sub!.credentials.m3uUrl} /> : null}
+              </div>
 
               {/* Setup instructions */}
               <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
                 <p className="mb-2 font-semibold">Quick setup</p>
                 <ol className="list-decimal list-inside space-y-1 text-xs">
-                  <li>Install <strong>IPTV Smarters Pro</strong>, <strong>TiviMate</strong>, <strong>VLC</strong>, or any compatible player</li>
-                  <li>Paste the playlist link</li>
-                  <li>Or use the host, username, and password above</li>
-                  <li>Use the member hub anytime from the login page</li>
+                  <li>Open TiviMate, IPTV Smarters, Kodi, VLC, or another compatible player.</li>
+                  <li>Use the protected playlist link for the fastest import path.</li>
+                  <li>Use the portal host, username, and password when the app supports Xtream login.</li>
+                  <li>Keep the browser member hub details saved for support or quick playback later.</li>
                 </ol>
                 <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                   {DEVICE_ONBOARDING_GUIDES.map((guide) => {
@@ -725,6 +731,7 @@ function IPTVSubscribePageContent() {
                           {guide.title}
                         </p>
                         <p className="mt-1 text-sm font-semibold text-gray-900">{guide.app}</p>
+                        <p className="mt-1 text-xs text-gray-500">{guide.summary}</p>
                         <ul className="mt-3 space-y-1 text-xs text-gray-600">
                           {guide.steps.map((step) => (
                             <li key={step} className="flex items-start gap-2">
@@ -740,22 +747,25 @@ function IPTVSubscribePageContent() {
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
-                <Link href="/movies" className="flex-1">
-                  <Button className="w-full rounded-xl bg-red-600 hover:bg-red-700">
-                    <PlayCircle className="mr-2 h-4 w-4" />
-                    Open My Hub
-                  </Button>
-                </Link>
                 <a
                   href={`https://wa.me/254717402034?text=Hi! I need help setting up my IPTV. Subscription ID: ${sub!.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1"
                 >
-                  <Button variant="outline" className="w-full rounded-xl border-green-500 text-green-700 hover:bg-green-50">
+                  <Button className="w-full rounded-xl bg-green-600 hover:bg-green-700">
                     WhatsApp Setup Help
                   </Button>
                 </a>
+                <Link href="/movies" className="flex-1">
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-xl border-red-200 text-red-700 hover:bg-red-50"
+                  >
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Open My Hub
+                  </Button>
+                </Link>
                 <Link href="/iptv" className="flex-1 sm:flex-none">
                   <Button variant="outline" className="w-full rounded-xl border-violet-300 text-violet-700 hover:bg-violet-50">
                     Back to Plans
@@ -780,6 +790,64 @@ function IPTVSubscribePageFallback() {
         <h1 className="text-2xl font-bold text-gray-900">Loading checkout</h1>
         <p className="mt-2 text-gray-500">Preparing your plan.</p>
       </div>
+    </div>
+  );
+}
+
+function PlaylistQrCode({ value }: { value: string }) {
+  const [dataUrl, setDataUrl] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setDataUrl('');
+
+    QRCode.toDataURL(value, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 320,
+      color: {
+        dark: '#0f172a',
+        light: '#0000',
+      },
+    })
+      .then((url) => {
+        if (active) {
+          setDataUrl(url);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setDataUrl('');
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [value]);
+
+  return (
+    <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4">
+      <p className="text-sm font-semibold text-violet-950">Scan playlist QR</p>
+      <p className="mt-1 text-xs text-violet-700">
+        Open the protected playlist on another device, then save it in your player.
+      </p>
+      <div className="mt-4 flex items-center justify-center rounded-2xl bg-white p-4">
+        {dataUrl ? (
+          <img
+            src={dataUrl}
+            alt="Playlist QR code"
+            className="h-48 w-48 rounded-xl border border-gray-100 bg-white p-3"
+          />
+        ) : (
+          <div className="flex h-48 w-48 items-center justify-center rounded-xl border border-gray-100 bg-gray-50">
+            <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+          </div>
+        )}
+      </div>
+      <p className="mt-3 text-xs text-gray-500">
+        Some TV apps still work better if you paste the Xtream or playlist details manually.
+      </p>
     </div>
   );
 }

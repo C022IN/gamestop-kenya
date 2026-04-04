@@ -38,9 +38,9 @@ const plans: Plan[] = [
     badge: 'Starter',
     features: [
       'M-Pesa activation',
-      'Protected playlist',
-      'Phone + code sign-in',
-      'Setup help',
+      'Protected playlist + Xtream login',
+      'Smart TV and box setup help',
+      'Browser member hub included',
     ],
   },
   {
@@ -53,9 +53,10 @@ const plans: Plan[] = [
     popular: true,
     features: [
       'M-Pesa activation',
-      'Live TV, movies, and sports',
+      'Smart TV, Firestick, and Kodi ready',
+      'Playlist + Xtream credentials',
       'Priority support',
-      'Renewal help',
+      'Browser member hub included',
     ],
   },
   {
@@ -67,8 +68,8 @@ const plans: Plan[] = [
     badge: 'Long-Term',
     features: [
       'M-Pesa activation',
-      'Protected playlist',
-      'Phone + code sign-in',
+      'Protected playlist + Xtream login',
+      'Browser member hub included',
       'Long-term support',
     ],
   },
@@ -106,10 +107,10 @@ export default function IPTVPage() {
                   GameStop IPTV
                 </div>
                 <h1 className="mt-5 text-4xl font-black leading-tight md:text-6xl">
-                  One checkout for live TV, movies, and sports.
+                  Set up on Smart TV, Android Box, Firestick, Kodi, TiviMate, and IPTV Smarters.
                 </h1>
                 <p className="mt-5 max-w-2xl text-lg text-white/[0.66]">
-                  Pay with M-Pesa, get your login, and watch on any screen.
+                  Checkout gives you a protected playlist URL plus Xtream host, username, and password. Your browser member hub still comes with the plan.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-4">
@@ -119,14 +120,6 @@ export default function IPTVPage() {
                   >
                     <a href="#plans">See Plans</a>
                   </Button>
-                  <Link href="/movies/login">
-                    <Button
-                      variant="outline"
-                      className="rounded-2xl border-white/15 bg-transparent px-8 py-6 text-base font-bold text-white hover:bg-white/10"
-                    >
-                      Member Sign In
-                    </Button>
-                  </Link>
                   <a
                     href="https://wa.me/254717402034?text=Hi!%20I%20need%20help%20choosing%20a%20GameStop%20IPTV%20plan."
                     target="_blank"
@@ -139,6 +132,14 @@ export default function IPTVPage() {
                       WhatsApp Help
                     </Button>
                   </a>
+                  <Link href="/movies/login">
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl border-white/15 bg-transparent px-8 py-6 text-base font-bold text-white hover:bg-white/10"
+                    >
+                      Member Sign In
+                    </Button>
+                  </Link>
                 </div>
 
                 <div className="mt-10 grid gap-3 sm:grid-cols-3">
@@ -177,13 +178,13 @@ export default function IPTVPage() {
                     },
                     {
                       icon: LockKeyhole,
-                      title: '3. Save access',
-                      text: 'Your phone and code appear after activation.',
+                      title: '3. Save TV setup details',
+                      text: 'Copy the playlist, portal host, username, and password.',
                     },
                     {
                       icon: CheckCircle2,
-                      title: '4. Start watching',
-                      text: 'Open the hub or playlist.',
+                      title: '4. Start watching anywhere',
+                      text: 'Use TiviMate, IPTV Smarters, Kodi, VLC, or open the browser hub.',
                     },
                   ].map(({ icon: Icon, title, text }) => (
                     <div
@@ -214,18 +215,18 @@ export default function IPTVPage() {
             {[
               {
                 icon: ShieldCheck,
-                title: 'Protected playback',
-                text: 'Tied to active subscriptions.',
+                title: 'Protected playlist access',
+                text: 'Every active subscription gets a secure playlist link plus Xtream credentials.',
               },
               {
                 icon: Tv2,
-                title: 'Unified member hub',
-                text: 'Live TV, movies, and sports in one place.',
+                title: 'External players first',
+                text: 'Best on TiviMate, IPTV Smarters, Kodi, VLC, smart TVs, and streaming sticks.',
               },
               {
                 icon: Waves,
-                title: 'Provider-based live events',
-                text: 'Sports slots use approved feeds.',
+                title: 'Browser hub included',
+                text: 'Members can still open live TV, movies, and support playback in the browser.',
               },
             ].map(({ icon: Icon, title, text }) => (
               <article key={title} className="rounded-[28px] border border-slate-200 bg-slate-50 p-6">
@@ -245,7 +246,7 @@ export default function IPTVPage() {
           <div className="mb-10 text-center">
             <h2 className="text-3xl font-black">Choose a plan</h2>
             <p className="mt-2 text-white/[0.58]">
-              Activate once and sign in anytime.
+              Activate once, save your TV setup details, and keep browser access as a backup.
             </p>
           </div>
 

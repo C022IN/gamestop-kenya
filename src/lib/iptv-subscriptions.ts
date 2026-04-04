@@ -251,6 +251,30 @@ async function getCredentialsMap(subscriptionIds: string[]): Promise<Map<string,
   );
 }
 
+async function upsertSubscriptionCredentials(
+  subscriptionId: string,
+  credentials: IptvCredentials,
+  provisionedAt: string
+) {
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) {
+    return;
+  }
+
+  await supabase.from('iptv_credentials').upsert(
+    {
+      subscription_id: subscriptionId,
+      m3u_url: credentials.m3uUrl,
+      xtream_host: credentials.xtreamHost,
+      xtream_username: credentials.xtreamUsername,
+      xtream_password: credentials.xtreamPassword,
+      xtream_port: credentials.xtreamPort,
+      provisioned_at: provisionedAt,
+    },
+    { onConflict: 'subscription_id' }
+  );
+}
+
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -488,18 +512,7 @@ export async function activateSubscription(
     };
 
     if (supabase) {
-      await supabase.from('iptv_credentials').upsert(
-        {
-          subscription_id: subscriptionId,
-          m3u_url: credentials.m3uUrl,
-          xtream_host: credentials.xtreamHost,
-          xtream_username: credentials.xtreamUsername,
-          xtream_password: credentials.xtreamPassword,
-          xtream_port: credentials.xtreamPort,
-          provisioned_at: activatedAt,
-        },
-        { onConflict: 'subscription_id' }
-      );
+      await upsertSubscriptionCredentials(subscriptionId, credentials, activatedAt);
 
       await supabase
         .from('iptv_subscriptions')
@@ -538,6 +551,30 @@ export async function activateSubscription(
       activationLocks.delete(subscriptionId);
     }
   }
+}
+
+export async function reprovisionSubscriptionCredentials(
+  subscriptionId: string
+): Promise<IptvSubscription | null> {
+  const existing = await getSubscription(subscriptionId, { fresh: true });
+  if (!existing) {
+    return null;
+  }
+
+  if (!hasSubscriptionPlaybackAccess(existing)) {
+    throw new Error('Only active subscriptions can be reprovisioned.');
+  }
+
+  const provisionedAt = new Date().toISOString();
+  const credentials = await provisionCredentials(existing);
+  const updated: IptvSubscription = {
+    ...existing,
+    credentials,
+  };
+
+  await upsertSubscriptionCredentials(subscriptionId, credentials, provisionedAt);
+  indexSubscription(updated);
+  return updated;
 }
 
 export async function activateByCheckoutId(

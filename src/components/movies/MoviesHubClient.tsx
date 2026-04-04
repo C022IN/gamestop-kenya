@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import {
   Bell,
+  Copy,
   Radio,
   UserRound,
 } from 'lucide-react';
@@ -26,6 +27,16 @@ interface MoviesHubClientProps {
   subscriptionEndsLabel?: string | null;
   spotlightItems: MoviesHubTile[];
   sections: MoviesHubSection[];
+  tvSetup?: {
+    playlistUrl: string;
+    xtreamHost: string;
+    xtreamUsername: string;
+    xtreamPassword: string;
+  } | null;
+}
+
+function copyText(value: string) {
+  void navigator.clipboard.writeText(value);
 }
 
 export default function MoviesHubClient({
@@ -37,6 +48,7 @@ export default function MoviesHubClient({
   subscriptionEndsLabel,
   spotlightItems,
   sections,
+  tvSetup,
 }: MoviesHubClientProps) {
   const { items: continueWatching } = useContinueWatching();
   const { items: recentlyViewed, remember } = useRecentlyViewed();
@@ -165,6 +177,61 @@ export default function MoviesHubClient({
                     {accessState === 'expired' ? 'Renew plan' : 'View plans'}
                   </Button>
                 </Link>
+              </div>
+            </section>
+          ) : null}
+
+          {tvSetup ? (
+            <section className="mt-8 rounded-[26px] border border-sky-300/15 bg-[#071121]/92 p-6 backdrop-blur-xl">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-300">
+                    TV setup / playlist details
+                  </p>
+                  <h2 className="mt-2 text-2xl font-black text-white">
+                    Recover your player credentials anytime
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-7 text-white/64">
+                    Use these in TiviMate, IPTV Smarters, Kodi, or VLC. The browser member hub stays available as your backup surface.
+                  </p>
+                </div>
+                <Link href="/iptv">
+                  <Button
+                    variant="outline"
+                    className="rounded-full border-sky-300/30 bg-transparent px-5 text-sky-100 hover:bg-sky-300/10"
+                  >
+                    Manage Plan
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  { label: 'Playlist', value: tvSetup.playlistUrl },
+                  { label: 'Host', value: tvSetup.xtreamHost },
+                  { label: 'Username', value: tvSetup.xtreamUsername },
+                  { label: 'Password', value: tvSetup.xtreamPassword },
+                ].map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="rounded-[22px] border border-white/10 bg-black/20 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-200/80">
+                        {label}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => copyText(value)}
+                        className="text-sky-200/70 transition hover:text-sky-100"
+                        title={`Copy ${label}`}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <p className="mt-2 break-all font-mono text-xs text-white/88">{value}</p>
+                  </div>
+                ))}
               </div>
             </section>
           ) : null}

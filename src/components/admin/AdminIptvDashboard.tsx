@@ -40,6 +40,14 @@ interface AssignedAdmin {
   phone: string | null;
 }
 
+interface DashboardCredentials {
+  m3uUrl: string;
+  xtreamHost: string;
+  xtreamUsername: string;
+  xtreamPassword: string;
+  xtreamPort: number;
+}
+
 interface Subscription {
   id: string;
   planId: string;
@@ -58,6 +66,8 @@ interface Subscription {
     profileId: string;
     accessCode: string;
   };
+  credentials?: DashboardCredentials;
+  playlistUrl?: string | null;
   assignedAdmin: AssignedAdmin | null;
 }
 
@@ -191,6 +201,10 @@ function roleLabel(role: AdminRole) {
   return role === 'super_admin' ? 'Super Admin' : 'Admin';
 }
 
+function copyText(value: string) {
+  void navigator.clipboard.writeText(value);
+}
+
 export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
   const isSuper = admin.role === 'super_admin';
   const [query, setQuery] = useState('');
@@ -206,6 +220,10 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
   const [activateMsg, setActivateMsg] = useState<Record<string, string>>({});
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignmentMsg, setAssignmentMsg] = useState<Record<string, string>>({});
+  const [reprovisioning, setReprovisioning] = useState<string | null>(null);
+  const [reprovisionMsg, setReprovisionMsg] = useState<
+    Record<string, { tone: 'success' | 'error'; text: string }>
+  >({});
   const [assignmentSelections, setAssignmentSelections] = useState<Record<string, string>>({});
   const [newAdminName, setNewAdminName] = useState('');
   const [newAdminPhone, setNewAdminPhone] = useState('');
@@ -374,6 +392,51 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
     }
   };
 
+  const handleReprovision = async (subscription: Subscription) => {
+    setReprovisioning(subscription.id);
+    setReprovisionMsg((prev) => ({
+      ...prev,
+      [subscription.id]: { tone: 'success', text: '' },
+    }));
+
+    try {
+      const res = await fetch('/api/admin/iptv/reprovision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId: subscription.id }),
+      });
+
+      if (res.status === 401) {
+        window.location.href = '/admin/login';
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Could not reprovision credentials');
+      }
+
+      setReprovisionMsg((prev) => ({
+        ...prev,
+        [subscription.id]: {
+          tone: 'success',
+          text: data.message ?? 'Credentials reprovisioned.',
+        },
+      }));
+      fetchDashboard(query.trim());
+    } catch (err) {
+      setReprovisionMsg((prev) => ({
+        ...prev,
+        [subscription.id]: {
+          tone: 'error',
+          text: err instanceof Error ? err.message : 'Could not reprovision credentials',
+        },
+      }));
+    } finally {
+      setReprovisioning(null);
+    }
+  };
+
   const handleCreateAdmin = async (event: React.FormEvent) => {
     event.preventDefault();
     setCreateAdminMsg('');
@@ -535,6 +598,50 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                       <p className="font-mono text-xs text-red-200">Movie code: {bundle.member.accessCode}</p>
                     </>
                   )}
+                  {subscription.credentials ? (
+                    <div className="mt-3 rounded-xl border border-sky-900/60 bg-sky-950/30 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-300">
+                        TV setup / playlist details
+                      </p>
+                      <div className="mt-2 space-y-2">
+                        {[
+                          {
+                            label: 'Playlist',
+                            value: subscription.playlistUrl ?? subscription.credentials.m3uUrl,
+                          },
+                          { label: 'Host', value: subscription.credentials.xtreamHost },
+                          { label: 'Username', value: subscription.credentials.xtreamUsername },
+                          { label: 'Password', value: subscription.credentials.xtreamPassword },
+                        ].map(({ label, value }) => (
+                          <div
+                            key={label}
+                            className="rounded-lg border border-sky-900/40 bg-slate-950/70 px-2.5 py-2"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-200/80">
+                                {label}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => copyText(value)}
+                                className="text-sky-200/70 transition hover:text-sky-100"
+                                title={`Copy ${label}`}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                            <p className="mt-1 break-all font-mono text-[11px] text-sky-50">
+                              {value}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : bundle.status === 'active' ? (
+                    <p className="mt-3 text-xs text-amber-300">
+                      No IPTV credentials are saved for this user yet. Reprovision to issue them again.
+                    </p>
+                  ) : null}
                   <p className="mt-2 text-xs text-gray-500">
                     Started {formatDateLabel(bundle.startedAt)} | {pluralize(bundle.subscriptions.length, 'subscription period')}
                   </p>
@@ -681,7 +788,35 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                   ) : bundle.status === 'expired' ? (
                     <span className="text-xs text-amber-300">Renew required</span>
                   ) : (
-                    <span className="text-xs text-gray-600">Active</span>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => handleReprovision(subscription)}
+                        disabled={reprovisioning === assignmentKey}
+                        className="flex items-center gap-1.5 rounded-lg border border-sky-500/40 bg-sky-950/40 px-3 py-1.5 text-xs font-bold text-sky-100 hover:bg-sky-950/70 disabled:opacity-50"
+                      >
+                        {reprovisioning === assignmentKey ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-3.5 w-3.5" />
+                        )}
+                        {subscription.credentials ? 'Reprovision credentials' : 'Issue credentials'}
+                      </button>
+                      <p className="text-[11px] text-gray-500">
+                        Reset credentials uses this same reprovision flow.
+                      </p>
+                      {reprovisionMsg[assignmentKey]?.text ? (
+                        <p
+                          className={`text-xs ${
+                            reprovisionMsg[assignmentKey]?.tone === 'error'
+                              ? 'text-red-400'
+                              : 'text-emerald-400'
+                          }`}
+                        >
+                          {reprovisionMsg[assignmentKey]?.text}
+                        </p>
+                      ) : null}
+                    </div>
                   )}
                 </td>
               </tr>

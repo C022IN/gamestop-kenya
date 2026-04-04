@@ -51,6 +51,7 @@ async function decorateSubscriptions(subscriptions: IptvSubscription[]) {
 
       return {
         ...subscription,
+        playlistUrl: subscription.credentials?.m3uUrl ?? null,
         member,
         assignedAdmin: assignedAdmin
           ? {

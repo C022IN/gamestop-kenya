@@ -92,7 +92,13 @@ async function provisionViaWebhook(subscription: IptvSubscription): Promise<Iptv
 }
 
 export async function provisionCredentials(subscription: IptvSubscription): Promise<IptvCredentials> {
-  const mode = process.env.IPTV_PROVISIONING_MODE ?? 'local';
+  const mode =
+    process.env.IPTV_PROVISIONING_MODE ??
+    (process.env.NODE_ENV === 'production' ? 'webhook' : 'local');
+
+  if (process.env.NODE_ENV === 'production' && mode !== 'webhook') {
+    throw new Error('Production requires IPTV_PROVISIONING_MODE=webhook.');
+  }
 
   if (mode === 'webhook') {
     return provisionViaWebhook(subscription);

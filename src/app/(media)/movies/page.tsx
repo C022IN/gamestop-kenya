@@ -160,6 +160,16 @@ export default async function MoviesPage() {
       }
       spotlightItems={spotlightItems}
       sections={sections}
+      tvSetup={
+        hasActive && primarySubscription?.credentials
+          ? {
+              playlistUrl: primarySubscription.credentials.m3uUrl,
+              xtreamHost: primarySubscription.credentials.xtreamHost,
+              xtreamUsername: primarySubscription.credentials.xtreamUsername,
+              xtreamPassword: primarySubscription.credentials.xtreamPassword,
+            }
+          : null
+      }
     />
   );
 }
