@@ -11,12 +11,13 @@ import xbmcplugin
 import xbmcaddon
 
 try:
-    from urllib.parse import urlencode, parse_qsl, quote_plus
+    from urllib.parse import urlencode, parse_qsl, quote_plus, urljoin
     import urllib.request as urllib_request
     import urllib.error as urllib_error
 except ImportError:
     from urllib import urlencode, quote_plus
     from urlparse import parse_qsl
+    from urlparse import urljoin
     import urllib2 as urllib_request
     import urllib2 as urllib_error
 
@@ -124,7 +125,21 @@ def extract_cookie(resp_headers, cookie_name):
     return None
 
 
-def post_json(url, payload):
+def get_redirect_target(url, parsed_body, resp_headers):
+    if isinstance(parsed_body, dict):
+        redirect_url = parsed_body.get("redirect") or parsed_body.get("location")
+        if redirect_url:
+            return urljoin(url, redirect_url)
+
+    if resp_headers:
+        redirect_url = resp_headers.get("Location")
+        if redirect_url:
+            return urljoin(url, redirect_url)
+
+    return None
+
+
+def post_json(url, payload, redirect_count=0):
     try:
         body = json.dumps(payload).encode("utf-8")
         req = urllib_request.Request(
@@ -159,9 +174,22 @@ def post_json(url, payload):
         if redirect_target:
             xbmc.log(f"[{ADDON_ID}] POST redirect target: {redirect_target}", xbmc.LOGERROR)
         if e.code in (301, 302, 307, 308):
+            try:
+                parsed = json.loads(raw) if raw else {}
+            except Exception:
+                parsed = {"error": raw or f"HTTP {e.code}"}
+
+            next_url = get_redirect_target(url, parsed, resp_headers)
+            if next_url and redirect_count < 3:
+                xbmc.log(
+                    f"[{ADDON_ID}] Following POST redirect {redirect_count + 1}: {url} -> {next_url}",
+                    xbmc.LOGWARNING,
+                )
+                return post_json(next_url, payload, redirect_count + 1)
+
             return {
                 "error": (
-                    f"Site URL redirected to {redirect_target or 'another URL'}. "
+                    f"Site URL redirected to {next_url or redirect_target or 'another URL'}. "
                     f"Set Site URL to {DEFAULT_SITE_URL}"
                 )
             }, resp_headers

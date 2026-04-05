@@ -2,36 +2,59 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
 import { Button } from '@/components/ui/button';
 import { LockKeyhole, ShieldCheck, Smartphone, Tv2 } from 'lucide-react';
 
 export default function MoviesLoginPage() {
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+  const turnstileEnabled = turnstileSiteKey.length > 0;
+  const turnstileMisconfigured = process.env.NODE_ENV === 'production' && !turnstileEnabled;
   const [phone, setPhone] = useState('');
   const [accessCode, setAccessCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileInstance, setTurnstileInstance] = useState(0);
+
+  const resetTurnstile = () => {
+    setTurnstileToken(null);
+    setTurnstileInstance((value) => value + 1);
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (turnstileMisconfigured) {
+      setError('Security check is unavailable right now. Please try again shortly.');
+      return;
+    }
+
+    if (turnstileEnabled && !turnstileToken) {
+      setError('Complete the security check and try again.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const res = await fetch('/api/movies/auth/login', {
+      const res = await fetch('/api/movies/auth/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, accessCode }),
+        body: JSON.stringify({ phone, accessCode, turnstileToken }),
       });
       const data = await res.json();
 
       if (!res.ok) {
         setError(data.error ?? 'Login failed.');
+        resetTurnstile();
         return;
       }
 
       window.location.href = '/movies';
     } catch {
       setError('Network error. Please try again.');
+      resetTurnstile();
     } finally {
       setLoading(false);
     }
@@ -125,11 +148,33 @@ export default function MoviesLoginPage() {
                 />
               </div>
 
+              {turnstileEnabled ? (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-white/84">Security Check</label>
+                  <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <TurnstileWidget
+                      key={turnstileInstance}
+                      siteKey={turnstileSiteKey}
+                      action="movies_login"
+                      theme="dark"
+                      onTokenChange={setTurnstileToken}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-white/45">
+                    Complete this once, then sign in with your phone number and access code.
+                  </p>
+                </div>
+              ) : turnstileMisconfigured ? (
+                <p className="text-sm text-amber-200">
+                  Security check is unavailable right now. Please try again shortly.
+                </p>
+              ) : null}
+
               {error && <p className="text-sm text-rose-300">{error}</p>}
 
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || turnstileMisconfigured || (turnstileEnabled && !turnstileToken)}
                 className="w-full rounded-2xl bg-white py-6 text-base font-bold text-slate-950 hover:bg-slate-100"
               >
                 {loading ? 'Signing in...' : 'Open My Hub'}

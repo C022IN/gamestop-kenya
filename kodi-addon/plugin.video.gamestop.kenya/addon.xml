@@ -2,7 +2,7 @@
 <addon
   id="plugin.video.gamestop.kenya"
   name="GameStop Kenya Movies"
-  version="1.0.0"
+  version="1.0.1"
   provider-name="GameStop Kenya">
 
   <requires>

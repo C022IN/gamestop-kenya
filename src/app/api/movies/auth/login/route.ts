@@ -4,10 +4,16 @@ import {
   getProfileByAccessCode,
   MOVIE_SESSION_COOKIE,
 } from '@/lib/movie-platform';
+import { verifyTurnstileRequest } from '@/lib/turnstile';
+
+function isKodiClient(req: NextRequest) {
+  const userAgent = req.headers.get('user-agent')?.toLowerCase() ?? '';
+  return userAgent.includes('kodi/gamestopkenya');
+}
 
 export async function POST(req: NextRequest) {
   try {
-    let body: { phone?: unknown; accessCode?: unknown };
+    let body: { phone?: unknown; accessCode?: unknown; turnstileToken?: unknown };
 
     try {
       body = await req.json();
@@ -19,6 +25,13 @@ export async function POST(req: NextRequest) {
 
     if (!phone || !accessCode) {
       return NextResponse.json({ error: 'phone and accessCode are required' }, { status: 400 });
+    }
+
+    if (!isKodiClient(req)) {
+      const verification = await verifyTurnstileRequest(req, body.turnstileToken);
+      if (!verification.ok) {
+        return NextResponse.json({ error: verification.error }, { status: verification.status });
+      }
     }
 
     const profile = await getProfileByAccessCode(String(phone), String(accessCode));
