@@ -6,6 +6,8 @@ const manualEnvEntries = [
 
   { key: 'NEXT_PUBLIC_SITE_URL', group: 'Core Storefront', level: 'required', note: 'Canonical public URL for Vercel production.' },
   { key: 'NEXT_PUBLIC_APP_URL', group: 'Core Storefront', level: 'optional', note: 'Optional secondary public URL override.' },
+  { key: 'NEXT_PUBLIC_TURNSTILE_SITE_KEY', group: 'Core Storefront', level: 'recommended', note: 'Recommended site key for Turnstile protection on public login and checkout forms.' },
+  { key: 'TURNSTILE_SECRET_KEY', group: 'Core Storefront', level: 'recommended', note: 'Recommended secret key for Turnstile siteverify on public login and checkout routes.' },
   { key: 'NEXT_PUBLIC_SUPABASE_URL', group: 'Core Storefront', level: 'required', note: 'Supabase project URL for browser clients.' },
   { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', group: 'Core Storefront', level: 'required', note: 'Supabase anon key for browser clients.' },
   { key: 'SUPABASE_SERVICE_ROLE_KEY', group: 'Core Storefront', level: 'required', note: 'Supabase service key for server-side media, orders, and admin work.' },

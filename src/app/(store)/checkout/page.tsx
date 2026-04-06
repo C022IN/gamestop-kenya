@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
 import { useCart } from '@/domains/storefront/cart/CartContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
@@ -76,6 +77,9 @@ type MpesaState =
   | { phase: 'failed'; reason: string };
 
 function CheckoutPageContent() {
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+  const turnstileEnabled = turnstileSiteKey.length > 0;
+  const turnstileMisconfigured = process.env.NODE_ENV === 'production' && !turnstileEnabled;
   const { items, clearCart, promoCode } = useCart();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
@@ -110,6 +114,8 @@ function CheckoutPageContent() {
   const [stripeOrder, setStripeOrder] = useState<StoreOrderSummary | null>(null);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileInstance, setTurnstileInstance] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { subtotal, discount, shippingCost, finalTotal, digitalOnly, appliedPromo } = getCartPricing(
@@ -155,6 +161,23 @@ function CheckoutPageContent() {
         : 'Stripe';
   const stripeSessionId = searchParams.get('session_id');
   const stripeCanceled = searchParams.get('canceled');
+
+  const resetTurnstile = () => {
+    setTurnstileToken(null);
+    setTurnstileInstance((value) => value + 1);
+  };
+
+  const getTurnstileError = () => {
+    if (turnstileMisconfigured) {
+      return 'Security check is unavailable right now. Please try again shortly.';
+    }
+
+    if (turnstileEnabled && !turnstileToken) {
+      return 'Complete the security check and try again.';
+    }
+
+    return null;
+  };
 
   useEffect(() => {
     if (!canUseMpesa && paymentMethod === 'mpesa') {
@@ -227,6 +250,7 @@ function CheckoutPageContent() {
               phase: 'failed',
               reason: confirmData.error ?? 'Payment was received, but the order could not be confirmed.',
             });
+            resetTurnstile();
             return;
           }
 
@@ -247,12 +271,14 @@ function CheckoutPageContent() {
             phase: 'failed',
             reason: data.resultDesc ?? 'Payment was not completed. Please try again.',
           });
+          resetTurnstile();
         } else if (attempts >= 24) {
           clearInterval(pollRef.current!);
           setMpesaState({
             phase: 'failed',
             reason: 'Payment timed out. If you were charged, please contact support.',
           });
+          resetTurnstile();
         }
       } catch {
         // Keep polling on transient errors.
@@ -263,6 +289,12 @@ function CheckoutPageContent() {
   const handleMpesaPayment = async () => {
     const phone = mpesaPhone || customerInfo.phone;
     if (!phone) return;
+
+    const turnstileError = getTurnstileError();
+    if (turnstileError) {
+      setMpesaState({ phase: 'failed', reason: turnstileError });
+      return;
+    }
 
     setMpesaState({ phase: 'sending' });
     try {
@@ -276,6 +308,7 @@ function CheckoutPageContent() {
           deliveryInfo,
           promoCode,
           phone,
+          turnstileToken,
         }),
       });
       const data = await response.json();
@@ -285,6 +318,7 @@ function CheckoutPageContent() {
           phase: 'failed',
           reason: data.error ?? 'Failed to send M-Pesa prompt. Please try again.',
         });
+        resetTurnstile();
         return;
       }
 
@@ -310,10 +344,17 @@ function CheckoutPageContent() {
         phase: 'failed',
         reason: 'Network error. Please check your connection and try again.',
       });
+      resetTurnstile();
     }
   };
 
   const handleStripePayment = async () => {
+    const turnstileError = getTurnstileError();
+    if (turnstileError) {
+      setStripeState({ phase: 'failed', reason: turnstileError });
+      return;
+    }
+
     setStripeState({ phase: 'redirecting' });
 
     try {
@@ -326,6 +367,7 @@ function CheckoutPageContent() {
           shippingInfo,
           deliveryInfo,
           promoCode,
+          turnstileToken,
         }),
       });
       const data = await response.json();
@@ -335,6 +377,7 @@ function CheckoutPageContent() {
           phase: 'failed',
           reason: data.error ?? 'Could not start Stripe checkout.',
         });
+        resetTurnstile();
         return;
       }
 
@@ -358,11 +401,13 @@ function CheckoutPageContent() {
         phase: 'failed',
         reason: 'Stripe checkout did not return a redirect URL.',
       });
+      resetTurnstile();
     } catch (error) {
       setStripeState({
         phase: 'failed',
         reason: error instanceof Error ? error.message : 'Could not start Stripe checkout.',
       });
+      resetTurnstile();
     }
   };
 
@@ -712,6 +757,27 @@ function CheckoutPageContent() {
                     </div>
                   )}
 
+                  {turnstileEnabled ? (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Security Check *</label>
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
+                        <TurnstileWidget
+                          key={turnstileInstance}
+                          siteKey={turnstileSiteKey}
+                          action="store_checkout"
+                          onTokenChange={setTurnstileToken}
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-400">
+                        Complete this once before starting M-Pesa or Stripe checkout.
+                      </p>
+                    </div>
+                  ) : turnstileMisconfigured ? (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                      Security check is unavailable right now. Please try again shortly.
+                    </div>
+                  ) : null}
+
                   {paymentMethod === 'mpesa' && (
                     <div className="space-y-4">
                       {(mpesaState.phase === 'idle' || mpesaState.phase === 'failed') && (
@@ -739,7 +805,12 @@ function CheckoutPageContent() {
                             <Button type="button" variant="outline" onClick={() => setCurrentStep(2)} className="flex-1 rounded-xl">
                               <ArrowLeft className="h-4 w-4 mr-2" /> Back
                             </Button>
-                            <Button type="button" onClick={handleMpesaPayment} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-5 rounded-xl">
+                            <Button
+                              type="button"
+                              onClick={handleMpesaPayment}
+                              disabled={turnstileMisconfigured || (turnstileEnabled && !turnstileToken)}
+                              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-5 rounded-xl"
+                            >
                               <Smartphone className="h-4 w-4 mr-2" />
                               Pay {formatPrice(finalTotal)} with M-Pesa
                             </Button>
@@ -797,7 +868,12 @@ function CheckoutPageContent() {
                         <Button
                           type="button"
                           onClick={handleStripePayment}
-                          disabled={stripeState.phase === 'redirecting' || stripeState.phase === 'verifying'}
+                          disabled={
+                            stripeState.phase === 'redirecting' ||
+                            stripeState.phase === 'verifying' ||
+                            turnstileMisconfigured ||
+                            (turnstileEnabled && !turnstileToken)
+                          }
                           className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold py-5 rounded-xl"
                         >
                           {stripeState.phase === 'redirecting' || stripeState.phase === 'verifying' ? (

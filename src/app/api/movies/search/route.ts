@@ -7,7 +7,7 @@ import {
   toTmdbTiles,
   type MoviesSearchFilter,
 } from '@/lib/movie-hub';
-import { getIptvCatalogSections } from '@/lib/iptv-catalog';
+import { getIptvCatalogSections, hasConfiguredPlayback } from '@/lib/iptv-catalog';
 import { searchMulti } from '@/lib/tmdb';
 
 function parseFilter(value: string | null): MoviesSearchFilter {
@@ -22,9 +22,15 @@ function parseFilter(value: string | null): MoviesSearchFilter {
   }
 }
 
+function isKodiClient(req: NextRequest) {
+  const userAgent = req.headers.get('user-agent')?.toLowerCase() ?? '';
+  return userAgent.includes('kodi/gamestopkenya');
+}
+
 export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get('q')?.trim() ?? '';
   const filter = parseFilter(req.nextUrl.searchParams.get('type'));
+  const kodiClient = isKodiClient(req);
 
   if (query.length < 2) {
     return NextResponse.json(
@@ -38,14 +44,18 @@ export async function GET(req: NextRequest) {
     searchMulti(query),
   ]);
 
-  const libraryResults = toCatalogTiles(
-    searchCatalogEntries(flattenCatalogEntries(catalog), query, 8),
-    8
-  ).filter((item) => matchesSearchFilter(item, filter));
+  const matchingCatalogEntries = searchCatalogEntries(flattenCatalogEntries(catalog), query, 8)
+    .filter((entry) => !kodiClient || hasConfiguredPlayback(entry));
 
-  const tmdbResults = toTmdbTiles(tmdbData?.results ?? [], 'movie', 8).filter((item) =>
+  const libraryResults = toCatalogTiles(matchingCatalogEntries, 8).filter((item) =>
     matchesSearchFilter(item, filter)
   );
+
+  const tmdbResults = kodiClient
+    ? []
+    : toTmdbTiles(tmdbData?.results ?? [], 'movie', 8).filter((item) =>
+        matchesSearchFilter(item, filter)
+      );
 
   return NextResponse.json(
     { query, filter, libraryResults, tmdbResults },

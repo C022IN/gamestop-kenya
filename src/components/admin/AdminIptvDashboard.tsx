@@ -237,8 +237,17 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
   const [grantName, setGrantName] = useState('');
   const [grantPlan, setGrantPlan] = useState<'1wk' | '1mo' | '3mo' | '12mo' | '24mo'>('1mo');
   const [granting, setGranting] = useState(false);
-  const [grantResult, setGrantResult] = useState<{ profileId: string; accessCode: string; phone: string } | null>(null);
+  const [grantResult, setGrantResult] = useState<{
+    profileId: string;
+    accessCode: string;
+    phone: string;
+    reusedExistingMember: boolean;
+  } | null>(null);
   const [grantError, setGrantError] = useState('');
+  const [renewingBundleKey, setRenewingBundleKey] = useState<string | null>(null);
+  const [renewalMsg, setRenewalMsg] = useState<
+    Record<string, { tone: 'success' | 'error'; text: string }>
+  >({});
 
   // Impersonate
   const [impPhone, setImpPhone] = useState('');
@@ -478,14 +487,22 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
     setGrantResult(null);
     setGranting(true);
     try {
+      const payload = {
+        phone: grantPhone,
+        customerName: grantName.trim() || undefined,
+        planId: grantPlan,
+      };
       const res = await fetch('/api/admin/iptv/grant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: grantPhone, customerName: grantName, planId: grantPlan }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Grant failed');
-      setGrantResult(data.member);
+      setGrantResult({
+        ...data.member,
+        reusedExistingMember: Boolean(data.reusedExistingMember),
+      });
       setGrantPhone('');
       setGrantName('');
       fetchDashboard(query.trim());
@@ -493,6 +510,58 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
       setGrantError(err instanceof Error ? err.message : 'Grant failed');
     } finally {
       setGranting(false);
+    }
+  };
+
+  const handleRenewBundle = async (bundle: SubscriptionBundle) => {
+    setRenewingBundleKey(bundle.key);
+    setRenewalMsg((prev) => ({
+      ...prev,
+      [bundle.key]: { tone: 'success', text: '' },
+    }));
+
+    try {
+      const res = await fetch('/api/admin/iptv/grant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: bundle.phone,
+          planId: bundle.latestSubscription.planId,
+        }),
+      });
+
+      if (res.status === 401) {
+        window.location.href = '/admin/login';
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? 'Renewal failed');
+      }
+
+      setRenewalMsg((prev) => ({
+        ...prev,
+        [bundle.key]: {
+          tone: 'success',
+          text: `Renewed on ${bundle.latestSubscription.planName}. Existing member access stayed in place.`,
+        },
+      }));
+      setGrantResult({
+        ...data.member,
+        reusedExistingMember: Boolean(data.reusedExistingMember),
+      });
+      fetchDashboard(query.trim());
+    } catch (err) {
+      setRenewalMsg((prev) => ({
+        ...prev,
+        [bundle.key]: {
+          tone: 'error',
+          text: err instanceof Error ? err.message : 'Renewal failed',
+        },
+      }));
+    } finally {
+      setRenewingBundleKey(null);
     }
   };
 
@@ -786,7 +855,41 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                       )}
                     </div>
                   ) : bundle.status === 'expired' ? (
-                    <span className="text-xs text-amber-300">Renew required</span>
+                    <div className="space-y-2">
+                      {isSuper ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRenewBundle(bundle)}
+                          disabled={renewingBundleKey === bundle.key}
+                          className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-gray-950 hover:bg-amber-400 disabled:opacity-50"
+                        >
+                          {renewingBundleKey === bundle.key ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Zap className="h-3.5 w-3.5" />
+                          )}
+                          Renew latest plan
+                        </button>
+                      ) : (
+                        <span className="text-xs text-amber-300">Renew required</span>
+                      )}
+                      <p className="text-[11px] text-gray-500">
+                        {isSuper
+                          ? `Uses ${bundle.latestSubscription.planName} and keeps the same member access.`
+                          : 'Renew required'}
+                      </p>
+                      {renewalMsg[bundle.key]?.text ? (
+                        <p
+                          className={`text-xs ${
+                            renewalMsg[bundle.key]?.tone === 'error'
+                              ? 'text-red-400'
+                              : 'text-emerald-400'
+                          }`}
+                        >
+                          {renewalMsg[bundle.key]?.text}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : (
                     <div className="space-y-2">
                       <button
@@ -931,8 +1034,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                 />
                 <input
                   type="text"
-                  required
-                  placeholder="Customer name"
+                  placeholder="Customer name for new user only"
                   value={grantName}
                   onChange={(e) => setGrantName(e.target.value)}
                   className="w-full rounded-xl border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"
@@ -954,15 +1056,50 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                   <span className="ml-2">{granting ? 'Granting…' : 'Grant & Activate'}</span>
                 </Button>
               </form>
-              {grantResult && (
+              {grantResult ? (
                 <div className="mt-3 rounded-xl border border-emerald-700 bg-emerald-950/40 p-4 text-sm">
-                  <p className="font-bold text-emerald-300">✓ Access granted!</p>
-                  <p className="mt-1 text-gray-300">Phone: <span className="font-mono text-white">{grantResult.phone}</span></p>
+                  <p className="font-bold text-emerald-300">
+                    {grantResult.reusedExistingMember ? 'Renewal granted!' : 'Access granted!'}
+                  </p>
+                  <p className="mt-1 text-gray-300">
+                    Phone: <span className="font-mono text-white">{grantResult.phone}</span>
+                  </p>
                   <div className="mt-1 flex items-center gap-2">
-                    <p className="text-gray-300">Access Code: <span className="font-mono text-xl font-black text-emerald-300">{grantResult.accessCode}</span></p>
+                    <p className="text-gray-300">
+                      Access Code:{' '}
+                      <span className="font-mono text-xl font-black text-emerald-300">
+                        {grantResult.accessCode}
+                      </span>
+                    </p>
                     <button
                       type="button"
                       onClick={() => navigator.clipboard.writeText(grantResult.accessCode)}
+                      className="text-gray-500 hover:text-white"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    {grantResult.reusedExistingMember ? (
+                      'Existing member profile kept the same phone and access code.'
+                    ) : (
+                      <>
+                        User logs in at <span className="text-violet-300">/movies/login</span> with
+                        their phone + code above.
+                      </>
+                    )}
+                  </p>
+                </div>
+              ) : null}
+              {false && grantResult && (
+                <div className="mt-3 rounded-xl border border-emerald-700 bg-emerald-950/40 p-4 text-sm">
+                  <p className="font-bold text-emerald-300">✓ Access granted!</p>
+                  <p className="mt-1 text-gray-300">Phone: <span className="font-mono text-white">{grantResult!.phone}</span></p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <p className="text-gray-300">Access Code: <span className="font-mono text-xl font-black text-emerald-300">{grantResult!.accessCode}</span></p>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(grantResult!.accessCode)}
                       className="text-gray-500 hover:text-white"
                     >
                       <Copy className="h-3.5 w-3.5" />

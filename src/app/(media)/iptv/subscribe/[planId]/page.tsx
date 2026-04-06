@@ -6,6 +6,7 @@ import Link from 'next/link';
 import QRCode from 'qrcode';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
 import { Button } from '@/components/ui/button';
 import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
 import { DEVICE_ONBOARDING_GUIDES } from '@/lib/iptv-guides';
@@ -124,6 +125,9 @@ function CopyBtn({ value }: { value: string }) {
 }
 
 function IPTVSubscribePageContent() {
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+  const turnstileEnabled = turnstileSiteKey.length > 0;
+  const turnstileMisconfigured = process.env.NODE_ENV === 'production' && !turnstileEnabled;
   const { planId } = useParams<{ planId: string }>();
   const searchParams = useSearchParams();
   const plan = PLANS[planId as PlanId];
@@ -137,9 +141,28 @@ function IPTVSubscribePageContent() {
   const [mpesaState, setMpesaState] = useState<MpesaPhase>({ phase: 'idle' });
   const [stripeState, setStripeState] = useState<StripePhase>({ phase: 'idle' });
   const [activationState, setActivationState] = useState<ActivationState | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileInstance, setTurnstileInstance] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stripeSessionId = searchParams.get('session_id');
   const stripeCanceled = searchParams.get('canceled');
+
+  const resetTurnstile = () => {
+    setTurnstileToken(null);
+    setTurnstileInstance((value) => value + 1);
+  };
+
+  const getTurnstileError = () => {
+    if (turnstileMisconfigured) {
+      return 'Security check is unavailable right now. Please try again shortly.';
+    }
+
+    if (turnstileEnabled && !turnstileToken) {
+      return 'Complete the security check and try again.';
+    }
+
+    return null;
+  };
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
   useEffect(() => {
@@ -231,6 +254,7 @@ function IPTVSubscribePageContent() {
 
           if (!confRes.ok || confData.error) {
             setMpesaState({ phase: 'failed', reason: confData.error ?? 'Activation failed. Please contact support.' });
+            resetTurnstile();
             return;
           }
 
@@ -248,9 +272,11 @@ function IPTVSubscribePageContent() {
         } else if (data.status === 'failed') {
           clearInterval(pollRef.current!);
           setMpesaState({ phase: 'failed', reason: data.resultDesc ?? 'Payment was not completed.' });
+          resetTurnstile();
         } else if (attempts >= maxAttempts) {
           clearInterval(pollRef.current!);
           setMpesaState({ phase: 'failed', reason: 'Payment timed out. If you were charged, contact support with your phone number.' });
+          resetTurnstile();
         }
       } catch {
         // keep polling on network error
@@ -262,18 +288,25 @@ function IPTVSubscribePageContent() {
     e.preventDefault();
     if (!phone || !customerName || !email) return;
 
+    const turnstileError = getTurnstileError();
+    if (turnstileError) {
+      setMpesaState({ phase: 'failed', reason: turnstileError });
+      return;
+    }
+
     setMpesaState({ phase: 'sending' });
 
     try {
       const res = await fetch('/api/iptv/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: plan.id, customerName, email, phone }),
+        body: JSON.stringify({ planId: plan.id, customerName, email, phone, turnstileToken }),
       });
       const data = await res.json();
 
       if (!res.ok || data.error) {
         setMpesaState({ phase: 'failed', reason: data.error ?? 'Failed to initiate payment.' });
+        resetTurnstile();
         return;
       }
 
@@ -286,11 +319,18 @@ function IPTVSubscribePageContent() {
       startPolling(data.checkoutRequestId);
     } catch {
       setMpesaState({ phase: 'failed', reason: 'Network error. Please check your connection.' });
+      resetTurnstile();
     }
   };
 
   const handleStripeSubscribe = async () => {
     if (!phone || !customerName || !email) return;
+
+    const turnstileError = getTurnstileError();
+    if (turnstileError) {
+      setStripeState({ phase: 'failed', reason: turnstileError });
+      return;
+    }
 
     setStripeState({ phase: 'redirecting' });
 
@@ -303,6 +343,7 @@ function IPTVSubscribePageContent() {
           customerName,
           email,
           phone,
+          turnstileToken,
         }),
       });
       const data = await response.json();
@@ -312,6 +353,7 @@ function IPTVSubscribePageContent() {
           phase: 'failed',
           reason: data.error ?? 'Failed to start Stripe subscription checkout.',
         });
+        resetTurnstile();
         return;
       }
 
@@ -339,11 +381,13 @@ function IPTVSubscribePageContent() {
         phase: 'failed',
         reason: 'Stripe subscription checkout did not return a redirect URL.',
       });
+      resetTurnstile();
     } catch {
       setStripeState({
         phase: 'failed',
         reason: 'Network error. Please check your connection.',
       });
+      resetTurnstile();
     }
   };
 
@@ -442,6 +486,27 @@ function IPTVSubscribePageContent() {
                       <p className="mt-1 text-xs text-gray-400">Use this number to sign in later.</p>
                     </div>
 
+                    {turnstileEnabled ? (
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-gray-700">Security Check *</label>
+                        <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
+                          <TurnstileWidget
+                            key={turnstileInstance}
+                            siteKey={turnstileSiteKey}
+                            action="iptv_checkout"
+                            onTokenChange={setTurnstileToken}
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-400">
+                          Complete this once before starting M-Pesa or Stripe checkout.
+                        </p>
+                      </div>
+                    ) : turnstileMisconfigured ? (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                        Security check is unavailable right now. Please try again shortly.
+                      </div>
+                    ) : null}
+
                     <div className="grid grid-cols-2 gap-3">
                       {[
                         { id: 'mpesa', label: 'M-Pesa', active: 'border-green-500 bg-green-50 text-green-700', icon: Smartphone },
@@ -491,6 +556,7 @@ function IPTVSubscribePageContent() {
                     {paymentMethod === 'mpesa' ? (
                       <Button
                         type="submit"
+                        disabled={turnstileMisconfigured || (turnstileEnabled && !turnstileToken)}
                         className="w-full rounded-xl bg-violet-600 py-6 text-base font-bold hover:bg-violet-700"
                       >
                         <Smartphone className="mr-2 h-5 w-5" />
@@ -499,7 +565,12 @@ function IPTVSubscribePageContent() {
                     ) : (
                       <Button
                         type="submit"
-                        disabled={stripeState.phase === 'redirecting' || stripeState.phase === 'verifying'}
+                        disabled={
+                          stripeState.phase === 'redirecting' ||
+                          stripeState.phase === 'verifying' ||
+                          turnstileMisconfigured ||
+                          (turnstileEnabled && !turnstileToken)
+                        }
                         className="w-full rounded-xl bg-slate-900 py-6 text-base font-bold hover:bg-slate-800"
                       >
                         {stripeState.phase === 'redirecting' || stripeState.phase === 'verifying' ? (
@@ -549,7 +620,10 @@ function IPTVSubscribePageContent() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setMpesaState({ phase: 'idle' })}
+                      onClick={() => {
+                        resetTurnstile();
+                        setMpesaState({ phase: 'idle' });
+                      }}
                       className="text-xs text-gray-400 underline hover:text-red-500"
                     >
                       Cancel

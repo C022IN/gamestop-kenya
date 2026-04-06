@@ -718,6 +718,60 @@ export async function getSubscriptionsByAdminId(adminId: string): Promise<IptvSu
   return all.filter((subscription) => subscription.assignedAdminId === adminId);
 }
 
+export async function getSubscriptionsByPhone(phone: string): Promise<IptvSubscription[]> {
+  const normalizedPhone = phone.trim();
+  if (!normalizedPhone) {
+    return [];
+  }
+
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) {
+    const subscriptionIds = byPhone.get(normalizedPhone) ?? [];
+    const matches = subscriptionIds
+      .map((subscriptionId) => subscriptions.get(subscriptionId) ?? null)
+      .filter((subscription): subscription is IptvSubscription => Boolean(subscription));
+
+    const normalized = await Promise.all(
+      matches.map((subscription) => persistNormalizedSubscription(subscription))
+    );
+
+    return normalized.sort((left, right) => {
+      const rightExpiry = getExpiryTimestamp(right.expiresAt) ?? 0;
+      const leftExpiry = getExpiryTimestamp(left.expiresAt) ?? 0;
+      if (rightExpiry !== leftExpiry) {
+        return rightExpiry - leftExpiry;
+      }
+
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+    });
+  }
+
+  const { data, error } = await supabase
+    .from('iptv_subscriptions')
+    .select(SUBSCRIPTION_SELECT)
+    .eq('phone', normalizedPhone)
+    .order('expires_at', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error || !data) {
+    return [];
+  }
+
+  const rows = data as SubscriptionRow[];
+  const credentialsMap = await getCredentialsMap(rows.map((row) => row.id));
+  const mapped = rows.map((row) =>
+    fromSubscriptionRow(row, credentialsMap.get(row.id) ?? null)
+  );
+
+  return await Promise.all(mapped.map((subscription) => persistNormalizedSubscription(subscription)));
+}
+
+export async function getLatestSubscriptionForPhone(
+  phone: string
+): Promise<IptvSubscription | null> {
+  return (await getSubscriptionsByPhone(phone))[0] ?? null;
+}
+
 export async function assignSubscriptionToAdmin(
   subscriptionId: string,
   assignedAdminId: string,

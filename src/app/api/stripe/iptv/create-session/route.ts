@@ -17,21 +17,36 @@ import {
   getStripeTaxBehaviorValue,
   toStripeAmount,
 } from '@/lib/stripe/tax';
+import { verifyTurnstileRequest } from '@/lib/turnstile';
 
 export async function POST(req: NextRequest) {
   try {
-    const { planId, customerName, email, phone } = (await req.json()) as {
+    let body: {
       planId?: string;
       customerName?: string;
       email?: string;
       phone?: string;
+      turnstileToken?: string;
     };
+
+    try {
+      body = (await req.json()) as typeof body;
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { planId, customerName, email, phone, turnstileToken } = body;
 
     if (!planId || !customerName || !email || !phone) {
       return NextResponse.json(
         { error: 'planId, customerName, email, and phone are required' },
         { status: 400 }
       );
+    }
+
+    const verification = await verifyTurnstileRequest(req, turnstileToken);
+    if (!verification.ok) {
+      return NextResponse.json({ error: verification.error }, { status: verification.status });
     }
 
     const plan = IPTV_PLANS[planId as PlanId];

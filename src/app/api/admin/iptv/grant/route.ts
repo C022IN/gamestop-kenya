@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { activateSubscription, createPendingSubscription, IPTV_PLANS, type PlanId } from '@/lib/iptv-subscriptions';
+import {
+  activateSubscription,
+  createPendingSubscription,
+  getLatestSubscriptionForPhone,
+  IPTV_PLANS,
+  type PlanId,
+} from '@/lib/iptv-subscriptions';
 import { provisionMemberFromSubscription } from '@/lib/movie-platform';
 import { normaliseMpesaPhone } from '@/lib/mpesa';
 import {
@@ -19,13 +25,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { phone: rawPhone, customerName, planId, mpesaReceipt } = body as {
     phone: string;
-    customerName: string;
+    customerName?: string;
     planId: PlanId;
     mpesaReceipt?: string;
   };
 
-  if (!rawPhone || !customerName || !planId) {
-    return NextResponse.json({ error: 'phone, customerName and planId are required.' }, { status: 400 });
+  if (!rawPhone || !planId) {
+    return NextResponse.json({ error: 'phone and planId are required.' }, { status: 400 });
   }
 
   if (!IPTV_PLANS[planId]) {
@@ -33,22 +39,34 @@ export async function POST(req: NextRequest) {
   }
 
   const phone = normaliseMpesaPhone(rawPhone);
+  const existing = await getLatestSubscriptionForPhone(phone);
+  const resolvedCustomerName = customerName?.trim() || existing?.customerName?.trim() || '';
+  if (!resolvedCustomerName) {
+    return NextResponse.json(
+      { error: 'customerName is required for a new user. Existing users can be renewed by phone only.' },
+      { status: 400 }
+    );
+  }
+
   const receipt = mpesaReceipt?.trim() || `ADMIN-GRANT-${Date.now()}`;
   const checkoutRequestId = `ADMIN-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  const assignedAdminId = existing?.assignedAdminId ?? auth.context.current.admin.id;
+  const resolvedEmail = existing?.email?.trim() || `${phone}@admin.grant`;
+  const isRenewal = Boolean(existing);
 
   try {
     const pending = await createPendingSubscription({
       planId,
-      customerName: customerName.trim(),
-      email: `${phone}@admin.grant`,
+      customerName: resolvedCustomerName,
+      email: resolvedEmail,
       phone,
       checkoutRequestId,
-      assignedAdminId: auth.context.current.admin.id,
+      assignedAdminId,
       assignedByAdminId: auth.context.current.admin.id,
     });
 
     const activated = await activateSubscription(pending.id, receipt, {
-      assignedAdminId: auth.context.current.admin.id,
+      assignedAdminId,
       assignedByAdminId: auth.context.current.admin.id,
     });
 
@@ -61,7 +79,9 @@ export async function POST(req: NextRequest) {
     await recordAdminRequestAudit(auth.context, {
       action: 'subscription_grant',
       status: 'success',
-      summary: `Granted ${planId} access to ${phone} (${customerName}). Receipt: ${receipt}.`,
+      summary: isRenewal
+        ? `Renewed ${phone} on ${planId} without re-registering. Receipt: ${receipt}.`
+        : `Granted ${planId} access to ${phone} (${resolvedCustomerName}). Receipt: ${receipt}.`,
       target: activated.id,
     });
 
@@ -72,6 +92,7 @@ export async function POST(req: NextRequest) {
         accessCode: member.accessCode,
         phone,
       },
+      reusedExistingMember: isRenewal,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Grant failed.';

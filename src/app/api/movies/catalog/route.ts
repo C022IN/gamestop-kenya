@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  buildPlaybackSource,
   getSessionByToken,
   getAccessibleContentForProfile,
   MOVIE_SESSION_COOKIE,
@@ -17,9 +18,18 @@ export async function GET(req: NextRequest) {
   }
 
   const items = await getAccessibleContentForProfile(session.profileId);
+  const playbackCandidates = await Promise.all(
+    items.map(async (item) => ({
+      item,
+      playback: await buildPlaybackSource(item),
+    }))
+  );
+  const playableItems = playbackCandidates
+    .filter((entry) => Boolean(entry.playback))
+    .map((entry) => entry.item);
 
   return NextResponse.json({
-    items: items.map((item) => ({
+    items: playableItems.map((item) => ({
       id: item.id,
       slug: item.slug,
       title: item.title,

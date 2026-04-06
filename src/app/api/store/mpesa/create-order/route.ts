@@ -10,16 +10,26 @@ import {
   type StoreCheckoutDeliveryInfo,
   type StoreCheckoutShippingInfo,
 } from '@/lib/store-orders';
+import { verifyTurnstileRequest } from '@/lib/turnstile';
 
 export async function POST(req: NextRequest) {
   try {
-    const { items, customerInfo, shippingInfo, deliveryInfo, promoCode, phone } = (await req.json()) as {
+    const {
+      items,
+      customerInfo,
+      shippingInfo,
+      deliveryInfo,
+      promoCode,
+      phone,
+      turnstileToken,
+    } = (await req.json()) as {
       items?: CartItem[];
       customerInfo?: StoreCheckoutCustomerInfo;
       shippingInfo?: StoreCheckoutShippingInfo;
       deliveryInfo?: StoreCheckoutDeliveryInfo;
       promoCode?: string | null;
       phone?: string;
+      turnstileToken?: string;
     };
 
     if (!items?.length || !customerInfo?.email || !customerInfo.phone) {
@@ -59,6 +69,11 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    const verification = await verifyTurnstileRequest(req, turnstileToken);
+    if (!verification.ok) {
+      return NextResponse.json({ error: verification.error }, { status: verification.status });
     }
 
     const order = await createStoreOrder({
