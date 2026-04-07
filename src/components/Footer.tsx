@@ -23,7 +23,7 @@ const socialLinks = [
   { Icon: Facebook, href: 'https://facebook.com/gamestopkenya', label: 'Facebook', color: 'hover:text-blue-500' },
   { Icon: Instagram, href: 'https://instagram.com/gamestopkenya', label: 'Instagram', color: 'hover:text-pink-500' },
   { Icon: Youtube, href: 'https://youtube.com/@gamestopkenya', label: 'YouTube', color: 'hover:text-red-500' },
-  { Icon: MessageCircle, href: 'https://wa.me/254717402034', label: 'WhatsApp', color: 'hover:text-green-400' },
+  { Icon: MessageCircle, href: 'https://wa.me/254115278516', label: 'WhatsApp', color: 'hover:text-green-400' },
 ] as const;
 
 const quickLinks = [
@@ -120,8 +120,8 @@ export default function Footer() {
               <li className="flex items-start gap-3">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                 <div>
-                  <a href="tel:0717402034" className="font-medium text-white transition-colors hover:text-red-400">
-                    0717402034
+                  <a href="tel:0115278516" className="font-medium text-white transition-colors hover:text-red-400">
+                    0115278516
                   </a>
                   <div className="text-xs">Call or WhatsApp</div>
                 </div>

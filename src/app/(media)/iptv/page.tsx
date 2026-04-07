@@ -122,7 +122,7 @@ export default function IPTVPage() {
                     <a href="#plans">See Plans</a>
                   </Button>
                   <a
-                    href="https://wa.me/254717402034?text=Hi!%20I%20need%20help%20choosing%20a%20GameStop%20IPTV%20plan."
+                    href="https://wa.me/254115278516?text=Hi!%20I%20need%20help%20choosing%20a%20GameStop%20IPTV%20plan."
                     target="_blank"
                     rel="noopener noreferrer"
                   >
