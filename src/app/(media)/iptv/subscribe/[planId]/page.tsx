@@ -822,7 +822,7 @@ function IPTVSubscribePageContent() {
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <a
-                  href={`https://wa.me/254115278516?text=Hi! I need help setting up my IPTV. Subscription ID: ${sub!.id}`}
+                  href={`https://wa.me/254717402034?text=Hi! I need help setting up my IPTV. Subscription ID: ${sub!.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1"
