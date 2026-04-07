@@ -107,7 +107,7 @@ export const contactPageContent: RoutePageContent = {
   intro:
     'For order help, payment issues, or product questions, contact support by phone, WhatsApp, or email.',
   facts: [
-    { label: 'Call / WhatsApp', value: '0717402034' },
+    { label: 'Call / WhatsApp', value: '0115278516' },
     { label: 'Email', value: 'support@gamestop.co.ke' },
     { label: 'Location', value: 'Westlands' },
     { label: 'Reply', value: '< 2 Hours' },
@@ -121,7 +121,7 @@ export const contactPageContent: RoutePageContent = {
     {
       title: 'Fastest Option',
       description: 'WhatsApp is usually the quickest route for urgent issues.',
-      points: ['Use 0717402034 for call or WhatsApp.', 'Share your order number for faster lookup.'],
+      points: ['Use 0115278516 for call or WhatsApp.', 'Share your order number for faster lookup.'],
     },
     {
       title: 'Visit Or Email',
