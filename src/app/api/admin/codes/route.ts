@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isSuperAdmin } from '@/lib/admin-auth';
 import { createAccessCodes, listAccessCodes } from '@/lib/iptv-codes';
-import { IPTV_PLANS, type PlanId } from '@/lib/iptv-subscriptions';
+import { IPTV_PLANS, type PlanId } from '@/domains/iptv/services/subscription-management';
 import {
   recordAdminRequestAudit,
   requireAdminRequest,

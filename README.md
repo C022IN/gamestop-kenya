@@ -141,6 +141,7 @@ Before deploying, make sure:
 
 ## Operational References
 
+- `docs/movies-app-blueprint.md`
 - `docs/iptv-provider-setup.md`
 - `supabase/schema.sql`
 - `scripts/vercel-env.mjs`

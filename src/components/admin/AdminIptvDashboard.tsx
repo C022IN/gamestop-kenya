@@ -229,6 +229,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
   const [newAdminPhone, setNewAdminPhone] = useState('');
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [newAdminType, setNewAdminType] = useState<'iptv' | 'catalog' | 'movies'>('iptv');
   const [creatingAdmin, setCreatingAdmin] = useState(false);
   const [createAdminMsg, setCreateAdminMsg] = useState('');
 
@@ -460,6 +461,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
           phone: newAdminPhone,
           email: newAdminEmail,
           password: newAdminPassword,
+          adminType: newAdminType,
         }),
       });
 
@@ -468,11 +470,20 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
         throw new Error(data.error ?? 'Could not create admin');
       }
 
-      setCreateAdminMsg(`Created ${data.admin.name}.`);
+      const typeLabel =
+        newAdminType === 'catalog'
+          ? 'Catalog Admin'
+          : newAdminType === 'movies'
+          ? 'Movies Admin'
+          : 'IPTV Admin';
+      setCreateAdminMsg(
+        `Created ${data.admin.name} as ${typeLabel}. Referral code: ${data.admin.referralCode ?? 'N/A'}`
+      );
       setNewAdminName('');
       setNewAdminPhone('');
       setNewAdminEmail('');
       setNewAdminPassword('');
+      setNewAdminType('iptv');
       fetchDashboard(query.trim());
     } catch (err) {
       setCreateAdminMsg(err instanceof Error ? err.message : 'Could not create admin');
@@ -1383,8 +1394,31 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                 </div>
                 <div>
                   <h2 className="text-lg font-black">Create Admin</h2>
-                  <p className="text-sm text-gray-400">Add another admin who will only see their own onboarded users.</p>
+                  <p className="text-sm text-gray-400">Add an IPTV, Catalog, or Movies admin with their own scoped dashboard and referral code.</p>
                 </div>
+              </div>
+
+              {/* Admin type selector */}
+              <div className="mb-3 flex gap-2">
+                {([
+                  { value: 'iptv', label: 'IPTV Admin', desc: 'Manages IPTV subscribers' },
+                  { value: 'catalog', label: 'Catalog Admin', desc: 'Lists products + tracking links' },
+                  { value: 'movies', label: 'Movies Admin', desc: 'Views referred subscribers' },
+                ] as const).map(({ value, label, desc }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setNewAdminType(value)}
+                    className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                      newAdminType === value
+                        ? 'border-violet-500 bg-violet-500/10 text-white'
+                        : 'border-gray-700 bg-gray-950 text-gray-400 hover:border-gray-500'
+                    }`}
+                  >
+                    <p className="text-xs font-semibold">{label}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                  </button>
+                ))}
               </div>
 
               <form onSubmit={handleCreateAdmin} className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">

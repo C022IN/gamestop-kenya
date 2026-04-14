@@ -3,9 +3,11 @@ import {
   ADMIN_SESSION_COOKIE,
   getAdminContextByToken,
   isAdminConfigured,
+  isAdminOfType,
   isSuperAdmin,
   recordAdminAudit,
   type AdminAuditEntry,
+  type AdminType,
 } from '@/lib/admin-auth';
 
 export interface AdminRequestMetadata {
@@ -89,6 +91,35 @@ export async function requireSuperAdminRequest(
     return {
       ok: false,
       response: jsonError(options?.forbiddenMessage ?? 'Super admin only.', 403),
+    };
+  }
+
+  return auth;
+}
+
+export async function requireAdminOfTypeRequest(
+  req: NextRequest,
+  type: AdminType,
+  options?: {
+    notConfiguredMessage?: string;
+    forbiddenMessage?: string;
+  }
+): Promise<AuthorizedAdminResult> {
+  const auth = await requireAdminRequest(req, {
+    notConfiguredMessage: options?.notConfiguredMessage,
+  });
+
+  if (!auth.ok) {
+    return auth;
+  }
+
+  if (!isAdminOfType(auth.context.current.admin, type)) {
+    return {
+      ok: false,
+      response: jsonError(
+        options?.forbiddenMessage ?? `Only ${type} admins can access this.`,
+        403
+      ),
     };
   }
 

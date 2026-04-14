@@ -51,12 +51,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { name, phone, email, password } = await req.json();
+    const { name, phone, email, password, adminType } = await req.json();
+    const resolvedType = ['iptv', 'catalog', 'movies'].includes(String(adminType))
+      ? (String(adminType) as 'iptv' | 'catalog' | 'movies')
+      : 'iptv';
+
     const result = await createStaffAdmin({
       name: String(name ?? ''),
       phone: typeof phone === 'string' ? phone : null,
       email: String(email ?? ''),
       password: String(password ?? ''),
+      adminType: resolvedType,
       createdByAdminId: auth.context.current.admin.id,
     });
 

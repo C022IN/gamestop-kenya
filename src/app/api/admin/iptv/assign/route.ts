@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminById } from '@/lib/admin-auth';
-import { assignSubscriptionToAdmin, getSubscription } from '@/lib/iptv-subscriptions';
 import {
   recordAdminRequestAudit,
   requireSuperAdminRequest,
 } from '@/domains/admin/api/request-context';
+import { assignIptvSubscription } from '@/domains/iptv/services/subscription-management';
 
 export async function POST(req: NextRequest) {
   const auth = await requireSuperAdminRequest(req, {
@@ -20,29 +19,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'subscriptionId and adminId are required' }, { status: 400 });
     }
 
-    if (!(await getSubscription(subscriptionId))) {
-      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
-    }
-
-    const targetAdmin = await getAdminById(adminId);
-    if (!targetAdmin) {
-      return NextResponse.json({ error: 'Admin not found' }, { status: 404 });
-    }
-
-    const updated = await assignSubscriptionToAdmin(
+    const result = await assignIptvSubscription({
       subscriptionId,
-      adminId,
-      auth.context.current.admin.id
-    );
+      targetAdminId: adminId,
+      actingAdminId: auth.context.current.admin.id,
+    });
+
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    const { subscription, assignedAdmin } = result.data;
 
     await recordAdminRequestAudit(auth.context, {
       action: 'subscription_reassign',
       status: 'success',
-      summary: `Assigned ${subscriptionId} to ${targetAdmin.name}.`,
+      summary: `Assigned ${subscriptionId} to ${assignedAdmin?.name ?? adminId}.`,
       target: subscriptionId,
     });
 
-    return NextResponse.json({ subscription: updated, assignedAdmin: targetAdmin });
+    return NextResponse.json({ subscription, assignedAdmin });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Could not reassign user' },

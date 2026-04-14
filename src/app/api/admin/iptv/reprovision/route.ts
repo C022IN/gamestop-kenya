@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  getSubscription,
-  hasSubscriptionPlaybackAccess,
-  reprovisionSubscriptionCredentials,
-} from '@/lib/iptv-subscriptions';
-import {
   recordAdminRequestAudit,
   requireAdminRequest,
 } from '@/domains/admin/api/request-context';
+import { reprovisionIptvSubscription } from '@/domains/iptv/services/subscription-management';
+import { isSuperAdmin } from '@/lib/admin-auth';
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdminRequest(req, {
@@ -27,39 +24,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'subscriptionId is required.' }, { status: 400 });
     }
 
-    const existing = await getSubscription(subscriptionId, { fresh: true });
-    if (!existing) {
+    const result = await reprovisionIptvSubscription({
+      subscriptionId,
+      actingAdminId: auth.context.current.admin.id,
+      isSuperAdmin: isSuperAdmin(auth.context.current.admin),
+    });
+
+    if (!result.ok) {
       await recordAdminRequestAudit(auth.context, {
         action: 'subscription_reprovision',
         status: 'failed',
-        summary: `Credential reprovision failed. Subscription ${subscriptionId} was not found.`,
+        summary: `Credential reprovision failed. ${result.error}`,
         target: subscriptionId,
       });
-
-      return NextResponse.json({ error: 'Subscription not found.' }, { status: 404 });
-    }
-
-    const canManage =
-      auth.context.current.admin.role === 'super_admin' ||
-      existing.assignedAdminId === auth.context.current.admin.id;
-
-    if (!canManage) {
-      return NextResponse.json(
-        { error: 'You can only reprovision users assigned to you.' },
-        { status: 403 }
-      );
-    }
-
-    if (!hasSubscriptionPlaybackAccess(existing)) {
-      return NextResponse.json(
-        { error: 'Only active subscriptions can be reprovisioned.' },
-        { status: 400 }
-      );
-    }
-
-    const updated = await reprovisionSubscriptionCredentials(subscriptionId);
-    if (!updated) {
-      throw new Error('Subscription could not be reprovisioned.');
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
     await recordAdminRequestAudit(auth.context, {
@@ -70,7 +48,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      subscription: updated,
+      subscription: result.data.subscription,
       message: 'Credentials reprovisioned.',
     });
   } catch (error) {

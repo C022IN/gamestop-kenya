@@ -605,6 +605,92 @@ create index if not exists iptv_live_events_starts_idx on iptv_live_events(start
 create index if not exists iptv_live_events_competition_idx on iptv_live_events(competition);
 
 -- ----------------------------------------------------------
+-- Catalog admin — product listings, click tracking, inquiries
+-- ----------------------------------------------------------
+
+-- Extend admin_accounts with type + referral code
+alter table if exists admin_accounts
+  add column if not exists admin_type text check (admin_type in ('iptv', 'catalog', 'movies'));
+
+alter table if exists admin_accounts
+  add column if not exists referral_code text unique;
+
+create index if not exists admin_accounts_referral_code_idx on admin_accounts(referral_code);
+create index if not exists admin_accounts_type_idx on admin_accounts(admin_type);
+
+-- Back-fill existing non-super admins to iptv type
+update admin_accounts set admin_type = 'iptv' where role = 'admin' and admin_type is null;
+
+-- Products listed by catalog admins
+create table if not exists catalog_listings (
+  id text primary key,
+  admin_id text not null references admin_accounts(id) on delete cascade,
+  title text not null,
+  slug text not null unique,
+  description text not null default '',
+  category text not null default 'general',
+  price_kes numeric(12,2),
+  images text[] not null default '{}',
+  specs jsonb not null default '{}'::jsonb,
+  condition text not null default 'new' check (condition in ('new', 'used', 'refurbished')),
+  is_available boolean not null default true,
+  tracking_code text not null unique,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists catalog_listings_admin_idx on catalog_listings(admin_id);
+create index if not exists catalog_listings_tracking_idx on catalog_listings(tracking_code);
+create index if not exists catalog_listings_available_idx on catalog_listings(is_available);
+
+-- Link clicks on tracking URLs
+create table if not exists catalog_link_clicks (
+  id uuid primary key default gen_random_uuid(),
+  listing_id text not null references catalog_listings(id) on delete cascade,
+  admin_id text not null references admin_accounts(id) on delete cascade,
+  visitor_ip text,
+  user_agent text,
+  referrer_url text,
+  converted boolean not null default false,
+  clicked_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists catalog_link_clicks_listing_idx on catalog_link_clicks(listing_id);
+create index if not exists catalog_link_clicks_admin_idx on catalog_link_clicks(admin_id);
+create index if not exists catalog_link_clicks_clicked_idx on catalog_link_clicks(clicked_at desc);
+
+-- Buyer inquiries submitted through tracking links
+create table if not exists catalog_inquiries (
+  id uuid primary key default gen_random_uuid(),
+  listing_id text not null references catalog_listings(id) on delete cascade,
+  admin_id text not null references admin_accounts(id) on delete cascade,
+  click_id uuid references catalog_link_clicks(id) on delete set null,
+  buyer_name text not null,
+  buyer_phone text not null,
+  buyer_email text,
+  message text,
+  status text not null default 'new' check (status in ('new', 'contacted', 'sold', 'closed')),
+  admin_notes text,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists catalog_inquiries_listing_idx on catalog_inquiries(listing_id);
+create index if not exists catalog_inquiries_admin_idx on catalog_inquiries(admin_id);
+create index if not exists catalog_inquiries_status_idx on catalog_inquiries(status);
+create index if not exists catalog_inquiries_created_idx on catalog_inquiries(created_at desc);
+
+-- Link movies subscribers to a movies admin via referral
+alter table if exists iptv_subscriptions
+  add column if not exists movies_admin_id text references admin_accounts(id) on delete set null;
+
+alter table if exists movie_profiles
+  add column if not exists movies_admin_id text references admin_accounts(id) on delete set null;
+
+create index if not exists iptv_subscriptions_movies_admin_idx on iptv_subscriptions(movies_admin_id);
+create index if not exists movie_profiles_movies_admin_idx on movie_profiles(movies_admin_id);
+
+-- ----------------------------------------------------------
 -- Organisation settings
 -- ----------------------------------------------------------
 

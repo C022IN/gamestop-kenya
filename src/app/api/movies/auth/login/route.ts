@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  createMovieSession,
-  getProfileByAccessCode,
-  MOVIE_SESSION_COOKIE,
-} from '@/lib/movie-platform';
+import { loginWithAccessCode, MOVIE_SESSION_COOKIE } from '@/domains/iptv/services/movie-auth-service';
 import { verifyTurnstileRequest } from '@/lib/turnstile';
 
 function isKodiClient(req: NextRequest) {
@@ -34,23 +30,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const profile = await getProfileByAccessCode(String(phone), String(accessCode));
-    if (!profile) {
-      return NextResponse.json({ error: 'Invalid phone or access code' }, { status: 401 });
-    }
-
-    const session = await createMovieSession(profile.profileId);
-    if (!session) {
-      return NextResponse.json({ error: 'Could not create session' }, { status: 500 });
-    }
-
-    const response = NextResponse.json({
-      profile: {
-        profileId: profile.profileId,
-        phone: profile.phone,
-      },
+    const result = await loginWithAccessCode({
+      phone: String(phone),
+      accessCode: String(accessCode),
     });
 
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    const { profile, session } = result.data;
+
+    const response = NextResponse.json({ profile });
     response.cookies.set(MOVIE_SESSION_COOKIE, session.token, {
       httpOnly: true,
       sameSite: 'lax',

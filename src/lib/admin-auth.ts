@@ -6,13 +6,16 @@ export const ADMIN_SESSION_COOKIE = 'gsm_admin_session';
 export const SUPER_ADMIN_ID = 'super-admin';
 
 export type AdminRole = 'super_admin' | 'admin';
+export type AdminType = 'iptv' | 'catalog' | 'movies';
 
 export interface AdminIdentity {
   id: string;
   role: AdminRole;
+  adminType: AdminType | null;
   name: string;
   email: string | null;
   phone: string | null;
+  referralCode: string | null;
   createdAt: string;
   createdByAdminId: string | null;
 }
@@ -44,10 +47,12 @@ export interface AdminAuditEntry {
 interface AdminRow {
   id: string;
   role: AdminRole;
+  admin_type: AdminType | null;
   name: string;
   email: string | null;
   phone: string | null;
   password_hash: string;
+  referral_code: string | null;
   created_at: string;
   created_by_admin_id: string | null;
 }
@@ -77,7 +82,7 @@ const adminSessions = new Map<string, AdminSession>();
 const adminAuditTrail: AdminAuditEntry[] = [];
 const MAX_AUDIT_ENTRIES = 200;
 const ADMIN_SELECT =
-  'id, role, name, email, phone, password_hash, created_at, created_by_admin_id';
+  'id, role, admin_type, name, email, phone, password_hash, referral_code, created_at, created_by_admin_id';
 
 function trimEnv(value: string | undefined): string | null {
   const next = value?.trim();
@@ -143,9 +148,11 @@ function toIdentity(record: AdminRecord): AdminIdentity {
   return {
     id: record.id,
     role: record.role,
+    adminType: record.adminType,
     name: record.name,
     email: record.email,
     phone: record.phone,
+    referralCode: record.referralCode,
     createdAt: record.createdAt,
     createdByAdminId: record.createdByAdminId,
   };
@@ -155,10 +162,12 @@ function fromAdminRow(row: AdminRow): AdminRecord {
   return {
     id: row.id,
     role: row.role,
+    adminType: row.admin_type,
     name: row.name,
     email: row.email,
     phone: row.phone,
     passwordHash: row.password_hash,
+    referralCode: row.referral_code,
     createdAt: row.created_at,
     createdByAdminId: row.created_by_admin_id,
   };
@@ -188,6 +197,17 @@ function fromAuditRow(row: AdminAuditRow): AdminAuditEntry {
   };
 }
 
+function makeReferralCode(type: AdminType, name: string): string {
+  const prefix = type === 'catalog' ? 'CAT' : type === 'movies' ? 'MOV' : 'IPTV';
+  const slug = name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 6);
+  const suffix = randomBytes(2).toString('hex').toUpperCase();
+  return `${prefix}-${slug || 'ADM'}-${suffix}`;
+}
+
 function getEnvFallbackSuperAdminRecord(): AdminRecord | null {
   const email = normaliseEmail(trimEnv(process.env.SUPER_ADMIN_EMAIL));
   const phone = normaliseAdminPhone(trimEnv(process.env.SUPER_ADMIN_PHONE));
@@ -200,9 +220,11 @@ function getEnvFallbackSuperAdminRecord(): AdminRecord | null {
   return {
     id: makeAdminId('super'),
     role: 'super_admin',
+    adminType: null,
     name: trimEnv(process.env.SUPER_ADMIN_NAME) ?? 'Super Admin',
     email,
     phone,
+    referralCode: null,
     passwordHash: `plain:${password}`,
     createdAt: 'system',
     createdByAdminId: null,
@@ -278,6 +300,23 @@ export function isSuperAdmin(admin: Pick<AdminIdentity, 'role'> | null | undefin
   return admin?.role === 'super_admin';
 }
 
+export function isAdminOfType(
+  admin: Pick<AdminIdentity, 'role' | 'adminType'> | null | undefined,
+  type: AdminType
+): boolean {
+  if (!admin) return false;
+  if (admin.role === 'super_admin') return true;
+  return admin.adminType === type;
+}
+
+export function getAdminType(
+  admin: Pick<AdminIdentity, 'role' | 'adminType'> | null | undefined
+): AdminType | 'super_admin' | null {
+  if (!admin) return null;
+  if (admin.role === 'super_admin') return 'super_admin';
+  return admin.adminType;
+}
+
 export async function authenticateAdmin(email: string, password: string): Promise<{
   ok: boolean;
   admin?: AdminIdentity;
@@ -307,12 +346,14 @@ export async function createStaffAdmin(params: {
   phone?: string | null;
   email: string;
   password: string;
+  adminType: AdminType;
   createdByAdminId: string;
 }): Promise<{ ok: boolean; admin?: AdminIdentity; error?: string }> {
   const name = params.name.trim();
   const password = params.password.trim();
   const phone = normaliseAdminPhone(params.phone ?? null);
   const email = normaliseEmail(params.email);
+  const adminType: AdminType = params.adminType ?? 'iptv';
 
   if (!name) {
     return { ok: false, error: 'Admin name is required.' };
@@ -335,12 +376,20 @@ export async function createStaffAdmin(params: {
     return { ok: false, error: 'That email address is already in use by another admin.' };
   }
 
+  // Generate a unique referral code, retrying on collision (extremely unlikely)
+  let referralCode = makeReferralCode(adminType, name);
+  while (allAdmins.some((a) => a.referralCode === referralCode)) {
+    referralCode = makeReferralCode(adminType, name);
+  }
+
   const record: AdminRecord = {
     id: makeAdminId('admin', email),
     role: 'admin',
+    adminType,
     name,
     email,
     phone,
+    referralCode,
     passwordHash: makePasswordHash(password),
     createdAt: new Date().toISOString(),
     createdByAdminId: params.createdByAdminId,
@@ -352,10 +401,12 @@ export async function createStaffAdmin(params: {
       {
         id: record.id,
         role: record.role,
+        admin_type: record.adminType,
         name: record.name,
         email: record.email,
         phone: record.phone,
         password_hash: record.passwordHash,
+        referral_code: record.referralCode,
         is_active: true,
         created_at: record.createdAt,
         created_by_admin_id: record.createdByAdminId,
