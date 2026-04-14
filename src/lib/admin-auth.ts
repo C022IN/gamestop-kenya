@@ -253,10 +253,28 @@ async function getAllAdminRecords(): Promise<AdminRecord[]> {
     .eq('is_active', true)
     .order('created_at', { ascending: true });
 
-  if (error || !data) {
-    return [];
+  if (error) {
+    // Schema migration may not have run yet (missing admin_type / referral_code columns).
+    // Retry with only the original columns so existing admins can still log in.
+    const LEGACY_SELECT =
+      'id, role, name, email, phone, password_hash, created_at, created_by_admin_id';
+    const { data: legacyData, error: legacyError } = await supabase
+      .from('admin_accounts')
+      .select(LEGACY_SELECT)
+      .eq('is_active', true)
+      .order('created_at', { ascending: true });
+
+    if (legacyError || !legacyData) {
+      return [];
+    }
+
+    type LegacyRow = Omit<AdminRow, 'admin_type' | 'referral_code'>;
+    return (legacyData as LegacyRow[])
+      .map((row) => fromAdminRow({ ...row, admin_type: null, referral_code: null }))
+      .sort(compareAdminRecords);
   }
 
+  if (!data) return [];
   return (data as AdminRow[]).map(fromAdminRow).sort(compareAdminRecords);
 }
 
