@@ -652,12 +652,12 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
         <table className="w-full text-sm">
           <thead className="bg-gray-900 text-xs uppercase tracking-wide text-gray-400">
             <tr>
-              <th className="px-4 py-3 text-left">User</th>
-              <th className="px-4 py-3 text-left">Journey</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Latest receipt</th>
-              <th className="px-4 py-3 text-left">Owner</th>
-              <th className="px-4 py-3 text-left">Action</th>
+              <th className="px-4 py-2 text-left">User</th>
+              <th className="px-4 py-2 text-left">Journey</th>
+              <th className="px-4 py-2 text-left">Status</th>
+              <th className="px-4 py-2 text-left">Latest receipt</th>
+              <th className="px-4 py-2 text-left">Owner</th>
+              <th className="px-4 py-2 text-left">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800 bg-gray-950">
@@ -673,110 +673,58 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                   <p className="text-xs text-gray-400">{bundle.email}</p>
                   <p className="text-xs text-gray-500">{bundle.phone}</p>
                   {bundle.member && (
-                    <>
-                      <p className="text-xs text-red-300">Member ID: {bundle.member.profileId}</p>
-                      <p className="font-mono text-xs text-red-200">Movie code: {bundle.member.accessCode}</p>
-                    </>
+                    <p className="text-xs text-red-300 mt-0.5">
+                      Code: <span className="font-mono text-red-200">{bundle.member.accessCode}</span>
+                    </p>
                   )}
                   {subscription.credentials ? (
-                    <div className="mt-3 rounded-xl border border-sky-900/60 bg-sky-950/30 p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-300">
-                        TV setup / playlist details
-                      </p>
-                      <div className="mt-2 space-y-2">
-                        {[
-                          {
-                            label: 'Playlist',
-                            value: subscription.playlistUrl ?? subscription.credentials.m3uUrl,
-                          },
-                          { label: 'Host', value: subscription.credentials.xtreamHost },
-                          { label: 'Username', value: subscription.credentials.xtreamUsername },
-                          { label: 'Password', value: subscription.credentials.xtreamPassword },
-                        ].map(({ label, value }) => (
-                          <div
-                            key={label}
-                            className="rounded-lg border border-sky-900/40 bg-slate-950/70 px-2.5 py-2"
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-200/80">
-                                {label}
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => copyText(value)}
-                                className="text-sky-200/70 transition hover:text-sky-100"
-                                title={`Copy ${label}`}
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                            <p className="mt-1 break-all font-mono text-[11px] text-sky-50">
-                              {value}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="mt-2 rounded-lg border border-sky-900/40 bg-sky-950/20 px-2.5 py-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-400 mb-1">TV Credentials</p>
+                      {[
+                        { label: 'M3U', value: subscription.playlistUrl ?? subscription.credentials.m3uUrl },
+                        { label: 'Host', value: subscription.credentials.xtreamHost },
+                        { label: 'User', value: subscription.credentials.xtreamUsername },
+                        { label: 'Pass', value: subscription.credentials.xtreamPassword },
+                      ].map(({ label, value }) => (
+                        <div key={label} className="flex items-center gap-1.5 py-0.5">
+                          <span className="text-[10px] text-sky-400/60 w-7 shrink-0">{label}</span>
+                          <span className="font-mono text-[10px] text-sky-100 truncate flex-1 max-w-[140px]">{value}</span>
+                          <button type="button" onClick={() => copyText(value)} className="text-sky-400/50 hover:text-sky-200 shrink-0">
+                            <Copy className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   ) : bundle.status === 'active' ? (
-                    <p className="mt-3 text-xs text-amber-300">
-                      No IPTV credentials are saved for this user yet. Reprovision to issue them again.
-                    </p>
+                    <p className="mt-1 text-xs text-amber-300">No credentials yet — reprovision to issue.</p>
                   ) : null}
-                  <p className="mt-2 text-xs text-gray-500">
-                    Started {formatDateLabel(bundle.startedAt)} | {pluralize(bundle.subscriptions.length, 'subscription period')}
+                  <p className="mt-1 text-[10px] text-gray-600">
+                    Since {formatDateLabel(bundle.startedAt)} · {pluralize(bundle.subscriptions.length, 'period')} · <span className="font-mono">{bundle.profileId.slice(0, 10)}…</span>
                   </p>
-                  <p className="font-mono text-xs text-gray-600">{bundle.profileId}</p>
                 </td>
                 <td className="px-4 py-3 align-top">
                   <p className="font-semibold">{subscription.planName}</p>
-                  <p className="text-xs text-gray-400">
-                    {formatKes(subscription.amountKes)} latest | {formatKes(bundle.totalRevenueKes)} total
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Latest created {formatDateLabel(subscription.createdAt)} | Expires {formatDateLabel(subscription.expiresAt)}
-                  </p>
-                  <div className="mt-3 space-y-3">
+                  <p className="text-xs text-gray-400">{formatKes(subscription.amountKes)} latest | {formatKes(bundle.totalRevenueKes)} total</p>
+                  <p className="text-xs text-gray-500">Created {formatDateLabel(subscription.createdAt)} · Expires {formatDateLabel(subscription.expiresAt)}</p>
+                  <div className="mt-2 space-y-1.5">
                     <div>
-                      <p className="text-[11px] uppercase tracking-wide text-gray-500">Coverage periods</p>
-                      <div className="mt-1 space-y-1">
-                        {bundle.periods.length > 0 ? (
-                          <>
-                            {bundle.periods.slice(0, 3).map((period) => (
-                              <p key={`${period.startedAt}-${period.endedAt}`} className="text-xs text-gray-300">
-                                {formatDateLabel(period.startedAt)} - {formatDateLabel(period.endedAt)} | {pluralize(period.subscriptionIds.length, 'renewal')}
-                              </p>
-                            ))}
-                            {bundle.periods.length > 3 && (
-                              <p className="text-xs text-gray-500">
-                                +{bundle.periods.length - 3} more coverage {bundle.periods.length - 3 === 1 ? 'block' : 'blocks'}
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-xs text-gray-500">Pending only. No active coverage tracked yet.</p>
-                        )}
-                      </div>
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">Coverage · </span>
+                      {bundle.periods.length > 0 ? (
+                        <span className="text-xs text-gray-300">
+                          {formatDateLabel(bundle.periods[0].startedAt)} – {formatDateLabel(bundle.periods[bundle.periods.length - 1].endedAt)}
+                          {bundle.periods.length > 1 && <span className="text-gray-500"> · {bundle.periods.length} blocks</span>}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-500">Pending</span>
+                      )}
                     </div>
                     <div>
-                      <p className="text-[11px] uppercase tracking-wide text-gray-500">Skipped periods</p>
-                      <div className="mt-1 space-y-1">
-                        {bundle.gaps.length > 0 ? (
-                          <>
-                            {bundle.gaps.slice(0, 2).map((gap) => (
-                              <p key={`${gap.startedAt}-${gap.endedAt}`} className="text-xs text-amber-300">
-                                {formatDateLabel(gap.startedAt)} - {formatDateLabel(gap.endedAt)} | {pluralize(gap.durationDays, 'day')} skipped
-                              </p>
-                            ))}
-                            {bundle.gaps.length > 2 && (
-                              <p className="text-xs text-gray-500">
-                                +{bundle.gaps.length - 2} more skipped {bundle.gaps.length - 2 === 1 ? 'period' : 'periods'}
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-xs text-emerald-400">No skipped renewal periods.</p>
-                        )}
-                      </div>
+                      <span className="text-[10px] uppercase tracking-wide text-gray-500">Skipped · </span>
+                      {bundle.gaps.length > 0 ? (
+                        <span className="text-xs text-amber-300">{bundle.gaps.length} {bundle.gaps.length === 1 ? 'gap' : 'gaps'}</span>
+                      ) : (
+                        <span className="text-xs text-emerald-400">None</span>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -801,8 +749,8 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                 </td>
                 <td className="px-4 py-3 align-top font-mono text-xs text-emerald-400">
                   <p>{subscription.mpesaReceipt ?? '-'}</p>
-                  <p className="mt-2 text-gray-500">{pluralize(bundle.subscriptions.length, 'receipt')} tracked</p>
-                  <p className="mt-1 text-gray-600">{subscription.id}</p>
+                  <p className="mt-1 text-gray-500">{pluralize(bundle.subscriptions.length, 'receipt')} tracked</p>
+                  <p className="mt-0.5 text-[10px] text-gray-600">{subscription.id}</p>
                 </td>
                 <td className="px-4 py-3 align-top">
                   <p className="text-xs font-semibold text-white">
