@@ -12,10 +12,12 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+interface RouteProps {
+  params: Promise<{ id: string }>;
+}
+
+export async function PUT(req: NextRequest, { params }: RouteProps) {
+  const { id } = await params;
   const auth = await requireAdminRequest(req);
   if (!auth.ok) return auth.response;
 
@@ -30,7 +32,7 @@ export async function PUT(
     const body = await req.json();
     const { title, description, category, priceKes, images, specs, condition, isAvailable } = body;
 
-    const result = await updateListing(params.id, admin.id, superAdmin, {
+    const result = await updateListing(id, admin.id, superAdmin, {
       title: typeof title === 'string' ? title : undefined,
       description: typeof description === 'string' ? description : undefined,
       category: typeof category === 'string' ? category : undefined,
@@ -50,8 +52,8 @@ export async function PUT(
     await recordAdminRequestAudit(auth.context, {
       action: 'catalog_listing_update',
       status: 'success',
-      summary: `Updated listing ${params.id}.`,
-      target: params.id,
+      summary: `Updated listing ${id}.`,
+      target: id,
     });
 
     return NextResponse.json({ listing: result.listing });
@@ -60,10 +62,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, { params }: RouteProps) {
+  const { id } = await params;
   const auth = await requireAdminRequest(req);
   if (!auth.ok) return auth.response;
 
@@ -74,7 +74,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Catalog admin access only.' }, { status: 403 });
   }
 
-  const result = await deleteListing(params.id, admin.id, superAdmin);
+  const result = await deleteListing(id, admin.id, superAdmin);
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
@@ -82,8 +82,8 @@ export async function DELETE(
   await recordAdminRequestAudit(auth.context, {
     action: 'catalog_listing_delete',
     status: 'success',
-    summary: `Deleted listing ${params.id}.`,
-    target: params.id,
+    summary: `Deleted listing ${id}.`,
+    target: id,
   });
 
   return NextResponse.json({ ok: true });

@@ -21,6 +21,52 @@ import {
   Zap,
 } from 'lucide-react';
 
+// ─── Lightweight toast ────────────────────────────────────────────────────────
+
+interface Toast { id: number; message: string; type: 'success' | 'error' }
+
+let _toastCounter = 0;
+let _pushToast: ((msg: string, type?: 'success' | 'error') => void) | null = null;
+
+function useToastStack() {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const push = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    const id = ++_toastCounter;
+    setToasts((t) => [...t, { id, message, type }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 2200);
+  }, []);
+  _pushToast = push;
+  return toasts;
+}
+
+function toast(message: string, type: 'success' | 'error' = 'success') {
+  _pushToast?.(message, type);
+}
+
+function ToastStack({ toasts }: { toasts: Toast[] }) {
+  return (
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-2 pointer-events-none">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-lg backdrop-blur-sm transition-all ${
+            t.type === 'error'
+              ? 'bg-red-900/90 text-red-100 border border-red-700'
+              : 'bg-gray-800/95 text-white border border-gray-600'
+          }`}
+        >
+          {t.type === 'error' ? (
+            <AlertCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+          ) : (
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+          )}
+          {t.message}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 type AdminRole = 'super_admin' | 'admin';
 
 interface AdminIptvDashboardProps {
@@ -201,12 +247,23 @@ function roleLabel(role: AdminRole) {
   return role === 'super_admin' ? 'Super Admin' : 'Admin';
 }
 
-function copyText(value: string) {
-  void navigator.clipboard.writeText(value);
+const PLAN_OPTIONS = [
+  { id: '1wk',  name: '1 Week',     kes: 500 },
+  { id: '1mo',  name: '1 Month',    kes: 1499 },
+  { id: '3mo',  name: '3 Months',   kes: 4499 },
+  { id: '12mo', name: '12 Months',  kes: 14999 },
+  { id: '24mo', name: '24 Months',  kes: 22499 },
+] as const;
+
+type PlanId = typeof PLAN_OPTIONS[number]['id'];
+
+function copyText(value: string, label = 'Copied') {
+  navigator.clipboard.writeText(value).then(() => toast(label));
 }
 
 export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
   const isSuper = admin.role === 'super_admin';
+  const toasts = useToastStack();
   const [query, setQuery] = useState('');
   const [overview, setOverview] = useState<Overview | null>(null);
   const [auditTrail, setAuditTrail] = useState<AuditEntry[]>([]);
@@ -249,6 +306,8 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
   const [renewalMsg, setRenewalMsg] = useState<
     Record<string, { tone: 'success' | 'error'; text: string }>
   >({});
+  const [changePlanSelections, setChangePlanSelections] = useState<Record<string, PlanId>>({});
+  const [changingPlanKey, setChangingPlanKey] = useState<string | null>(null);
 
   // Impersonate
   const [impPhone, setImpPhone] = useState('');
@@ -576,6 +635,29 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
     }
   };
 
+  const handleChangePlan = async (bundle: SubscriptionBundle, planId: PlanId) => {
+    const plan = PLAN_OPTIONS.find((p) => p.id === planId);
+    if (!plan) return;
+    setChangingPlanKey(bundle.key);
+    try {
+      const res = await fetch('/api/admin/iptv/grant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: bundle.phone, planId }),
+      });
+      if (res.status === 401) { window.location.href = '/admin/login'; return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Plan change failed');
+      toast(`Plan changed to ${plan.name} for ${bundle.customerName}`);
+      setGrantResult({ ...data.member, reusedExistingMember: Boolean(data.reusedExistingMember) });
+      fetchDashboard(query.trim());
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Plan change failed', 'error');
+    } finally {
+      setChangingPlanKey(null);
+    }
+  };
+
   const handleImpersonate = async (e: React.FormEvent) => {
     e.preventDefault();
     setImpError('');
@@ -689,7 +771,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                         <div key={label} className="flex items-center gap-1.5 py-0.5">
                           <span className="text-[10px] text-sky-400/60 w-7 shrink-0">{label}</span>
                           <span className="font-mono text-[10px] text-sky-100 truncate flex-1 max-w-[140px]">{value}</span>
-                          <button type="button" onClick={() => copyText(value)} className="text-sky-400/50 hover:text-sky-200 shrink-0">
+                          <button type="button" onClick={() => copyText(value, `${label} copied`)} className="text-sky-400/50 hover:text-sky-200 shrink-0">
                             <Copy className="h-3 w-3" />
                           </button>
                         </div>
@@ -793,8 +875,9 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-3 align-top">
+                <td className="px-4 py-2 align-top">
                   {bundle.status !== 'active' && subscription.status === 'pending' ? (
+                    /* ── Pending: Activate ── */
                     <div>
                       <button
                         type="button"
@@ -802,11 +885,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                         disabled={activating === assignmentKey}
                         className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50"
                       >
-                        {activating === assignmentKey ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Zap className="h-3.5 w-3.5" />
-                        )}
+                        {activating === assignmentKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
                         Activate
                       </button>
                       {activateMsg[assignmentKey] && (
@@ -814,42 +893,52 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                       )}
                     </div>
                   ) : bundle.status === 'expired' ? (
+                    /* ── Expired: Renew same plan + Change plan ── */
                     <div className="space-y-2">
                       {isSuper ? (
-                        <button
-                          type="button"
-                          onClick={() => handleRenewBundle(bundle)}
-                          disabled={renewingBundleKey === bundle.key}
-                          className="flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-gray-950 hover:bg-amber-400 disabled:opacity-50"
-                        >
-                          {renewingBundleKey === bundle.key ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Zap className="h-3.5 w-3.5" />
+                        <>
+                          {/* Renew same plan */}
+                          <button
+                            type="button"
+                            onClick={() => handleRenewBundle(bundle)}
+                            disabled={renewingBundleKey === bundle.key || changingPlanKey === bundle.key}
+                            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-gray-950 hover:bg-amber-400 disabled:opacity-50"
+                          >
+                            {renewingBundleKey === bundle.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+                            Renew ({bundle.latestSubscription.planName})
+                          </button>
+                          {/* Change plan */}
+                          <div className="flex gap-1.5">
+                            <select
+                              value={changePlanSelections[bundle.key] ?? bundle.latestSubscription.planId}
+                              onChange={(e) => setChangePlanSelections((p) => ({ ...p, [bundle.key]: e.target.value as PlanId }))}
+                              className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                            >
+                              {PLAN_OPTIONS.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name} — KSh {p.kes.toLocaleString()}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => handleChangePlan(bundle, changePlanSelections[bundle.key] ?? bundle.latestSubscription.planId as PlanId)}
+                              disabled={changingPlanKey === bundle.key || renewingBundleKey === bundle.key}
+                              className="rounded-lg border border-violet-500/40 bg-violet-950/60 px-2.5 py-1.5 text-xs font-bold text-violet-200 hover:bg-violet-900 disabled:opacity-50"
+                            >
+                              {changingPlanKey === bundle.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Switch'}
+                            </button>
+                          </div>
+                          {renewalMsg[bundle.key]?.text && (
+                            <p className={`text-xs ${renewalMsg[bundle.key]?.tone === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                              {renewalMsg[bundle.key]?.text}
+                            </p>
                           )}
-                          Renew latest plan
-                        </button>
+                        </>
                       ) : (
-                        <span className="text-xs text-amber-300">Renew required</span>
+                        <span className="text-xs text-amber-300">Renewal required</span>
                       )}
-                      <p className="text-[11px] text-gray-500">
-                        {isSuper
-                          ? `Uses ${bundle.latestSubscription.planName} and keeps the same member access.`
-                          : 'Renew required'}
-                      </p>
-                      {renewalMsg[bundle.key]?.text ? (
-                        <p
-                          className={`text-xs ${
-                            renewalMsg[bundle.key]?.tone === 'error'
-                              ? 'text-red-400'
-                              : 'text-emerald-400'
-                          }`}
-                        >
-                          {renewalMsg[bundle.key]?.text}
-                        </p>
-                      ) : null}
                     </div>
                   ) : (
+                    /* ── Active: Reprovision + Change plan (SA only) ── */
                     <div className="space-y-2">
                       <button
                         type="button"
@@ -857,27 +946,39 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
                         disabled={reprovisioning === assignmentKey}
                         className="flex items-center gap-1.5 rounded-lg border border-sky-500/40 bg-sky-950/40 px-3 py-1.5 text-xs font-bold text-sky-100 hover:bg-sky-950/70 disabled:opacity-50"
                       >
-                        {reprovisioning === assignmentKey ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-3.5 w-3.5" />
-                        )}
-                        {subscription.credentials ? 'Reprovision credentials' : 'Issue credentials'}
+                        {reprovisioning === assignmentKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                        {subscription.credentials ? 'Reprovision' : 'Issue credentials'}
                       </button>
-                      <p className="text-[11px] text-gray-500">
-                        Reset credentials uses this same reprovision flow.
-                      </p>
-                      {reprovisionMsg[assignmentKey]?.text ? (
-                        <p
-                          className={`text-xs ${
-                            reprovisionMsg[assignmentKey]?.tone === 'error'
-                              ? 'text-red-400'
-                              : 'text-emerald-400'
-                          }`}
-                        >
+                      {reprovisionMsg[assignmentKey]?.text && (
+                        <p className={`text-xs ${reprovisionMsg[assignmentKey]?.tone === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
                           {reprovisionMsg[assignmentKey]?.text}
                         </p>
-                      ) : null}
+                      )}
+                      {isSuper && (
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wide text-gray-600 mb-1">Change / Upgrade plan</p>
+                          <div className="flex gap-1.5">
+                            <select
+                              value={changePlanSelections[bundle.key] ?? bundle.latestSubscription.planId}
+                              onChange={(e) => setChangePlanSelections((p) => ({ ...p, [bundle.key]: e.target.value as PlanId }))}
+                              className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-white focus:border-violet-500 focus:outline-none"
+                            >
+                              {PLAN_OPTIONS.map((p) => (
+                                <option key={p.id} value={p.id}>{p.name} — KSh {p.kes.toLocaleString()}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => handleChangePlan(bundle, changePlanSelections[bundle.key] ?? bundle.latestSubscription.planId as PlanId)}
+                              disabled={changingPlanKey === bundle.key}
+                              className="rounded-lg border border-violet-500/40 bg-violet-950/60 px-2.5 py-1.5 text-xs font-bold text-violet-200 hover:bg-violet-900 disabled:opacity-50"
+                            >
+                              {changingPlanKey === bundle.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Apply'}
+                            </button>
+                          </div>
+                          <p className="text-[10px] text-gray-600 mt-1">Starts a new subscription period.</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </td>
@@ -892,6 +993,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
 
   return (
     <div className="min-h-screen bg-gray-950 p-6 text-white">
+      <ToastStack toasts={toasts} />
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>

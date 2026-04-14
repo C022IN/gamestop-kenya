@@ -11,10 +11,12 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+interface RouteProps {
+  params: Promise<{ id: string }>;
+}
+
+export async function PUT(req: NextRequest, { params }: RouteProps) {
+  const { id } = await params;
   const auth = await requireAdminRequest(req);
   if (!auth.ok) return auth.response;
 
@@ -29,7 +31,7 @@ export async function PUT(
     const { status, adminNotes } = await req.json();
 
     const validStatuses: InquiryStatus[] = ['new', 'contacted', 'sold', 'closed'];
-    const result = await updateInquiryStatus(params.id, admin.id, superAdmin, {
+    const result = await updateInquiryStatus(id, admin.id, superAdmin, {
       status: validStatuses.includes(status) ? status : undefined,
       adminNotes: typeof adminNotes === 'string' ? adminNotes : undefined,
     });
@@ -41,8 +43,8 @@ export async function PUT(
     await recordAdminRequestAudit(auth.context, {
       action: 'catalog_inquiry_update',
       status: 'success',
-      summary: `Updated inquiry ${params.id} to status "${status}".`,
-      target: params.id,
+      summary: `Updated inquiry ${id} to status "${status}".`,
+      target: id,
     });
 
     return NextResponse.json({ ok: true });
