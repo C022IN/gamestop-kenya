@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loginWithAccessCode, MOVIE_SESSION_COOKIE } from '@/domains/iptv/services/movie-auth-service';
 import { verifyTurnstileRequest } from '@/lib/turnstile';
 
-function isKodiClient(req: NextRequest) {
+function isTrustedNativeClient(req: NextRequest) {
   const userAgent = req.headers.get('user-agent')?.toLowerCase() ?? '';
-  return userAgent.includes('kodi/gamestopkenya');
+  return (
+    userAgent.includes('kodi/gamestopkenya') ||
+    userAgent.includes('gamestopmoviestv/')
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -23,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'phone and accessCode are required' }, { status: 400 });
     }
 
-    if (!isKodiClient(req)) {
+    if (!isTrustedNativeClient(req)) {
       const verification = await verifyTurnstileRequest(req, body.turnstileToken);
       if (!verification.ok) {
         return NextResponse.json({ error: verification.error }, { status: verification.status });
