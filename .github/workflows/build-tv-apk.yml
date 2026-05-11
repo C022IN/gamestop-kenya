@@ -13,8 +13,11 @@ on:
     branches: [main]
     paths:
       - 'tv-app/src/**'
+      - 'tv-app/app.config.js'
       - 'tv-app/app.config.ts'
       - 'tv-app/eas.json'
+      - 'tv-app/package.json'
+      - 'tv-app/plugins/**'
 
 concurrency:
   group: build-tv-${{ github.ref }}
