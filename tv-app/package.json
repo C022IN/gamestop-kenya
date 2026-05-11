@@ -6,36 +6,30 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
+    "prebuild": "expo prebuild --platform android",
     "build:preview": "eas build --platform android --profile preview --non-interactive",
     "build:production": "eas build --platform android --profile production --non-interactive",
     "eas:submit": "eas submit --platform android --profile production"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^2.1.0",
+    "@react-native-async-storage/async-storage": "2.1.2",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/stack": "^6.4.1",
     "expo": "~55.0.23",
     "expo-av": "~16.0.8",
     "expo-build-properties": "~55.0.13",
+    "expo-image": "~2.3.0",
     "expo-linear-gradient": "~55.0.13",
-    "expo-splash-screen": "~55.0.13",
+    "expo-splash-screen": "~0.29.22",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
     "react-native": "0.79.2",
-    "react-native-fast-image": "^8.6.3",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.25.0",
-    "react-native-tvos": "0.79.5-0"
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@react-native/typescript-config": "0.76.5",
     "@types/react": "~19.0.10",
     "typescript": "^5.3.3"
-  },
-  "expo": {
-    "install": {
-      "exclude": ["react-native"]
-    }
   }
 }

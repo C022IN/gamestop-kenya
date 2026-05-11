@@ -1,12 +1,6 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableHighlight,
-  Dimensions,
-} from 'react-native';
-import FastImage from 'react-native-fast-image';
+import { View, Text, StyleSheet, TouchableHighlight, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { tmdbBackdrop } from '@/api/client';
@@ -36,22 +30,20 @@ function getTitle(item: HeroItem): string {
 }
 
 function getOverview(item: HeroItem): string {
-  if ('overview' in item && item.overview) return item.overview;
-  return '';
+  return ('overview' in item ? item.overview : '') ?? '';
 }
 
 export default function HeroBanner({ item, onPlay, onMore }: HeroBannerProps) {
   const imageUri = getBackdrop(item);
-  const title = getTitle(item);
-  const overview = getOverview(item);
 
   return (
     <View style={[styles.container, { height: HERO_HEIGHT }]}>
       {imageUri ? (
-        <FastImage
-          source={{ uri: imageUri, priority: FastImage.priority.high }}
+        <Image
+          source={{ uri: imageUri }}
           style={StyleSheet.absoluteFill}
-          resizeMode={FastImage.resizeMode.cover}
+          contentFit="cover"
+          priority="high"
         />
       ) : null}
       <LinearGradient
@@ -59,13 +51,9 @@ export default function HeroBanner({ item, onPlay, onMore }: HeroBannerProps) {
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={2}>
-          {title}
-        </Text>
-        {overview ? (
-          <Text style={styles.overview} numberOfLines={3}>
-            {overview}
-          </Text>
+        <Text style={styles.title} numberOfLines={2}>{getTitle(item)}</Text>
+        {getOverview(item) ? (
+          <Text style={styles.overview} numberOfLines={3}>{getOverview(item)}</Text>
         ) : null}
         <View style={styles.buttons}>
           <TouchableHighlight
@@ -91,34 +79,11 @@ export default function HeroBanner({ item, onPlay, onMore }: HeroBannerProps) {
 
 const styles = StyleSheet.create({
   container: { width, backgroundColor: '#000' },
-  content: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 40,
-  },
-  title: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  overview: {
-    color: '#ccc',
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 20,
-    maxWidth: 560,
-  },
+  content: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 40 },
+  title: { color: '#fff', fontSize: 36, fontWeight: '800', marginBottom: 8 },
+  overview: { color: '#ccc', fontSize: 15, lineHeight: 22, marginBottom: 20, maxWidth: 560 },
   buttons: { flexDirection: 'row', gap: 16 },
-  btn: {
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: 4,
-    minWidth: 140,
-    alignItems: 'center',
-  },
+  btn: { paddingHorizontal: 28, paddingVertical: 12, borderRadius: 4, minWidth: 140, alignItems: 'center' },
   playBtn: { backgroundColor: '#e50914' },
   moreBtn: { backgroundColor: 'rgba(255,255,255,0.15)' },
   playBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },

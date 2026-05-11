@@ -1,6 +1,4 @@
-import type { ExpoConfig } from 'expo/config';
-
-const config: ExpoConfig = {
+module.exports = {
   name: 'GameStop Movies',
   slug: 'gamestop-movies-tv',
   version: '1.0.0',
@@ -44,5 +42,3 @@ const config: ExpoConfig = {
     },
   },
 };
-
-export default config;
