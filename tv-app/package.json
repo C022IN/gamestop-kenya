@@ -27,6 +27,13 @@
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0"
   },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": ["expo-av"]
+      }
+    }
+  },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.2.10",
