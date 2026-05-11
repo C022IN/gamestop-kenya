@@ -57,7 +57,7 @@ jobs:
 
       - name: Install Node dependencies
         working-directory: tv-app
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Decode release keystore
         working-directory: tv-app/android
