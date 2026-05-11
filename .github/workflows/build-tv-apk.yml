@@ -49,15 +49,15 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Node dependencies
+        working-directory: tv-app
+        run: npm install --legacy-peer-deps
+
       - name: Bootstrap Gradle wrapper
         working-directory: tv-app/android
         run: |
           gradle wrapper --gradle-version=8.8 --distribution-type=bin
           chmod +x gradlew
-
-      - name: Install Node dependencies
-        working-directory: tv-app
-        run: npm install --legacy-peer-deps
 
       - name: Decode release keystore
         working-directory: tv-app/android
