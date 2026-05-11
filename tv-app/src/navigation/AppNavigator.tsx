@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { clearToken, getStoredToken } from '@/api/client';
 import SplashScreen from '@/screens/SplashScreen';
 import LoginScreen from '@/screens/LoginScreen';
@@ -9,7 +9,7 @@ import DetailScreen from '@/screens/DetailScreen';
 import PlayerScreen from '@/screens/PlayerScreen';
 import SearchScreen from '@/screens/SearchScreen';
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   const [ready, setReady] = useState(false);
@@ -29,7 +29,7 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: '#000' } }}>
+      <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000' } }}>
         {loggedIn ? (
           <>
             <Stack.Screen name="Home">
