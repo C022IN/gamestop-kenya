@@ -43,7 +43,7 @@ export async function login(phone: string, accessCode: string): Promise<LoginRes
   try {
     const res = await fetch(`${BASE_URL}/movies/auth/login/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'User-Agent': 'GameStopMoviesTV/1.0' },
       body: JSON.stringify({ phone: normalisePhone(phone), accessCode: accessCode.toUpperCase() }),
     });
     const token = extractSessionCookie(res);
