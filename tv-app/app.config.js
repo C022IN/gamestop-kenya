@@ -23,14 +23,16 @@ module.exports = {
     ],
   },
   plugins: [
+    'expo-image',
     [
       'expo-build-properties',
       {
         android: {
           minSdkVersion: 21,
-          targetSdkVersion: 34,
+          targetSdkVersion: 35,
           compileSdkVersion: 35,
           buildToolsVersion: '35.0.0',
+          newArchEnabled: false,
         },
       },
     ],
