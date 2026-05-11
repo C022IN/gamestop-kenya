@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Allow HTTPS to gamestop.co.ke and TMDB image CDN only -->
-<network-security-config>
-    <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">gamestop.co.ke</domain>
-        <domain includeSubdomains="true">image.tmdb.org</domain>
-    </domain-config>
-</network-security-config>

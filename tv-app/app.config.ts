@@ -19,7 +19,10 @@ const config: ExpoConfig = {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#000000',
     },
-    permissions: ['android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE'],
+    permissions: [
+      'android.permission.INTERNET',
+      'android.permission.ACCESS_NETWORK_STATE',
+    ],
   },
   plugins: [
     [
@@ -30,25 +33,14 @@ const config: ExpoConfig = {
           targetSdkVersion: 34,
           compileSdkVersion: 35,
           buildToolsVersion: '35.0.0',
-          // Enable TV features
-          extraBuildGradleContent: `
-android {
-    defaultConfig {
-        resConfigs "en", "sw"
-    }
-}
-          `,
         },
       },
     ],
-    [
-      // TV manifest config — adds LEANBACK_LAUNCHER and removes touchscreen requirement
-      './plugins/withTVConfig',
-    ],
+    './plugins/withTVConfig',
   ],
   extra: {
     eas: {
-      projectId: 'gamestop-movies-tv',
+      projectId: '623d7a87-ee47-4abb-a601-ddfbc9052305',
     },
   },
 };
