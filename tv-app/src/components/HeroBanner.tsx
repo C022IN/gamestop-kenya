@@ -7,7 +7,7 @@ import {
   Dimensions,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import LinearGradient from 'react-native-linear-gradient';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { tmdbBackdrop } from '@/api/client';
 

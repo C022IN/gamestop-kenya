@@ -1,43 +1,34 @@
-name: Build TV App (APK + AAB)
+name: Build TV App (EAS Build)
 
 on:
   workflow_dispatch:
     inputs:
-      version_code:
-        description: 'Version code (integer, e.g. 2)'
-        required: false
-        default: '1'
-      version_name:
-        description: 'Version name (e.g. 1.0.1)'
-        required: false
-        default: '1.0.0'
+      profile:
+        description: 'EAS build profile'
+        required: true
+        default: 'preview'
+        type: choice
+        options: [preview, production]
   push:
     branches: [main]
     paths:
-      - 'tv-app/**'
+      - 'tv-app/src/**'
+      - 'tv-app/app.config.ts'
+      - 'tv-app/eas.json'
 
 concurrency:
   group: build-tv-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  KEYSTORE_FILE: ""
-
 jobs:
   build:
-    name: Build Android TV APK + AAB
+    name: EAS Build — Android TV
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -46,87 +37,27 @@ jobs:
           cache: npm
           cache-dependency-path: tv-app/package-lock.json
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Node dependencies
+      - name: Install dependencies
         working-directory: tv-app
         run: npm install --legacy-peer-deps
 
-      - name: Bootstrap Gradle wrapper
-        working-directory: tv-app/android
-        run: |
-          gradle wrapper --gradle-version=8.8 --distribution-type=bin
-          chmod +x gradlew
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli@latest
 
-      - name: Decode release keystore
-        working-directory: tv-app/android
+      - name: EAS Build — APK/AAB
+        working-directory: tv-app
         env:
-          TV_KEYSTORE_BASE64: ${{ secrets.TV_KEYSTORE_BASE64 }}
-          TV_KEYSTORE_PASSWORD: ${{ secrets.TV_KEYSTORE_PASSWORD }}
-          TV_KEY_ALIAS: ${{ secrets.TV_KEY_ALIAS }}
-          TV_KEY_PASSWORD: ${{ secrets.TV_KEY_PASSWORD }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          if [ -n "$TV_KEYSTORE_BASE64" ]; then
-            echo "$TV_KEYSTORE_BASE64" | base64 -d > release.keystore
-            echo "KEYSTORE_FILE=$(pwd)/release.keystore" >> $GITHUB_ENV
-            echo "KEYSTORE_PASSWORD=$TV_KEYSTORE_PASSWORD" >> $GITHUB_ENV
-            echo "KEY_ALIAS=$TV_KEY_ALIAS" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=$TV_KEY_PASSWORD" >> $GITHUB_ENV
-            echo "✅ Keystore decoded — release builds will be signed"
-          else
-            echo "⚠️  No keystore secret — release builds will be unsigned"
-          fi
-
-      - name: Set version
-        working-directory: tv-app/android
-        run: |
-          VERSION_CODE="${{ github.event.inputs.version_code }}"
-          VERSION_NAME="${{ github.event.inputs.version_name }}"
-          sed -i "s/versionCode .*/versionCode ${VERSION_CODE:-1}/" app/build.gradle
-          sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME:-1.0.0}\"/" app/build.gradle
-
-      - name: Build Debug APK
-        working-directory: tv-app/android
-        run: ./gradlew assembleDebug --no-daemon
-
-      - name: Build Release APK
-        working-directory: tv-app/android
-        run: ./gradlew assembleRelease --no-daemon
-
-      - name: Build Release AAB (Play Store)
-        working-directory: tv-app/android
-        run: ./gradlew bundleRelease --no-daemon
-
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: gamestop-movies-tv-debug-apk
-          path: tv-app/android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 14
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: gamestop-movies-tv-release-apk
-          path: tv-app/android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 30
-
-      - name: Upload Release AAB (Play Store)
-        uses: actions/upload-artifact@v4
-        with:
-          name: gamestop-movies-tv-release-aab
-          path: tv-app/android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 30
-
-      - name: Build summary
-        run: |
-          echo "## GameStop Movies TV Build" >> $GITHUB_STEP_SUMMARY
+          PROFILE="${{ github.event.inputs.profile || 'preview' }}"
+          echo "Building profile: $PROFILE"
+          eas build \
+            --platform android \
+            --profile "$PROFILE" \
+            --non-interactive \
+            --no-wait
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Artifact | Purpose |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| \`app-debug.apk\` | Sideload on any Android TV for testing |" >> $GITHUB_STEP_SUMMARY
-          echo "| \`app-release.apk\` | Sideload + Amazon Appstore submission |" >> $GITHUB_STEP_SUMMARY
-          echo "| \`app-release.aab\` | Google Play Store submission |" >> $GITHUB_STEP_SUMMARY
+          echo "## GameStop Movies TV — EAS Build submitted" >> $GITHUB_STEP_SUMMARY
+          echo "Profile: **$PROFILE**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Download from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
+          echo "Monitor and download at: https://expo.dev/accounts/[your-account]/projects/gamestop-movies-tv/builds" >> $GITHUB_STEP_SUMMARY

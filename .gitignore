@@ -52,3 +52,7 @@ next-env.d.ts
 /docs/*.md
 
 .env*.local
+
+gamestop-movies.keystore
+*.keystore
+!tv-app/android/gamestop-movies.keystore

@@ -7,7 +7,7 @@ import {
   TouchableHighlight,
   View,
 } from 'react-native';
-import Video, { type VideoRef } from 'react-native-video';
+import { Video, ResizeMode, type AVPlaybackStatus } from 'expo-av';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { fetchStream } from '@/api/client';
@@ -22,8 +22,7 @@ interface Props {
 }
 
 function getSlug(item: AnyItem): string {
-  if ('slug' in item && item.slug) return item.slug;
-  return '';
+  return ('slug' in item && item.slug) ? item.slug : '';
 }
 function getId(item: AnyItem): string {
   return String(item.id ?? '');
@@ -36,7 +35,7 @@ function getTitle(item: AnyItem): string {
 
 export default function PlayerScreen({ route, navigation }: Props) {
   const { item } = route.params;
-  const videoRef = useRef<VideoRef>(null);
+  const videoRef = useRef<Video>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [loadingStream, setLoadingStream] = useState(true);
   const [streamError, setStreamError] = useState<string | null>(null);
@@ -49,16 +48,15 @@ export default function PlayerScreen({ route, navigation }: Props) {
     setStreamError(null);
     const result = await fetchStream(getSlug(item), getId(item));
     setLoadingStream(false);
-    if (!result || (!result.stream_url && !result.iframe_url)) {
-      setStreamError('This content is not available for playback. Check your subscription.');
+    if (!result?.stream_url) {
+      setStreamError(
+        result?.iframe_url
+          ? 'Iframe-only streams require the web player. Open gamestop.co.ke/movies.'
+          : 'This content is not available. Check your subscription.',
+      );
       return;
     }
-    // Prefer HLS stream; fall back to iframe URL if no direct stream
-    if (result.stream_url) {
-      setStreamUrl(result.stream_url);
-    } else {
-      setStreamError('Iframe-only streams require the web player. Open gamestop.co.ke/movies on a browser.');
-    }
+    setStreamUrl(result.stream_url);
   }, [item]);
 
   React.useEffect(() => { loadStream(); }, [loadStream]);
@@ -67,6 +65,12 @@ export default function PlayerScreen({ route, navigation }: Props) {
     setShowControls(true);
     if (controlsTimer.current) clearTimeout(controlsTimer.current);
     controlsTimer.current = setTimeout(() => setShowControls(false), 4000);
+  }
+
+  function onPlaybackStatusUpdate(status: AVPlaybackStatus) {
+    if (!status.isLoaded) {
+      if (status.error) setStreamError(`Playback error: ${status.error}`);
+    }
   }
 
   if (loadingStream) {
@@ -88,7 +92,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
           onPress={() => navigation.goBack()}
           hasTVPreferredFocus
         >
-          <Text style={styles.backText}>← Go Back</Text>
+          <Text style={styles.backBtnText}>← Go Back</Text>
         </TouchableHighlight>
       </View>
     );
@@ -100,16 +104,13 @@ export default function PlayerScreen({ route, navigation }: Props) {
         ref={videoRef}
         source={{ uri: streamUrl }}
         style={styles.video}
-        resizeMode="contain"
-        paused={paused}
-        controls={false}
-        onLoad={() => setLoadingStream(false)}
-        onError={e => setStreamError(`Playback error: ${e.error?.localizedDescription ?? 'Unknown'}`)}
-        ignoreSilentSwitch="ignore"
-        playInBackground={false}
+        resizeMode={ResizeMode.CONTAIN}
+        shouldPlay={!paused}
+        onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+        isLooping={false}
+        useNativeControls={false}
       />
 
-      {/* Overlay controls */}
       {showControls && (
         <View style={styles.overlay}>
           <View style={styles.controlsTop}>
@@ -141,52 +142,17 @@ export default function PlayerScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   video: { width, height },
-  centered: {
-    flex: 1,
-    backgroundColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 20,
-  },
+  centered: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center', gap: 20 },
   loadingText: { color: '#fff', fontSize: 16, marginTop: 12 },
   errorText: { color: '#e50914', fontSize: 18, textAlign: 'center', maxWidth: 500 },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'space-between',
-  },
-  controlsTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 24,
-    gap: 20,
-  },
-  controlsCenter: {
-    alignItems: 'center',
-    paddingBottom: 48,
-  },
-  controlBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 6,
-  },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'space-between' },
+  controlsTop: { flexDirection: 'row', alignItems: 'center', padding: 24, gap: 20 },
+  controlsCenter: { alignItems: 'center', paddingBottom: 48 },
+  controlBtn: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 6 },
   controlText: { color: '#fff', fontSize: 16 },
   titleText: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
-  playPauseBtn: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(229,9,20,0.85)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  playPauseBtn: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(229,9,20,0.85)', alignItems: 'center', justifyContent: 'center' },
   playPauseText: { color: '#fff', fontSize: 28 },
-  backBtn: {
-    backgroundColor: '#e50914',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 6,
-  },
-  backText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  backBtn: { backgroundColor: '#e50914', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 6 },
+  backBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
