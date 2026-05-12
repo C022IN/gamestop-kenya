@@ -11,6 +11,18 @@ import {
   isCompatiblePlayerConfigured,
 } from '@/lib/compatible-player';
 
+// Fallback embed player used when COMPATIBLE_PLAYER_BASE_URL is not configured.
+// vidlink.pro supports autoplay, works in Android WebView, and uses TMDB IDs.
+const FALLBACK_PLAYER = 'https://vidlink.pro';
+
+function buildFallbackMovieUrl(tmdbId: number): string {
+  return `${FALLBACK_PLAYER}/movie/${tmdbId}?autoplay=true&multiLang=true`;
+}
+
+function buildFallbackTvUrl(tmdbId: number, season: number, episode: number): string {
+  return `${FALLBACK_PLAYER}/tv/${tmdbId}/${season}/${episode}?autoplay=true&nextbutton=true&multiLang=true`;
+}
+
 export async function GET(req: NextRequest) {
   const token = req.cookies.get(MOVIE_SESSION_COOKIE)?.value;
   if (!token) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
@@ -21,26 +33,36 @@ export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get('slug') ?? '';
   const id = req.nextUrl.searchParams.get('id') ?? '';
   const mediaType = req.nextUrl.searchParams.get('media_type') ?? 'movie';
+  const season = Number(req.nextUrl.searchParams.get('season') ?? '1');
+  const episode = Number(req.nextUrl.searchParams.get('episode') ?? '1');
 
   if (!slug && !id) {
     return NextResponse.json({ error: 'slug or id required' }, { status: 400 });
   }
 
-  // TMDB numeric ID path — build Videasy URL directly
+  // TMDB numeric ID — build player URL directly (no content DB lookup needed)
   const numericId = Number(id || slug);
-  if (Number.isFinite(numericId) && numericId > 0 && isCompatiblePlayerConfigured()) {
-    let iframeUrl: string | null = null;
+  if (Number.isFinite(numericId) && numericId > 0) {
+    let iframeUrl: string;
+    let provider: string;
 
-    if (mediaType === 'tv') {
-      const season = Number(req.nextUrl.searchParams.get('season') ?? '1');
-      const episode = Number(req.nextUrl.searchParams.get('episode') ?? '1');
-      iframeUrl = buildCompatibleTvPlayerUrl(numericId, season, episode);
+    if (isCompatiblePlayerConfigured()) {
+      // Use the configured provider (e.g. Videasy via COMPATIBLE_PLAYER_BASE_URL)
+      const built = mediaType === 'tv'
+        ? buildCompatibleTvPlayerUrl(numericId, season, episode)
+        : buildCompatibleMoviePlayerUrl(numericId);
+
+      if (!built) {
+        return NextResponse.json({ error: 'Player not configured' }, { status: 503 });
+      }
+      iframeUrl = built;
+      provider = 'Videasy';
     } else {
-      iframeUrl = buildCompatibleMoviePlayerUrl(numericId);
-    }
-
-    if (!iframeUrl) {
-      return NextResponse.json({ error: 'Player not configured' }, { status: 503 });
+      // Fallback: vidlink.pro works without any env var configuration
+      iframeUrl = mediaType === 'tv'
+        ? buildFallbackTvUrl(numericId, season, episode)
+        : buildFallbackMovieUrl(numericId);
+      provider = 'VidLink';
     }
 
     return NextResponse.json({
@@ -48,11 +70,11 @@ export async function GET(req: NextRequest) {
       stream_url: null,
       source_type: 'iframe',
       playback_mode: 'iframe',
-      provider: 'Videasy',
+      provider,
     });
   }
 
-  // Custom content item path (slug-based)
+  // Custom content item path (slug-based entries in the DB)
   const content = await getContentItemBySlug(slug || id);
   if (!content) {
     return NextResponse.json({ error: 'Content not found' }, { status: 404 });

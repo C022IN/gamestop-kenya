@@ -11,7 +11,7 @@ import { Video, ResizeMode, type AVPlaybackStatus } from 'expo-av';
 import { WebView } from 'react-native-webview';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
-import { fetchStream } from '@/api/client';
+import { fetchStream, buildDirectPlayerUrl } from '@/api/client';
 
 const { width, height } = Dimensions.get('window');
 
@@ -96,6 +96,12 @@ export default function PlayerScreen({ route, navigation }: Props) {
     );
     setLoading(false);
     if (!result) {
+      // Server API failed — for TMDB numeric IDs build the player URL directly
+      const numericId = Number(getId(item));
+      if (Number.isFinite(numericId) && numericId > 0) {
+        setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
+        return;
+      }
       setError('Stream not available. Check your connection or subscription.');
       return;
     }
