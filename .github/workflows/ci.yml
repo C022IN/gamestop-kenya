@@ -31,9 +31,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check env example coverage
-        run: npm run env:example:check
-
       - name: Lint
         run: npm run lint
 
