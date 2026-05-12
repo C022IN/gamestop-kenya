@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Video, ResizeMode, type AVPlaybackStatus } from 'expo-av';
+import { WebView } from 'react-native-webview';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { fetchStream } from '@/api/client';
@@ -27,6 +28,9 @@ function getSlug(item: AnyItem): string {
 function getId(item: AnyItem): string {
   return String(item.id ?? '');
 }
+function getMediaType(item: AnyItem): string {
+  return ('media_type' in item && (item as TmdbItem).media_type) ? (item as TmdbItem).media_type! : 'movie';
+}
 function getTitle(item: AnyItem): string {
   if ('title' in item && item.title) return item.title;
   if ('name' in item && (item as TmdbItem).name) return (item as TmdbItem).name!;
@@ -37,26 +41,36 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const { item } = route.params;
   const videoRef = useRef<Video>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
-  const [loadingStream, setLoadingStream] = useState(true);
-  const [streamError, setStreamError] = useState<string | null>(null);
+  const [iframeUrl, setIframeUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadStream = useCallback(async () => {
-    setLoadingStream(true);
-    setStreamError(null);
-    const result = await fetchStream(getSlug(item), getId(item));
-    setLoadingStream(false);
-    if (!result?.stream_url) {
-      setStreamError(
-        result?.iframe_url
-          ? 'Iframe-only streams require the web player. Open gamestop.co.ke/movies.'
-          : 'This content is not available. Check your subscription.',
-      );
+    setLoading(true);
+    setError(null);
+    const result = await fetchStream(getSlug(item), getId(item), getMediaType(item));
+    setLoading(false);
+    if (!result) {
+      setError('This content is not available. Check your subscription.');
       return;
     }
-    setStreamUrl(result.stream_url);
+    if (result.playback_mode === 'iframe' || result.source_type === 'iframe') {
+      const url = result.iframe_url;
+      if (!url) {
+        setError('Stream not available.');
+        return;
+      }
+      setIframeUrl(url);
+      return;
+    }
+    if (result.stream_url) {
+      setStreamUrl(result.stream_url);
+      return;
+    }
+    setError('Stream not available.');
   }, [item]);
 
   React.useEffect(() => { loadStream(); }, [loadStream]);
@@ -68,12 +82,12 @@ export default function PlayerScreen({ route, navigation }: Props) {
   }
 
   function onPlaybackStatusUpdate(status: AVPlaybackStatus) {
-    if (!status.isLoaded) {
-      if (status.error) setStreamError(`Playback error: ${status.error}`);
+    if (!status.isLoaded && status.error) {
+      setError(`Playback error: ${status.error}`);
     }
   }
 
-  if (loadingStream) {
+  if (loading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#e50914" />
@@ -82,10 +96,10 @@ export default function PlayerScreen({ route, navigation }: Props) {
     );
   }
 
-  if (streamError || !streamUrl) {
+  if (error) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>{streamError ?? 'Stream unavailable.'}</Text>
+        <Text style={styles.errorText}>{error}</Text>
         <TouchableHighlight
           style={styles.backBtn}
           underlayColor="#333"
@@ -98,11 +112,34 @@ export default function PlayerScreen({ route, navigation }: Props) {
     );
   }
 
+  if (iframeUrl) {
+    return (
+      <View style={styles.container}>
+        <WebView
+          source={{ uri: iframeUrl }}
+          style={styles.webview}
+          allowsFullscreenVideo
+          mediaPlaybackRequiresUserAction={false}
+          javaScriptEnabled
+          domStorageEnabled
+        />
+        <TouchableHighlight
+          style={styles.webviewBackBtn}
+          underlayColor="#333"
+          onPress={() => navigation.goBack()}
+          hasTVPreferredFocus
+        >
+          <Text style={styles.controlText}>← Back</Text>
+        </TouchableHighlight>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container} onTouchStart={resetControlsTimer}>
       <Video
         ref={videoRef}
-        source={{ uri: streamUrl }}
+        source={{ uri: streamUrl! }}
         style={styles.video}
         resizeMode={ResizeMode.CONTAIN}
         shouldPlay={!paused}
@@ -110,7 +147,6 @@ export default function PlayerScreen({ route, navigation }: Props) {
         isLooping={false}
         useNativeControls={false}
       />
-
       {showControls && (
         <View style={styles.overlay}>
           <View style={styles.controlsTop}>
@@ -142,6 +178,12 @@ export default function PlayerScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   video: { width, height },
+  webview: { flex: 1, backgroundColor: '#000' },
+  webviewBackBtn: {
+    position: 'absolute', top: 16, left: 16,
+    paddingHorizontal: 16, paddingVertical: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)', borderRadius: 6,
+  },
   centered: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center', gap: 20 },
   loadingText: { color: '#fff', fontSize: 16, marginTop: 12 },
   errorText: { color: '#e50914', fontSize: 18, textAlign: 'center', maxWidth: 500 },

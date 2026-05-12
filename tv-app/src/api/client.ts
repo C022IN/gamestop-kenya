@@ -117,17 +117,23 @@ export function tmdbBackdrop(path: string | null | undefined): string {
 }
 
 export interface StreamResult {
-  stream_url?: string;
+  stream_url?: string | null;
   iframe_url?: string;
   source_type?: string;
+  playback_mode?: string;
   provider?: string;
 }
 
-export async function fetchStream(slug: string, id: string): Promise<StreamResult | null> {
+export async function fetchStream(
+  slug: string,
+  id: string,
+  mediaType?: string,
+): Promise<StreamResult | null> {
   try {
     const params = new URLSearchParams();
     if (slug) params.set('slug', slug);
-    if (id) params.set('id', id);
+    if (id) params.set('id', String(id));
+    if (mediaType) params.set('media_type', mediaType);
     const res = await fetch(`${BASE_URL}/movies/stream/?${params}`, { headers: await headers() });
     if (!res.ok) return null;
     return res.json();
