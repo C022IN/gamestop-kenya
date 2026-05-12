@@ -38,7 +38,14 @@ module.exports = {
         },
       },
     ],
-    './plugins/withTVConfig',
+    [
+      '@react-native-tvos/config-tv',
+      {
+        isTV: true,
+        showVerboseWarnings: false,
+        removeFlipperOnAndroid: true,
+      },
+    ],
   ],
   extra: {
     eas: {

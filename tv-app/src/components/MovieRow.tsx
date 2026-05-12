@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TVFocusGuideView } from 'react-native';
 import FocusableCard from './FocusableCard';
 import { tmdbPoster } from '@/api/client';
 import type { CatalogItem, TmdbItem } from '@/api/client';
@@ -45,7 +45,7 @@ export default function MovieRow({ title, items, onSelect, isFirstRow = false }:
   if (!items.length) return null;
 
   return (
-    <View style={styles.container}>
+    <TVFocusGuideView style={styles.container} autoFocus trapFocusLeft={false} trapFocusRight={false}>
       <Text style={styles.heading}>{title}</Text>
       <FlatList
         ref={listRef}
@@ -78,7 +78,7 @@ export default function MovieRow({ title, items, onSelect, isFirstRow = false }:
           />
         )}
       />
-    </View>
+    </TVFocusGuideView>
   );
 }
 
