@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import ClientBody from './ClientBody';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -84,6 +85,7 @@ export default function RootLayout({
       <ClientBody className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         {children}
         <WhatsAppButton />
+        <Analytics />
       </ClientBody>
     </html>
   );
