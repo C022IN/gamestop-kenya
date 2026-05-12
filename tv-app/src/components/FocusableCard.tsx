@@ -1,9 +1,6 @@
-import React, { useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View, Text } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, View, Text } from 'react-native';
 import { Image } from 'expo-image';
-
-// hasTVPreferredFocus is a valid Android TV prop missing from RN TS types
-const TVPressable = Pressable as any;
 
 interface FocusableCardProps {
   title: string;
@@ -27,55 +24,39 @@ export default function FocusableCard({
   hasTVPreferredFocus = false,
 }: FocusableCardProps) {
   const [focused, setFocused] = useState(false);
-  const scale = useRef(new Animated.Value(1)).current;
-
-  function handleFocus() {
-    setFocused(true);
-    onFocus?.();
-    Animated.spring(scale, { toValue: 1.1, useNativeDriver: true, speed: 22, bounciness: 3 }).start();
-  }
-
-  function handleBlur() {
-    setFocused(false);
-    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 22 }).start();
-  }
 
   return (
-    // Border lives on this outer wrapper — outside overflow:hidden, no elevation change
-    // (elevation change triggers Android layout recalculation which drops TV focus)
-    <View style={[
-      styles.outerWrapper,
-      { borderColor: focused ? '#e50914' : 'transparent' },
-    ]}>
-      <TVPressable
-        onPress={onPress}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        hasTVPreferredFocus={hasTVPreferredFocus}
-        android_ripple={null}
-      >
-        <Animated.View style={[{ transform: [{ scale }] }]}>
-          <View style={[styles.card, { width, height }]}>
-            {imageUri ? (
-              <Image
-                source={{ uri: imageUri }}
-                style={{ width, height }}
-                contentFit="cover"
-                transition={200}
-              />
-            ) : (
-              <View style={[styles.placeholder, { width, height }]}>
-                <Text style={styles.placeholderText} numberOfLines={3}>{title}</Text>
-              </View>
-            )}
+    <Pressable
+      onPress={onPress}
+      onFocus={() => { setFocused(true); onFocus?.(); }}
+      onBlur={() => setFocused(false)}
+      hasTVPreferredFocus={hasTVPreferredFocus}
+      isTVSelectable
+      tvParallaxProperties={{ enabled: true, magnification: 1.08 }}
+      style={[
+        styles.outerWrapper,
+        focused && styles.outerFocused,
+      ]}
+    >
+      <View style={[styles.card, { width, height }]}>
+        {imageUri ? (
+          <Image
+            source={{ uri: imageUri }}
+            style={{ width, height }}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <View style={[styles.placeholder, { width, height }]}>
+            <Text style={styles.placeholderText} numberOfLines={3}>{title}</Text>
           </View>
-          <View style={[styles.info, { width }, focused && styles.infoFocused]}>
-            <Text style={[styles.titleText, focused && styles.titleFocused]} numberOfLines={1}>{title}</Text>
-            {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
-          </View>
-        </Animated.View>
-      </TVPressable>
-    </View>
+        )}
+      </View>
+      <View style={[styles.info, { width }, focused && styles.infoFocused]}>
+        <Text style={[styles.titleText, focused && styles.titleFocused]} numberOfLines={1}>{title}</Text>
+        {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
+      </View>
+    </Pressable>
   );
 }
 
@@ -84,7 +65,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     borderRadius: 8,
     borderWidth: 3,
-    // No elevation here — changing elevation drops Android TV focus
+    borderColor: 'transparent',
+  },
+  outerFocused: {
+    borderColor: '#e50914',
   },
   card: {
     borderRadius: 6,
