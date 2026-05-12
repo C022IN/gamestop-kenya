@@ -128,12 +128,16 @@ export async function fetchStream(
   slug: string,
   id: string,
   mediaType?: string,
+  season?: number,
+  episode?: number,
 ): Promise<StreamResult | null> {
   try {
     const params = new URLSearchParams();
     if (slug) params.set('slug', slug);
     if (id) params.set('id', String(id));
     if (mediaType) params.set('media_type', mediaType);
+    if (season) params.set('season', String(season));
+    if (episode) params.set('episode', String(episode));
     const res = await fetch(`${BASE_URL}/movies/stream/?${params}`, { headers: await headers() });
     if (!res.ok) return null;
     return res.json();

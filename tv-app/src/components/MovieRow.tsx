@@ -13,6 +13,10 @@ interface MovieRowProps {
   isFirstRow?: boolean;
 }
 
+const CARD_WIDTH = 160;
+const CARD_MARGIN = 12; // 6 * 2
+const ITEM_SIZE = CARD_WIDTH + CARD_MARGIN;
+
 function getImage(item: AnyItem): string {
   if ('poster_url' in item && item.poster_url) return item.poster_url;
   if ('poster_path' in item) return tmdbPoster((item as TmdbItem).poster_path);
@@ -31,10 +35,8 @@ function getKey(item: AnyItem): string {
 }
 
 function getSubtitle(item: AnyItem): string | undefined {
-  if ('vote_average' in item && item.vote_average) {
-    return `★ ${Number(item.vote_average).toFixed(1)}`;
-  }
-  return undefined;
+  const v = (item as any).vote_average;
+  return v ? `★ ${Number(v).toFixed(1)}` : undefined;
 }
 
 export default function MovieRow({ title, items, onSelect, isFirstRow = false }: MovieRowProps) {
@@ -52,28 +54,26 @@ export default function MovieRow({ title, items, onSelect, isFirstRow = false }:
         keyExtractor={getKey}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
-        initialNumToRender={6}
-        maxToRenderPerBatch={8}
-        windowSize={5}
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={3}
+        removeClippedSubviews={false}
         getItemLayout={(_, index) => ({
-          length: 172,
-          offset: 172 * index,
+          length: ITEM_SIZE,
+          offset: ITEM_SIZE * index + 26,
           index,
         })}
         renderItem={({ item, index }) => (
           <FocusableCard
-            key={getKey(item)}
             title={getTitle(item)}
             imageUri={getImage(item)}
             subtitle={getSubtitle(item)}
             hasTVPreferredFocus={isFirstRow && index === 0}
             onPress={() => onSelect(item)}
             onFocus={() => {
-              listRef.current?.scrollToIndex({
-                index,
-                animated: true,
-                viewPosition: 0.3,
-              });
+              try {
+                listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
+              } catch {}
             }}
           />
         )}

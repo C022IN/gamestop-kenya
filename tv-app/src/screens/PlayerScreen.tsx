@@ -18,7 +18,7 @@ const { width, height } = Dimensions.get('window');
 type AnyItem = CatalogItem | TmdbItem;
 
 interface Props {
-  route: RouteProp<{ Player: { item: AnyItem } }, 'Player'>;
+  route: RouteProp<{ Player: { item: AnyItem; season?: number; episode?: number } }, 'Player'>;
   navigation: NavigationProp<any>;
 }
 
@@ -37,8 +37,20 @@ function getTitle(item: AnyItem): string {
   return 'Playing…';
 }
 
+// Injected into WebView to remove the ReactNativeWebView fingerprint that
+// some players use to detect embedded WebViews and block playback.
+const WEBVIEW_INJECT_JS = `
+  (function() {
+    try {
+      Object.defineProperty(window, 'ReactNativeWebView', { get: function() { return undefined; } });
+      Object.defineProperty(window, '_reactNativeWebView', { get: function() { return undefined; } });
+    } catch(e) {}
+    true;
+  })();
+`;
+
 export default function PlayerScreen({ route, navigation }: Props) {
-  const { item } = route.params;
+  const { item, season = 1, episode = 1 } = route.params;
   const videoRef = useRef<Video>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
@@ -51,27 +63,29 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const loadStream = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const result = await fetchStream(getSlug(item), getId(item), getMediaType(item));
+    const result = await fetchStream(
+      getSlug(item),
+      getId(item),
+      getMediaType(item),
+      season,
+      episode,
+    );
     setLoading(false);
     if (!result) {
-      setError('This content is not available. Check your subscription.');
+      setError('Stream not available. Check your connection or subscription.');
       return;
     }
     if (result.playback_mode === 'iframe' || result.source_type === 'iframe') {
-      const url = result.iframe_url;
-      if (!url) {
-        setError('Stream not available.');
-        return;
-      }
-      setIframeUrl(url);
+      if (!result.iframe_url) { setError('Player URL missing.'); return; }
+      setIframeUrl(result.iframe_url);
       return;
     }
     if (result.stream_url) {
       setStreamUrl(result.stream_url);
       return;
     }
-    setError('Stream not available.');
-  }, [item]);
+    setError('No playable source found.');
+  }, [item, season, episode]);
 
   React.useEffect(() => { loadStream(); }, [loadStream]);
 
@@ -101,10 +115,17 @@ export default function PlayerScreen({ route, navigation }: Props) {
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableHighlight
+          style={[styles.backBtn, { marginTop: 8 }]}
+          underlayColor="#333"
+          onPress={loadStream}
+          hasTVPreferredFocus
+        >
+          <Text style={styles.backBtnText}>↺ Retry</Text>
+        </TouchableHighlight>
+        <TouchableHighlight
           style={styles.backBtn}
           underlayColor="#333"
           onPress={() => navigation.goBack()}
-          hasTVPreferredFocus
         >
           <Text style={styles.backBtnText}>← Go Back</Text>
         </TouchableHighlight>
@@ -123,10 +144,14 @@ export default function PlayerScreen({ route, navigation }: Props) {
           mediaPlaybackRequiresUserAction={false}
           javaScriptEnabled
           domStorageEnabled
-          userAgent="Mozilla/5.0 (Linux; Android 12; Tablet) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+          // Desktop Chrome UA — Videasy and similar players require a real browser UA
+          userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           originWhitelist={['*']}
           mixedContentMode="always"
           setSupportMultipleWindows={false}
+          // Remove window.ReactNativeWebView so the player doesn't block WebView embeds
+          injectedJavaScriptBeforeContentLoaded={WEBVIEW_INJECT_JS}
+          onError={e => setError(`WebView error: ${e.nativeEvent.description}`)}
         />
         <TouchableHighlight
           style={styles.webviewBackBtn}
@@ -189,7 +214,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8,
     backgroundColor: 'rgba(0,0,0,0.7)', borderRadius: 6,
   },
-  centered: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center', gap: 20 },
+  centered: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center', gap: 16 },
   loadingText: { color: '#fff', fontSize: 16, marginTop: 12 },
   errorText: { color: '#e50914', fontSize: 18, textAlign: 'center', maxWidth: 500 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'space-between' },
@@ -200,6 +225,6 @@ const styles = StyleSheet.create({
   titleText: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
   playPauseBtn: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(229,9,20,0.85)', alignItems: 'center', justifyContent: 'center' },
   playPauseText: { color: '#fff', fontSize: 28 },
-  backBtn: { backgroundColor: '#e50914', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 6 },
+  backBtn: { backgroundColor: '#333', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 6 },
   backBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

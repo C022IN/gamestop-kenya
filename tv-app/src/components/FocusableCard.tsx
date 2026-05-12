@@ -1,6 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Animated, StyleSheet, TouchableHighlight, View, Text } from 'react-native';
+import { Animated, Pressable, StyleSheet, View, Text } from 'react-native';
 import { Image } from 'expo-image';
+
+// hasTVPreferredFocus is a valid Android TV prop missing from RN TS types
+const TVPressable = Pressable as any;
 
 interface FocusableCardProps {
   title: string;
@@ -29,76 +32,70 @@ export default function FocusableCard({
   function handleFocus() {
     setFocused(true);
     onFocus?.();
-    Animated.spring(scale, { toValue: 1.12, useNativeDriver: true, speed: 25, bounciness: 4 }).start();
+    Animated.spring(scale, { toValue: 1.1, useNativeDriver: true, speed: 22, bounciness: 3 }).start();
   }
 
   function handleBlur() {
     setFocused(false);
-    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 25 }).start();
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 22 }).start();
   }
 
   return (
-    <View style={{ marginHorizontal: 6 }}>
-      <TouchableHighlight
+    // Focus border lives on this outer View — NOT inside overflow:hidden
+    <View style={[styles.outerWrapper, focused && styles.outerFocused]}>
+      <TVPressable
         onPress={onPress}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        underlayColor="transparent"
         hasTVPreferredFocus={hasTVPreferredFocus}
+        android_ripple={null}
       >
-        <Animated.View
-          style={[
-            styles.card,
-            { width, height: height + 52 },
-            { transform: [{ scale }] },
-            focused && styles.cardFocused,
-          ]}
-        >
-          {focused && <View style={[styles.focusGlow, { width: width + 8, height: height + 60 }]} />}
-          {imageUri ? (
-            <Image
-              source={{ uri: imageUri }}
-              style={{ width, height, borderRadius: focused ? 0 : 6 }}
-              contentFit="cover"
-              transition={200}
-            />
-          ) : (
-            <View style={[styles.placeholder, { width, height }]}>
-              <Text style={styles.placeholderText} numberOfLines={3}>{title}</Text>
-            </View>
-          )}
+        <Animated.View style={[{ width, height: height + 52 }, { transform: [{ scale }] }]}>
+          {/* Inner card — overflow hidden for image clipping only */}
+          <View style={[styles.card, { width, height }]}>
+            {imageUri ? (
+              <Image
+                source={{ uri: imageUri }}
+                style={{ width, height }}
+                contentFit="cover"
+                transition={200}
+              />
+            ) : (
+              <View style={[styles.placeholder, { width, height }]}>
+                <Text style={styles.placeholderText} numberOfLines={3}>{title}</Text>
+              </View>
+            )}
+          </View>
           <View style={[styles.info, focused && styles.infoFocused]}>
             <Text style={[styles.titleText, focused && styles.titleFocused]} numberOfLines={1}>{title}</Text>
-            {subtitle ? (
-              <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
-            ) : null}
+            {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
           </View>
         </Animated.View>
-      </TouchableHighlight>
+      </TVPressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  outerWrapper: {
+    marginHorizontal: 6,
     borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#1a1a2e',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: 'transparent',
   },
-  cardFocused: {
+  outerFocused: {
     borderColor: '#e50914',
-    borderWidth: 3,
-    borderRadius: 8,
+    // Shadow glow effect
+    shadowColor: '#e50914',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 10,
+    elevation: 12,
   },
-  focusGlow: {
-    position: 'absolute',
-    top: -4,
-    left: -4,
-    borderRadius: 10,
-    backgroundColor: 'rgba(229, 9, 20, 0.18)',
-    zIndex: -1,
+  card: {
+    borderRadius: 6,
+    overflow: 'hidden',
+    backgroundColor: '#1a1a2e',
   },
   placeholder: {
     backgroundColor: '#2a2a3e',
@@ -107,9 +104,14 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   placeholderText: { color: '#aaa', textAlign: 'center', fontSize: 13 },
-  info: { paddingHorizontal: 6, paddingTop: 6, paddingBottom: 4, backgroundColor: '#1a1a2e' },
+  info: {
+    paddingHorizontal: 6,
+    paddingTop: 6,
+    paddingBottom: 4,
+    backgroundColor: '#111',
+  },
   infoFocused: { backgroundColor: '#2a0a0e' },
-  titleText: { color: '#ccc', fontSize: 13, fontWeight: '600' },
+  titleText: { color: '#bbb', fontSize: 13, fontWeight: '600' },
   titleFocused: { color: '#fff' },
-  subtitle: { color: '#888', fontSize: 11, marginTop: 2 },
+  subtitle: { color: '#e50914', fontSize: 11, marginTop: 2 },
 });
