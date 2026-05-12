@@ -1,6 +1,5 @@
 import {
-  buildPlaybackSource,
-  getAccessibleContentForProfile,
+  getContentItems,
   getSessionByToken,
   MOVIE_SESSION_COOKIE,
 } from '@/lib/movie-platform';
@@ -20,6 +19,8 @@ export interface CatalogItem {
   year: number | undefined;
   duration_minutes: number | undefined;
   maturity_rating: string | undefined;
+  poster_url: string | undefined;
+  backdrop_url: string | undefined;
 }
 
 export interface CatalogResult {
@@ -38,26 +39,20 @@ export async function getCatalogForSession(
     return { ok: false, error: 'Session expired', status: 401 };
   }
 
-  const rawItems = await getAccessibleContentForProfile(session.profileId);
-  const candidates = await Promise.all(
-    rawItems.map(async (item) => ({
-      item,
-      playback: await buildPlaybackSource(item),
-    }))
-  );
+  const rawItems = await getContentItems();
 
-  const items: CatalogItem[] = candidates
-    .filter((entry) => Boolean(entry.playback))
-    .map(({ item }) => ({
-      id: item.id,
-      slug: item.slug,
-      title: item.title,
-      overview: item.synopsis,
-      genres: item.genres,
-      year: item.year,
-      duration_minutes: item.durationMinutes,
-      maturity_rating: item.maturityRating,
-    }));
+  const items: CatalogItem[] = rawItems.map((item) => ({
+    id: item.id,
+    slug: item.slug,
+    title: item.title,
+    overview: item.synopsis,
+    genres: item.genres,
+    year: item.year,
+    duration_minutes: item.durationMinutes,
+    maturity_rating: item.maturityRating,
+    poster_url: item.posterUrl,
+    backdrop_url: item.backdropUrl,
+  }));
 
   return { ok: true, data: { items } };
 }

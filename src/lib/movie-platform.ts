@@ -18,6 +18,8 @@ export interface ContentItem {
   year: number;
   durationMinutes: number;
   maturityRating: string;
+  posterUrl?: string;
+  backdropUrl?: string;
   cloudflareStreamUid?: string;
   requiresSignedPlayback?: boolean;
   playbackSourceType?: 'iframe' | 'hls' | 'dash' | 'external_link';
@@ -79,6 +81,8 @@ interface ContentItemRow {
   year: number;
   duration_minutes: number;
   maturity_rating: string;
+  poster_url: string | null;
+  backdrop_url: string | null;
   cloudflare_stream_uid: string | null;
   requires_signed_playback: boolean;
 }
@@ -240,6 +244,8 @@ const CONTENT_ITEMS: ContentItem[] = [
     year: 2026,
     durationMinutes: 122,
     maturityRating: '13+',
+    posterUrl: 'https://image.tmdb.org/t/p/w342/yFSIUVTCvgYrpalUktulvk3Gi5Y.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w780/rSPw7tgCH9c6NqICZef4kZjFOQ5.jpg',
     cloudflareStreamUid: process.env.CF_STREAM_UID_LAST_KICKOFF,
     requiresSignedPlayback: process.env.CF_STREAM_SIGNED_PLAYBACK === 'true',
     ...moviePlaybackConfigFromEnv(
@@ -259,6 +265,8 @@ const CONTENT_ITEMS: ContentItem[] = [
     year: 2025,
     durationMinutes: 110,
     maturityRating: '16+',
+    posterUrl: 'https://image.tmdb.org/t/p/w342/d5NXSklXo0qyIYkgV94XAgMIckC.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w780/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg',
     cloudflareStreamUid: process.env.CF_STREAM_UID_SILENT_GRID,
     requiresSignedPlayback: process.env.CF_STREAM_SIGNED_PLAYBACK === 'true',
     ...moviePlaybackConfigFromEnv(
@@ -278,6 +286,8 @@ const CONTENT_ITEMS: ContentItem[] = [
     year: 2024,
     durationMinutes: 101,
     maturityRating: '13+',
+    posterUrl: 'https://image.tmdb.org/t/p/w342/cezWGskPY5x7GaglTTRN4Fugfb8.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w780/Ab8mkHmkYADjU7wQiOkia9BzGvS.jpg',
     cloudflareStreamUid: process.env.CF_STREAM_UID_MARKET_DAY,
     requiresSignedPlayback: process.env.CF_STREAM_SIGNED_PLAYBACK === 'true',
     ...moviePlaybackConfigFromEnv(
@@ -300,6 +310,8 @@ function fromContentRow(row: ContentItemRow): ContentItem {
     year: row.year,
     durationMinutes: row.duration_minutes,
     maturityRating: row.maturity_rating,
+    posterUrl: row.poster_url ?? fallback?.posterUrl ?? undefined,
+    backdropUrl: row.backdrop_url ?? fallback?.backdropUrl ?? undefined,
     cloudflareStreamUid: row.cloudflare_stream_uid ?? fallback?.cloudflareStreamUid ?? undefined,
     requiresSignedPlayback: row.requires_signed_playback ?? fallback?.requiresSignedPlayback ?? false,
     playbackSourceType: fallback?.playbackSourceType,
@@ -352,7 +364,7 @@ export async function getContentItems(): Promise<ContentItem[]> {
   const { data, error } = await supabase
     .from('movie_content_items')
     .select(
-      'id, slug, title, synopsis, genres, year, duration_minutes, maturity_rating, cloudflare_stream_uid, requires_signed_playback'
+      'id, slug, title, synopsis, genres, year, duration_minutes, maturity_rating, poster_url, backdrop_url, cloudflare_stream_uid, requires_signed_playback'
     )
     .eq('is_published', true)
     .order('year', { ascending: false });
