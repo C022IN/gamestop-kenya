@@ -35,9 +35,15 @@ export default function AppNavigator() {
             <Stack.Screen name="Home">
               {props => <HomeScreen {...props} onLogout={handleLogout} />}
             </Stack.Screen>
-            <Stack.Screen name="Detail" component={DetailScreen} />
-            <Stack.Screen name="Player" component={PlayerScreen} />
-            <Stack.Screen name="Search" component={SearchScreen} />
+            <Stack.Screen name="Detail">
+              {props => <DetailScreen {...(props as any)} />}
+            </Stack.Screen>
+            <Stack.Screen name="Player">
+              {props => <PlayerScreen {...(props as any)} />}
+            </Stack.Screen>
+            <Stack.Screen name="Search">
+              {props => <SearchScreen {...(props as any)} />}
+            </Stack.Screen>
           </>
         ) : (
           <Stack.Screen name="Login">
