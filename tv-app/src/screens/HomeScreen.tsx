@@ -114,8 +114,8 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
           />
         )}
         <View style={styles.rows}>
-          {sections.map(s => (
-            <MovieRow key={s.id} title={s.title} items={s.items} onSelect={goToDetail} />
+          {sections.map((s, i) => (
+            <MovieRow key={s.id} title={s.title} items={s.items} onSelect={goToDetail} isFirstRow={i === 0} />
           ))}
         </View>
       </ScrollView>

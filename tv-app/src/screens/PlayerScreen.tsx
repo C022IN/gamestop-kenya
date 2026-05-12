@@ -119,9 +119,14 @@ export default function PlayerScreen({ route, navigation }: Props) {
           source={{ uri: iframeUrl }}
           style={styles.webview}
           allowsFullscreenVideo
+          allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
           javaScriptEnabled
           domStorageEnabled
+          userAgent="Mozilla/5.0 (Linux; Android 12; Tablet) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+          originWhitelist={['*']}
+          mixedContentMode="always"
+          setSupportMultipleWindows={false}
         />
         <TouchableHighlight
           style={styles.webviewBackBtn}

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   TextInput,
@@ -10,9 +10,8 @@ import {
 } from 'react-native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
-import { searchMovies } from '@/api/client';
+import { searchMovies, tmdbPoster } from '@/api/client';
 import FocusableCard from '@/components/FocusableCard';
-import { tmdbPoster } from '@/api/client';
 
 type AnyItem = CatalogItem | TmdbItem;
 
@@ -20,15 +19,36 @@ interface Props {
   navigation: NavigationProp<any>;
 }
 
+function getImage(item: AnyItem): string {
+  if ('poster_url' in item && item.poster_url) return item.poster_url;
+  if ('poster_path' in item) return tmdbPoster((item as TmdbItem).poster_path);
+  return '';
+}
+
+function getTitle(item: AnyItem): string {
+  if ('title' in item && item.title) return item.title;
+  if ('name' in item && (item as TmdbItem).name) return (item as TmdbItem).name!;
+  return 'Unknown';
+}
+
+function getSubtitle(item: AnyItem): string | undefined {
+  if ('vote_average' in item && item.vote_average) {
+    return `★ ${Number(item.vote_average).toFixed(1)}`;
+  }
+  return undefined;
+}
+
 export default function SearchScreen({ navigation }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<AnyItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   async function doSearch() {
     if (!query.trim()) return;
     setLoading(true);
+    setSearched(false);
     const data = await searchMovies(query.trim());
     const all: AnyItem[] = [
       ...(data.libraryResults ?? []),
@@ -39,17 +59,8 @@ export default function SearchScreen({ navigation }: Props) {
     setLoading(false);
   }
 
-  function getImage(item: AnyItem): string {
-    if ('poster_url' in item && item.poster_url) return item.poster_url;
-    if ('poster_path' in item) return tmdbPoster((item as TmdbItem).poster_path);
-    return '';
-  }
-
-  function getTitle(item: AnyItem): string {
-    if ('title' in item && item.title) return item.title;
-    if ('name' in item && (item as TmdbItem).name) return (item as TmdbItem).name!;
-    return 'Unknown';
-  }
+  const CARD_WIDTH = 150;
+  const NUM_COLUMNS = 5;
 
   return (
     <View style={styles.container}>
@@ -58,14 +69,16 @@ export default function SearchScreen({ navigation }: Props) {
           style={styles.backBtn}
           underlayColor="#333"
           onPress={() => navigation.goBack()}
+          hasTVPreferredFocus
         >
           <Text style={styles.backText}>← Back</Text>
         </TouchableHighlight>
-        <Text style={styles.heading}>Search Movies</Text>
+        <Text style={styles.heading}>Search</Text>
       </View>
 
       <View style={styles.searchBar}>
         <TextInput
+          ref={inputRef}
           style={styles.input}
           placeholder="Search for movies, series…"
           placeholderTextColor="#555"
@@ -74,6 +87,7 @@ export default function SearchScreen({ navigation }: Props) {
           onSubmitEditing={doSearch}
           returnKeyType="search"
           autoFocus
+          blurOnSubmit={false}
         />
         <TouchableHighlight style={styles.searchBtn} underlayColor="#cc0000" onPress={doSearch}>
           <Text style={styles.searchBtnText}>Search</Text>
@@ -83,6 +97,7 @@ export default function SearchScreen({ navigation }: Props) {
       {loading && (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#e50914" />
+          <Text style={styles.loadingText}>Searching…</Text>
         </View>
       )}
 
@@ -93,22 +108,28 @@ export default function SearchScreen({ navigation }: Props) {
       )}
 
       {!loading && results.length > 0 && (
-        <ScrollView
-          horizontal={false}
-          contentContainerStyle={styles.grid}
-          showsVerticalScrollIndicator={false}
-        >
-          {results.map((item, i) => (
-            <FocusableCard
-              key={`${getTitle(item)}-${i}`}
-              title={getTitle(item)}
-              imageUri={getImage(item)}
-              width={150}
-              height={225}
-              onPress={() => navigation.navigate('Detail', { item })}
-            />
-          ))}
-        </ScrollView>
+        <>
+          <Text style={styles.resultCount}>{results.length} result{results.length !== 1 ? 's' : ''}</Text>
+          <FlatList
+            data={results}
+            numColumns={NUM_COLUMNS}
+            keyExtractor={(item, i) => `${getTitle(item)}-${i}`}
+            contentContainerStyle={styles.grid}
+            showsVerticalScrollIndicator={false}
+            initialNumToRender={15}
+            renderItem={({ item, index }) => (
+              <FocusableCard
+                title={getTitle(item)}
+                imageUri={getImage(item)}
+                subtitle={getSubtitle(item)}
+                width={CARD_WIDTH}
+                height={225}
+                hasTVPreferredFocus={index === 0}
+                onPress={() => navigation.navigate('Detail', { item })}
+              />
+            )}
+          />
+        </>
       )}
     </View>
   );
@@ -136,13 +157,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 32,
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   input: {
     flex: 1,
     backgroundColor: '#1e1e1e',
     color: '#fff',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#333',
     borderRadius: 6,
     paddingHorizontal: 16,
@@ -157,12 +178,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   searchBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  resultCount: {
+    color: '#888',
+    fontSize: 14,
+    paddingHorizontal: 32,
+    marginBottom: 12,
+  },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loadingText: { color: '#888', fontSize: 16 },
   emptyText: { color: '#888', fontSize: 18 },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     paddingHorizontal: 26,
-    gap: 16,
+    paddingBottom: 32,
   },
 });
