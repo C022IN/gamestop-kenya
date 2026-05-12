@@ -37,16 +37,40 @@ function getTitle(item: AnyItem): string {
   return 'Playing…';
 }
 
-// Injected into WebView to remove the ReactNativeWebView fingerprint that
-// some players use to detect embedded WebViews and block playback.
-const WEBVIEW_INJECT_JS = `
+// Runs before any page script — removes WebView fingerprint so iframe players don't block us
+const WEBVIEW_BEFORE_LOAD_JS = `
   (function() {
     try {
       Object.defineProperty(window, 'ReactNativeWebView', { get: function() { return undefined; } });
-      Object.defineProperty(window, '_reactNativeWebView', { get: function() { return undefined; } });
     } catch(e) {}
-    true;
   })();
+  true;
+`;
+
+// Runs after page loads — polls for a video element and forces play
+const WEBVIEW_AFTER_LOAD_JS = `
+  (function() {
+    var tries = 0;
+    var t = setInterval(function() {
+      var videos = document.querySelectorAll('video');
+      if (videos.length > 0) {
+        videos.forEach(function(v) {
+          v.muted = false;
+          v.play().catch(function(){});
+        });
+        clearInterval(t);
+        return;
+      }
+      // Also try clicking any visible play button
+      var btns = document.querySelectorAll('button, [role="button"]');
+      btns.forEach(function(b) {
+        var label = (b.getAttribute('aria-label') || b.textContent || '').toLowerCase();
+        if (label.indexOf('play') !== -1) { b.click(); }
+      });
+      if (++tries >= 20) clearInterval(t);
+    }, 600);
+  })();
+  true;
 `;
 
 export default function PlayerScreen({ route, navigation }: Props) {
@@ -149,8 +173,8 @@ export default function PlayerScreen({ route, navigation }: Props) {
           originWhitelist={['*']}
           mixedContentMode="always"
           setSupportMultipleWindows={false}
-          // Remove window.ReactNativeWebView so the player doesn't block WebView embeds
-          injectedJavaScriptBeforeContentLoaded={WEBVIEW_INJECT_JS}
+          injectedJavaScriptBeforeContentLoaded={WEBVIEW_BEFORE_LOAD_JS}
+          injectedJavaScript={WEBVIEW_AFTER_LOAD_JS}
           onError={e => setError(`WebView error: ${e.nativeEvent.description}`)}
         />
         <TouchableHighlight

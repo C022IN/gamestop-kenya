@@ -41,8 +41,12 @@ export default function FocusableCard({
   }
 
   return (
-    // Focus border lives on this outer View — NOT inside overflow:hidden
-    <View style={[styles.outerWrapper, focused && styles.outerFocused]}>
+    // Border lives on this outer wrapper — outside overflow:hidden, no elevation change
+    // (elevation change triggers Android layout recalculation which drops TV focus)
+    <View style={[
+      styles.outerWrapper,
+      { borderColor: focused ? '#e50914' : 'transparent' },
+    ]}>
       <TVPressable
         onPress={onPress}
         onFocus={handleFocus}
@@ -50,8 +54,7 @@ export default function FocusableCard({
         hasTVPreferredFocus={hasTVPreferredFocus}
         android_ripple={null}
       >
-        <Animated.View style={[{ width, height: height + 52 }, { transform: [{ scale }] }]}>
-          {/* Inner card — overflow hidden for image clipping only */}
+        <Animated.View style={[{ transform: [{ scale }] }]}>
           <View style={[styles.card, { width, height }]}>
             {imageUri ? (
               <Image
@@ -66,7 +69,7 @@ export default function FocusableCard({
               </View>
             )}
           </View>
-          <View style={[styles.info, focused && styles.infoFocused]}>
+          <View style={[styles.info, { width }, focused && styles.infoFocused]}>
             <Text style={[styles.titleText, focused && styles.titleFocused]} numberOfLines={1}>{title}</Text>
             {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
           </View>
@@ -81,16 +84,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     borderRadius: 8,
     borderWidth: 3,
-    borderColor: 'transparent',
-  },
-  outerFocused: {
-    borderColor: '#e50914',
-    // Shadow glow effect
-    shadowColor: '#e50914',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 10,
-    elevation: 12,
+    // No elevation here — changing elevation drops Android TV focus
   },
   card: {
     borderRadius: 6,
@@ -107,10 +101,10 @@ const styles = StyleSheet.create({
   info: {
     paddingHorizontal: 6,
     paddingTop: 6,
-    paddingBottom: 4,
+    paddingBottom: 6,
     backgroundColor: '#111',
   },
-  infoFocused: { backgroundColor: '#2a0a0e' },
+  infoFocused: { backgroundColor: '#1a0003' },
   titleText: { color: '#bbb', fontSize: 13, fontWeight: '600' },
   titleFocused: { color: '#fff' },
   subtitle: { color: '#e50914', fontSize: 11, marginTop: 2 },

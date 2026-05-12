@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE_URL = 'https://www.gamestop.co.ke/api';
 const SESSION_KEY = 'gsm_movie_session';
+const PHONE_KEY = 'gsm_user_phone';
 
 export function normalisePhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
@@ -32,6 +33,11 @@ export async function getStoredToken(): Promise<string | null> {
 
 export async function clearToken(): Promise<void> {
   await AsyncStorage.removeItem(SESSION_KEY);
+  await AsyncStorage.removeItem(PHONE_KEY);
+}
+
+export async function getStoredPhone(): Promise<string | null> {
+  return AsyncStorage.getItem(PHONE_KEY);
 }
 
 export interface LoginResult {
@@ -51,6 +57,9 @@ export async function login(phone: string, accessCode: string): Promise<LoginRes
     if (data.error) return { ok: false, error: data.error };
     if (!token) return { ok: false, error: 'No session token received' };
     await AsyncStorage.setItem(SESSION_KEY, token);
+    // Store phone for display in HomeScreen
+    const displayPhone = data.profile?.phone ?? normalisePhone(phone);
+    await AsyncStorage.setItem(PHONE_KEY, displayPhone);
     return { ok: true };
   } catch (e: any) {
     return { ok: false, error: e.message ?? 'Network error' };

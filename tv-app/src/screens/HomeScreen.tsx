@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   TouchableHighlight,
@@ -9,17 +9,15 @@ import {
 } from 'react-native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
-import { fetchCatalog } from '@/api/client';
+import { fetchCatalog, getStoredPhone } from '@/api/client';
 import HeroBanner from '@/components/HeroBanner';
 import MovieRow from '@/components/MovieRow';
 
 type AnyItem = CatalogItem | TmdbItem;
 
-interface Section {
-  id: string;
-  title: string;
-  items: AnyItem[];
-}
+type FeedRow =
+  | { type: 'hero'; id: string; item: AnyItem }
+  | { type: 'section'; id: string; title: string; items: AnyItem[]; isFirst: boolean };
 
 interface Props {
   navigation: NavigationProp<any>;
@@ -27,10 +25,14 @@ interface Props {
 }
 
 export default function HomeScreen({ navigation, onLogout }: Props) {
-  const [heroItem, setHeroItem] = useState<AnyItem | null>(null);
-  const [sections, setSections] = useState<Section[]>([]);
+  const [feed, setFeed] = useState<FeedRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [phone, setPhone] = useState<string | null>(null);
+
+  useEffect(() => {
+    getStoredPhone().then(setPhone);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,18 +44,29 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
       return;
     }
 
+    const rows: FeedRow[] = [];
     const allItems = data.items ?? [];
-    if (allItems.length) setHeroItem(allItems[0]);
 
-    const built: Section[] = [];
-    if (data.sections?.length) {
-      for (const s of data.sections) {
-        built.push({ id: s.id, title: s.title, items: s.items as AnyItem[] });
-      }
-    } else if (allItems.length) {
-      built.push({ id: 'all', title: 'All Content', items: allItems });
+    if (allItems.length) {
+      rows.push({ type: 'hero', id: 'hero', item: allItems[0] });
     }
-    setSections(built);
+
+    const sections = data.sections ?? [];
+    sections.forEach((s, i) => {
+      rows.push({
+        type: 'section',
+        id: s.id,
+        title: s.title,
+        items: s.items as AnyItem[],
+        isFirst: i === 0,
+      });
+    });
+
+    if (!sections.length && allItems.length) {
+      rows.push({ type: 'section', id: 'all', title: 'All Content', items: allItems, isFirst: true });
+    }
+
+    setFeed(rows);
     setLoading(false);
   }, []);
 
@@ -61,10 +74,6 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
 
   function goToDetail(item: AnyItem) {
     navigation.navigate('Detail', { item });
-  }
-
-  function goToPlay(item: AnyItem) {
-    navigation.navigate('Player', { item });
   }
 
   if (loading) {
@@ -88,37 +97,52 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Top bar */}
       <View style={styles.topBar}>
-        <Text style={styles.brand}>🎬 GameStop Movies</Text>
+        <Text style={styles.brand}>GameStop Movies</Text>
         <View style={styles.topActions}>
+          {phone ? <Text style={styles.phoneText}>{phone}</Text> : null}
           <TouchableHighlight
             style={styles.topBtn}
-            underlayColor="#222"
+            underlayColor="#333"
             onPress={() => navigation.navigate('Search')}
           >
-            <Text style={styles.topBtnText}>🔍 Search</Text>
+            <Text style={styles.topBtnText}>Search</Text>
           </TouchableHighlight>
-          <TouchableHighlight style={styles.topBtn} underlayColor="#222" onPress={onLogout}>
+          <TouchableHighlight style={styles.topBtn} underlayColor="#333" onPress={onLogout}>
             <Text style={styles.topBtnText}>Sign Out</Text>
           </TouchableHighlight>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {heroItem && (
-          <HeroBanner
-            item={heroItem}
-            onPlay={() => goToPlay(heroItem)}
-            onMore={() => goToDetail(heroItem)}
-          />
-        )}
-        <View style={styles.rows}>
-          {sections.map((s, i) => (
-            <MovieRow key={s.id} title={s.title} items={s.items} onSelect={goToDetail} isFirstRow={i === 0} />
-          ))}
-        </View>
-      </ScrollView>
+      {/* FlatList for vertical rows — Android TV D-pad navigates between sections correctly */}
+      <FlatList
+        data={feed}
+        keyExtractor={row => row.id}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={false}
+        initialNumToRender={3}
+        maxToRenderPerBatch={2}
+        windowSize={5}
+        renderItem={({ item: row }) => {
+          if (row.type === 'hero') {
+            return (
+              <HeroBanner
+                item={row.item}
+                onPlay={() => navigation.navigate('Player', { item: row.item })}
+                onMore={() => goToDetail(row.item)}
+              />
+            );
+          }
+          return (
+            <MovieRow
+              title={row.title}
+              items={row.items}
+              onSelect={goToDetail}
+              isFirstRow={row.isFirst}
+            />
+          );
+        }}
+      />
     </View>
   );
 }
@@ -132,18 +156,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 32,
     paddingVertical: 14,
-    backgroundColor: 'rgba(0,0,0,0.9)',
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    zIndex: 10,
   },
-  brand: { color: '#fff', fontSize: 22, fontWeight: '800' },
-  topActions: { flexDirection: 'row', gap: 12 },
+  brand: { color: '#e50914', fontSize: 20, fontWeight: '800', letterSpacing: 1 },
+  topActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  phoneText: { color: '#888', fontSize: 13, marginRight: 4 },
   topBtn: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 4,
     backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#333',
   },
   topBtnText: { color: '#fff', fontSize: 14 },
-  rows: { paddingTop: 32 },
   errorText: { color: '#e50914', fontSize: 18, marginBottom: 24 },
   retryBtn: {
     backgroundColor: '#e50914',
