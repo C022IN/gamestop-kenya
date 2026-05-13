@@ -29,7 +29,9 @@ function getId(item: AnyItem): string {
   return String(item.id ?? '');
 }
 function getMediaType(item: AnyItem): string {
-  return ('media_type' in item && (item as TmdbItem).media_type) ? (item as TmdbItem).media_type! : 'movie';
+  if ('media_type' in item && (item as TmdbItem).media_type) return (item as TmdbItem).media_type!;
+  if ('kind' in item && (item as CatalogItem).kind === 'series') return 'tv';
+  return 'movie';
 }
 function getTitle(item: AnyItem): string {
   if ('title' in item && item.title) return item.title;
@@ -75,7 +77,6 @@ const WEBVIEW_AFTER_LOAD_JS = `
 
 export default function PlayerScreen({ route, navigation }: Props) {
   const { item, season = 1, episode = 1 } = route.params;
-  const videoRef = useRef<Video>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -198,7 +199,6 @@ export default function PlayerScreen({ route, navigation }: Props) {
   return (
     <View style={styles.container} onTouchStart={resetControlsTimer}>
       <Video
-        ref={videoRef}
         source={{ uri: streamUrl! }}
         style={styles.video}
         resizeMode={ResizeMode.CONTAIN}

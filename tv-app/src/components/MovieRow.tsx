@@ -29,9 +29,10 @@ function getTitle(item: AnyItem): string {
   return 'Unknown';
 }
 
-function getKey(item: AnyItem): string {
+function getKey(item: AnyItem, index: number): string {
   if ('slug' in item && item.slug) return item.slug;
-  return String(item.id ?? Math.random());
+  if (item.id !== undefined && item.id !== null) return String(item.id);
+  return `idx-${index}`;
 }
 
 function getSubtitle(item: AnyItem): string | undefined {
@@ -63,6 +64,9 @@ export default function MovieRow({ title, items, onSelect, isFirstRow = false }:
           offset: ITEM_SIZE * index + 26,
           index,
         })}
+        onScrollToIndexFailed={info => {
+          listRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: true });
+        }}
         renderItem={({ item, index }) => (
           <FocusableCard
             title={getTitle(item)}
@@ -71,9 +75,7 @@ export default function MovieRow({ title, items, onSelect, isFirstRow = false }:
             hasTVPreferredFocus={isFirstRow && index === 0}
             onPress={() => onSelect(item)}
             onFocus={() => {
-              try {
-                listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
-              } catch {}
+              listRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
             }}
           />
         )}

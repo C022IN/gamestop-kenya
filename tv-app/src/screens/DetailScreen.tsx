@@ -122,7 +122,6 @@ export default function DetailScreen({ route, navigation }: Props) {
         style={styles.backBtn}
         underlayColor="#333"
         onPress={() => navigation.goBack()}
-        hasTVPreferredFocus
       >
         <Text style={styles.backText}>← Back</Text>
       </TouchableHighlight>
@@ -151,6 +150,7 @@ export default function DetailScreen({ route, navigation }: Props) {
                 onFocus={() => setPlayFocused(true)}
                 onBlur={() => setPlayFocused(false)}
                 onPress={handlePlay}
+                hasTVPreferredFocus
               >
                 <Text style={styles.playBtnText}>▶  {tv ? `Play S${season} E${episode}` : 'Play Now'}</Text>
               </TouchableHighlight>

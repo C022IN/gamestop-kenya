@@ -81,7 +81,6 @@ export default function LoginScreen({ onSuccess }: Props) {
           underlayColor="#cc0000"
           onPress={handleLogin}
           disabled={loading}
-          hasTVPreferredFocus
         >
           {loading ? (
             <ActivityIndicator color="#fff" />

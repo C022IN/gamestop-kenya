@@ -69,7 +69,6 @@ export default function SearchScreen({ navigation }: Props) {
           style={styles.backBtn}
           underlayColor="#333"
           onPress={() => navigation.goBack()}
-          hasTVPreferredFocus
         >
           <Text style={styles.backText}>← Back</Text>
         </TouchableHighlight>
@@ -87,6 +86,7 @@ export default function SearchScreen({ navigation }: Props) {
           onSubmitEditing={doSearch}
           returnKeyType="search"
           autoFocus
+          hasTVPreferredFocus
           blurOnSubmit={false}
         />
         <TouchableHighlight style={styles.searchBtn} underlayColor="#cc0000" onPress={doSearch}>
