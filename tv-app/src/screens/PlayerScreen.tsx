@@ -188,7 +188,6 @@ export default function PlayerScreen({ route, navigation }: Props) {
           style={styles.webviewBackBtn}
           underlayColor="#333"
           onPress={() => navigation.goBack()}
-          hasTVPreferredFocus
         >
           <Text style={styles.controlText}>← Back</Text>
         </TouchableHighlight>
