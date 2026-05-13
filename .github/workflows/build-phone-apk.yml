@@ -1,4 +1,4 @@
-name: Build TV App (Local APK)
+name: Build Phone App (Local APK)
 
 on:
   workflow_dispatch:
@@ -11,12 +11,12 @@ on:
         options: [preview, production]
 
 concurrency:
-  group: build-tv-${{ github.ref }}
+  group: build-phone-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Android TV APK — Local Build
+    name: Android Phone APK — Local Build
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -40,14 +40,14 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install tv-app dependencies
+      - name: Install dependencies
         working-directory: tv-app
         run: npm install --legacy-peer-deps
 
-      - name: Generate native Android project (TV variant)
+      - name: Generate native Android project (phone variant)
         working-directory: tv-app
         env:
-          APP_VARIANT: tv
+          APP_VARIANT: phone
         run: npx expo prebuild --platform android --clean --no-install
 
       - name: Build APK with Gradle
@@ -59,32 +59,33 @@ jobs:
           PROFILE="${{ github.event.inputs.profile || 'preview' }}"
           if [ "$PROFILE" = "production" ]; then
             ./gradlew bundleRelease
-            find . -name "*.aab" -exec cp {} ../gamestop-tv.aab \;
+            find . -name "*.aab" -exec cp {} ../gamestop-phone.aab \;
           else
             ./gradlew assembleRelease
-            find . -name "app-release*.apk" -exec cp {} ../gamestop-tv.apk \;
+            find . -name "app-release*.apk" -exec cp {} ../gamestop-phone.apk \;
           fi
 
       - name: Upload APK artifact
         if: github.event.inputs.profile != 'production'
         uses: actions/upload-artifact@v4
         with:
-          name: gamestop-tv-apk-${{ github.sha }}
-          path: tv-app/gamestop-tv.apk
+          name: gamestop-phone-apk-${{ github.sha }}
+          path: tv-app/gamestop-phone.apk
           retention-days: 30
 
       - name: Upload AAB artifact
         if: github.event.inputs.profile == 'production'
         uses: actions/upload-artifact@v4
         with:
-          name: gamestop-tv-aab-${{ github.sha }}
-          path: tv-app/gamestop-tv.aab
+          name: gamestop-phone-aab-${{ github.sha }}
+          path: tv-app/gamestop-phone.aab
           retention-days: 30
 
       - name: Build summary
         run: |
-          echo "## GameStop Movies TV — Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "## GameStop Movies Phone — Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "**Profile:** ${{ github.event.inputs.profile || 'preview' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** ke.co.gamestop.movies.phone" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Download the APK/AAB from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY

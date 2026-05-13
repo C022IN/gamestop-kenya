@@ -1,8 +1,10 @@
+const isPhone = process.env.APP_VARIANT === 'phone';
+
 module.exports = {
   name: 'GameStop Movies',
-  slug: 'gamestop-movies-tv',
+  slug: isPhone ? 'gamestop-movies-phone' : 'gamestop-movies-tv',
   version: '1.0.0',
-  orientation: 'landscape',
+  orientation: isPhone ? 'portrait' : 'landscape',
   icon: './assets/icon.png',
   userInterfaceStyle: 'dark',
   splash: {
@@ -11,7 +13,7 @@ module.exports = {
     backgroundColor: '#000000',
   },
   android: {
-    package: 'ke.co.gamestop.movies',
+    package: isPhone ? 'ke.co.gamestop.movies.phone' : 'ke.co.gamestop.movies',
     versionCode: 1,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
@@ -38,14 +40,18 @@ module.exports = {
         },
       },
     ],
-    [
-      '@react-native-tvos/config-tv',
-      {
-        isTV: true,
-        showVerboseWarnings: false,
-        removeFlipperOnAndroid: true,
-      },
-    ],
+    ...(isPhone
+      ? []
+      : [
+          [
+            '@react-native-tvos/config-tv',
+            {
+              isTV: true,
+              showVerboseWarnings: false,
+              removeFlipperOnAndroid: true,
+            },
+          ],
+        ]),
   ],
   extra: {
     eas: {
