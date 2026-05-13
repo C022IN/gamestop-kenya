@@ -1,23 +1,14 @@
-name: Build TV App (EAS Build)
+name: Build TV App (Local APK)
 
 on:
   workflow_dispatch:
     inputs:
       profile:
-        description: 'EAS build profile'
+        description: 'Build profile'
         required: true
         default: 'preview'
         type: choice
         options: [preview, production]
-  push:
-    branches: [main]
-    paths:
-      - 'tv-app/src/**'
-      - 'tv-app/app.config.js'
-      - 'tv-app/app.config.ts'
-      - 'tv-app/eas.json'
-      - 'tv-app/package.json'
-      - 'tv-app/plugins/**'
 
 concurrency:
   group: build-tv-${{ github.ref }}
@@ -25,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    name: EAS Build — Android TV
+    name: Android TV APK — Local Build
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -33,34 +24,56 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: npm
           cache-dependency-path: tv-app/package-lock.json
 
-      - name: Install dependencies
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli@latest
+
+      - name: Install tv-app dependencies
         working-directory: tv-app
         run: npm install --legacy-peer-deps
 
-      - name: Setup EAS CLI
-        run: npm install -g eas-cli@latest
-
-      - name: EAS Build — APK/AAB
+      - name: Build APK locally (no EAS quota used)
         working-directory: tv-app
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
           PROFILE="${{ github.event.inputs.profile || 'preview' }}"
           echo "Building profile: $PROFILE"
           eas build \
             --platform android \
             --profile "$PROFILE" \
+            --local \
             --non-interactive \
-            --no-wait
+            --output ./gamestop-tv.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamestop-tv-apk-${{ github.sha }}
+          path: tv-app/gamestop-tv.apk
+          retention-days: 30
+
+      - name: Build summary
+        run: |
+          echo "## GameStop Movies TV — Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "**Profile:** ${{ github.event.inputs.profile || 'preview' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## GameStop Movies TV — EAS Build submitted" >> $GITHUB_STEP_SUMMARY
-          echo "Profile: **$PROFILE**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Monitor and download at: https://expo.dev/accounts/[your-account]/projects/gamestop-movies-tv/builds" >> $GITHUB_STEP_SUMMARY
+          echo "Download the APK from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
