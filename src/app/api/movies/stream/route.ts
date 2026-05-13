@@ -11,16 +11,15 @@ import {
   isCompatiblePlayerConfigured,
 } from '@/lib/compatible-player';
 
-// Fallback embed player used when COMPATIBLE_PLAYER_BASE_URL is not configured.
-// vidlink.pro supports autoplay, works in Android WebView, and uses TMDB IDs.
-const FALLBACK_PLAYER = 'https://vidlink.pro';
-
-function buildFallbackMovieUrl(tmdbId: number): string {
-  return `${FALLBACK_PLAYER}/movie/${tmdbId}?autoplay=true&multiLang=true`;
+// Primary fallback: multiembed.mov aggregates 10+ video servers, works in
+// Android WebView without WebView-detection blocking, uses TMDB IDs directly.
+// Secondary: vidlink.pro as an additional option if primary is down.
+function buildPrimaryMovieUrl(tmdbId: number): string {
+  return `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
 }
 
-function buildFallbackTvUrl(tmdbId: number, season: number, episode: number): string {
-  return `${FALLBACK_PLAYER}/tv/${tmdbId}/${season}/${episode}?autoplay=true&nextbutton=true&multiLang=true`;
+function buildPrimaryTvUrl(tmdbId: number, season: number, episode: number): string {
+  return `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`;
 }
 
 export async function GET(req: NextRequest) {
@@ -47,7 +46,7 @@ export async function GET(req: NextRequest) {
     let provider: string;
 
     if (isCompatiblePlayerConfigured()) {
-      // Use the configured provider (e.g. Videasy via COMPATIBLE_PLAYER_BASE_URL)
+      // Prefer the operator-configured provider (e.g. Videasy)
       const built = mediaType === 'tv'
         ? buildCompatibleTvPlayerUrl(numericId, season, episode)
         : buildCompatibleMoviePlayerUrl(numericId);
@@ -58,11 +57,11 @@ export async function GET(req: NextRequest) {
       iframeUrl = built;
       provider = 'Videasy';
     } else {
-      // Fallback: vidlink.pro works without any env var configuration
+      // No env var configured — use multiembed.mov (10+ servers, Android WebView friendly)
       iframeUrl = mediaType === 'tv'
-        ? buildFallbackTvUrl(numericId, season, episode)
-        : buildFallbackMovieUrl(numericId);
-      provider = 'VidLink';
+        ? buildPrimaryTvUrl(numericId, season, episode)
+        : buildPrimaryMovieUrl(numericId);
+      provider = 'MultiEmbed';
     }
 
     return NextResponse.json({

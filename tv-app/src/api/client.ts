@@ -133,8 +133,6 @@ export interface StreamResult {
   provider?: string;
 }
 
-const FALLBACK_PLAYER = 'https://vidlink.pro';
-
 export function buildDirectPlayerUrl(
   id: string | number,
   mediaType: string,
@@ -143,9 +141,9 @@ export function buildDirectPlayerUrl(
 ): string {
   const numId = Number(id);
   if (mediaType === 'tv') {
-    return `${FALLBACK_PLAYER}/tv/${numId}/${season}/${episode}?autoplay=true&nextbutton=true&multiLang=true`;
+    return `https://multiembed.mov/?video_id=${numId}&tmdb=1&s=${season}&e=${episode}`;
   }
-  return `${FALLBACK_PLAYER}/movie/${numId}?autoplay=true&multiLang=true`;
+  return `https://multiembed.mov/?video_id=${numId}&tmdb=1`;
 }
 
 export async function fetchStream(
