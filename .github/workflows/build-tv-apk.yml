@@ -40,34 +40,43 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install EAS CLI
-        run: npm install -g eas-cli@latest
-
       - name: Install tv-app dependencies
         working-directory: tv-app
         run: npm install --legacy-peer-deps
 
-      - name: Build APK locally (no EAS quota used)
+      - name: Generate native Android project
         working-directory: tv-app
+        run: npx expo prebuild --platform android --clean --no-install
+
+      - name: Build APK with Gradle
+        working-directory: tv-app/android
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
           PROFILE="${{ github.event.inputs.profile || 'preview' }}"
-          echo "Building profile: $PROFILE"
-          eas build \
-            --platform android \
-            --profile "$PROFILE" \
-            --local \
-            --non-interactive \
-            --output ./gamestop-tv.apk
+          if [ "$PROFILE" = "production" ]; then
+            ./gradlew bundleRelease
+            find . -name "*.aab" -exec cp {} ../gamestop-tv.aab \;
+          else
+            ./gradlew assembleRelease
+            find . -name "app-release*.apk" -exec cp {} ../gamestop-tv.apk \;
+          fi
 
       - name: Upload APK artifact
+        if: github.event.inputs.profile != 'production'
         uses: actions/upload-artifact@v4
         with:
           name: gamestop-tv-apk-${{ github.sha }}
           path: tv-app/gamestop-tv.apk
+          retention-days: 30
+
+      - name: Upload AAB artifact
+        if: github.event.inputs.profile == 'production'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gamestop-tv-aab-${{ github.sha }}
+          path: tv-app/gamestop-tv.aab
           retention-days: 30
 
       - name: Build summary
@@ -76,4 +85,4 @@ jobs:
           echo "**Profile:** ${{ github.event.inputs.profile || 'preview' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Download the APK from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
+          echo "Download the APK/AAB from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
