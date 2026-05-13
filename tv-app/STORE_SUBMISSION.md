@@ -4,14 +4,22 @@
 
 ### Option A — GitHub Actions (recommended, free)
 
-1. Go to **github.com/C022IN/gamestop-kenya → Actions → Build TV App (APK + AAB)**
-2. Click **Run workflow** → main branch → Run
-3. Wait ~15 min for the build
-4. Download artifacts:
-   - `gamestop-movies-tv-release-apk` → APK file (sideload + Amazon Appstore)
-   - `gamestop-movies-tv-release-aab` → AAB file (Google Play Store)
+1. Go to **github.com/C022IN/gamestop-kenya → Actions**
+2. Pick a workflow:
+   - **Build TV App (Local APK)** — Android TV, package `ke.co.gamestop.movies`, Leanback launcher
+   - **Build Phone App (Local APK)** — Android phone, package `ke.co.gamestop.movies.phone`, portrait
+3. Click **Run workflow** → choose `preview` (APK) or `production` (AAB) → Run
+4. Wait ~15 min, then download artifacts from the run page:
+   - Preview: `gamestop-tv-apk-<sha>` / `gamestop-phone-apk-<sha>` (sideloadable APK)
+   - Production: `gamestop-tv-aab-<sha>` / `gamestop-phone-aab-<sha>` (Play Store AAB)
 
-**First time only — add keystore secrets to GitHub:**
+> **Important — signing:** The current Gradle workflow signs release builds with Expo's
+> auto-generated debug keystore. APKs from this workflow **install fine via sideload**
+> (Fire TV / Android TV / Hisense) but are **NOT acceptable for Google Play Store**.
+> To make a Play-Store-ready build you need to wire a release keystore — see "Add
+> release keystore" below.
+
+**Add release keystore (only required for Play Store submission):**
 1. Generate a keystore locally:
    ```bash
    keytool -genkey -v \
@@ -25,6 +33,8 @@
    - `TV_KEYSTORE_PASSWORD` = your keystore password
    - `TV_KEY_ALIAS` = `gamestop-movies`
    - `TV_KEY_PASSWORD` = your key password
+4. Add a "Decode keystore" step to `build-tv-apk.yml` and a `signingConfig` block in
+   `tv-app/android/app/build.gradle` (not currently wired — open a follow-up task).
 
 ### Option B — Codemagic (easier Play Store integration)
 
@@ -81,7 +91,7 @@
 
 | Field | Value |
 |---|---|
-| Package / Bundle ID | `ke.co.gamestop.movies` |
+| Package / Bundle ID | `ke.co.gamestop.movies` (TV) / `ke.co.gamestop.movies.phone` (phone) |
 | App name | GameStop Movies |
 | Short description | Stream movies and TV with your GameStop Kenya subscription |
 | Category | Entertainment |

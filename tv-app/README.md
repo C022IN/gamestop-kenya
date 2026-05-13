@@ -21,10 +21,9 @@ React Native app targeting Android TV, Google TV, Amazon Fire TV, TCL, Hisense V
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20+ (Metro bundler in Expo SDK 55 uses `Array.prototype.toReversed`)
 - Java 17 (JDK)
-- Android SDK (API 35) + Build Tools
-- React Native CLI: `npm install -g react-native`
+- Android SDK (API 36) + Build Tools 35
 - For TV emulator: Android Studio with TV AVD image
 
 ---
