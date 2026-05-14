@@ -15,8 +15,14 @@ export interface ExtractedStream {
 }
 
 function getExtractorUrl(): string | null {
-  const raw = process.env.STREAM_EXTRACTOR_URL?.trim();
+  // Support both the canonical name and the shorter alias set in Vercel.
+  const raw = (process.env.STREAM_EXTRACTOR_URL ?? process.env.EXTRACTOR_BASE_URL)?.trim();
   return raw ? raw.replace(/\/+$/, '') : null;
+}
+
+function getExtractorToken(): string | null {
+  const raw = (process.env.STREAM_EXTRACTOR_TOKEN ?? process.env.EXTRACTOR_AUTH_TOKEN)?.trim();
+  return raw || null;
 }
 
 export function isStreamExtractorConfigured(): boolean {
@@ -41,7 +47,7 @@ export async function extractStream(params: {
     url.searchParams.set('e', String(params.episode ?? 1));
   }
 
-  const token = process.env.STREAM_EXTRACTOR_TOKEN?.trim();
+  const token = getExtractorToken();
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
 

@@ -17,7 +17,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const AUTH_TOKEN = process.env.EXTRACTOR_AUTH_TOKEN || '';
 const PLAYER_BASE = (process.env.PLAYER_BASE_URL || 'https://player.videasy.net').replace(/\/+$/, '');
 const PAGE_TIMEOUT_MS = Number(process.env.PAGE_TIMEOUT_MS) || 30_000;
-const M3U8_WAIT_MS = Number(process.env.M3U8_WAIT_MS) || 20_000;
+const M3U8_WAIT_MS = Number(process.env.M3U8_WAIT_MS) || 35_000;
 
 const app = express();
 
@@ -56,7 +56,7 @@ function buildEmbedUrl(tmdbId, type, season, episode) {
   return `${PLAYER_BASE}/movie/${tmdbId}?autoplay=true`;
 }
 
-async function extractM3u8(url) {
+async function extractM3u8(embedUrl) {
   const start = Date.now();
   const browser = await getBrowser();
   const page = await browser.newPage();
@@ -67,47 +67,57 @@ async function extractM3u8(url) {
   );
   await page.setViewport({ width: 1280, height: 720 });
 
-  // Block heavy/irrelevant resources so the page loads faster
+  // Block heavy resources; keep XHR/fetch so the player can fetch the m3u8
   await page.setRequestInterception(true);
   const candidates = [];
   page.on('request', req => {
-    const reqUrl = req.url();
     const type = req.resourceType();
     if (type === 'image' || type === 'font' || type === 'media') {
-      // Don't block the playlist itself (it's xhr/fetch), just skip raw media segments
       req.abort().catch(() => {});
       return;
     }
-    if (reqUrl.includes('.m3u8')) {
-      candidates.push({ url: reqUrl, headers: req.headers() });
+    if (req.url().includes('.m3u8')) {
+      candidates.push({ url: req.url(), headers: req.headers() });
     }
     req.continue().catch(() => {});
   });
 
-  try {
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: PAGE_TIMEOUT_MS });
-
-    // Some inner players need a click to start. Try clicking common play-button selectors.
-    await page.evaluate(() => {
-      const selectors = ['button[aria-label*="play" i]', '.vjs-big-play-button', '.plyr__control--overlaid', '.jw-icon-display'];
-      for (const sel of selectors) {
-        const el = document.querySelector(sel);
-        if (el) (/** @type {HTMLElement} */ (el)).click();
+  function clickPlay() {
+    return page.evaluate(() => {
+      // Videasy renders a full-screen overlay div with cursor-pointer that must be
+      // clicked to trigger React's onClick — standard button selectors miss it.
+      const selectors = [
+        'div.cursor-pointer',
+        'button[aria-label*="play" i]',
+        '.vjs-big-play-button',
+        '.plyr__control--overlaid',
+        '.jw-icon-display',
+        'button',
+      ];
+      for (const s of selectors) {
+        const el = document.querySelector(s);
+        if (el) { el.click(); break; }
       }
-      // Also try playing any <video> elements directly
-      document.querySelectorAll('video').forEach(v => {
-        v.muted = true; // muted autoplay is allowed
-        v.play().catch(() => {});
-      });
+      document.querySelectorAll('video').forEach(v => { v.muted = true; v.play().catch(() => {}); });
     }).catch(() => {});
+  }
 
-    // Poll for an m3u8 to arrive within budget
+  try {
+    // waitUntil:'load' ensures React has hydrated and attached onClick handlers before
+    // we try to click. 'domcontentloaded' fires too early — clicks are silently dropped.
+    await page.goto(embedUrl, { waitUntil: 'load', timeout: PAGE_TIMEOUT_MS });
+    await clickPlay();
+
     const deadline = Date.now() + M3U8_WAIT_MS;
+    let tick = 0;
     while (Date.now() < deadline && candidates.length === 0) {
-      await new Promise(r => setTimeout(r, 250));
+      tick++;
+      // Re-click periodically in case the first click landed before hydration finished
+      if (tick <= 6 && tick % 2 === 0) await clickPlay();
+      await new Promise(r => setTimeout(r, 500));
     }
 
-    // Prefer master playlist over variant — heuristic: shortest path that contains 'master' or fewest query params
+    // Prefer master/index playlist over variant playlists
     const ranked = candidates.slice().sort((a, b) => {
       const aMaster = /master|index|playlist/i.test(a.url) ? 0 : 1;
       const bMaster = /master|index|playlist/i.test(b.url) ? 0 : 1;
@@ -122,8 +132,6 @@ async function extractM3u8(url) {
       ok: true,
       m3u8: winner.url,
       headers: {
-        // Pass through the headers the inner page used — most relevant for the client
-        // when fetching segments (Referer is often required)
         referer: winner.headers['referer'] || winner.headers['Referer'] || null,
         'user-agent': winner.headers['user-agent'] || winner.headers['User-Agent'] || null,
       },
