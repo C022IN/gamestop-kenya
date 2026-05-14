@@ -6,6 +6,7 @@ import {
   Text,
   TouchableHighlight,
   View,
+  useTVEventHandler,
 } from 'react-native';
 import { Video, ResizeMode, type AVPlaybackStatus } from 'expo-av';
 import { WebView } from 'react-native-webview';
@@ -108,11 +109,23 @@ export default function PlayerScreen({ route, navigation }: Props) {
       return;
     }
     if (result.stream_url) {
-      // Native playback path — preferred for Android TV (expo-av → ExoPlayer)
+      // Native playback path — preferred for Android TV (expo-av → ExoPlayer).
+      // Forward every non-null header the extractor captured. Origin in particular
+      // is required by most HLS CDNs for hotlink protection — ExoPlayer doesn't
+      // add it on its own, so without forwarding it segments 403 silently.
       setStreamUrl(result.stream_url);
+      const HEADER_CASE: Record<string, string> = {
+        referer: 'Referer',
+        origin: 'Origin',
+        'user-agent': 'User-Agent',
+      };
       const h: Record<string, string> = {};
-      if (result.stream_headers?.referer) h.Referer = result.stream_headers.referer;
-      if (result.stream_headers?.['user-agent']) h['User-Agent'] = result.stream_headers['user-agent'];
+      const src = result.stream_headers ?? {};
+      for (const [k, v] of Object.entries(src)) {
+        if (typeof v === 'string' && v.length > 0) {
+          h[HEADER_CASE[k.toLowerCase()] ?? k] = v;
+        }
+      }
       setStreamHeaders(h);
       return;
     }
@@ -126,15 +139,32 @@ export default function PlayerScreen({ route, navigation }: Props) {
 
   React.useEffect(() => { loadStream(); }, [loadStream]);
 
-  function resetControlsTimer() {
+  const resetControlsTimer = useCallback(() => {
     setShowControls(true);
     if (controlsTimer.current) clearTimeout(controlsTimer.current);
     controlsTimer.current = setTimeout(() => setShowControls(false), 4000);
-  }
+  }, []);
 
+  // Android TV remote keys don't fire touch events, so we'd never hide the
+  // overlay. Wake the timer on any remote keypress instead.
+  useTVEventHandler((evt) => {
+    if (evt?.eventType && evt.eventType !== 'blur' && evt.eventType !== 'focus') {
+      resetControlsTimer();
+    }
+  });
+
+  const hasAutoHiddenRef = useRef(false);
   function onPlaybackStatusUpdate(status: AVPlaybackStatus) {
-    if (!status.isLoaded && status.error) {
-      setError(`Playback error: ${status.error}`);
+    if (!status.isLoaded) {
+      if (status.error) setError(`Playback error: ${status.error}`);
+      return;
+    }
+    // Once playback actually begins, hide the controls overlay automatically.
+    // Only do it once per session so we don't fight the user reopening them.
+    if (status.isPlaying && !hasAutoHiddenRef.current) {
+      hasAutoHiddenRef.current = true;
+      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      controlsTimer.current = setTimeout(() => setShowControls(false), 2500);
     }
   }
 

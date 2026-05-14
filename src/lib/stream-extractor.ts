@@ -7,10 +7,7 @@
 
 export interface ExtractedStream {
   m3u8: string;
-  headers: {
-    referer: string | null;
-    'user-agent': string | null;
-  };
+  headers: Record<string, string | null>;
   took_ms: number;
 }
 
@@ -59,7 +56,7 @@ export async function extractStream(params: {
     if (!body.ok || !body.m3u8) return null;
     return {
       m3u8: body.m3u8,
-      headers: body.headers ?? { referer: null, 'user-agent': null },
+      headers: body.headers ?? {},
       took_ms: body.took_ms ?? 0,
     };
   } catch {

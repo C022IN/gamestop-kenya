@@ -131,12 +131,9 @@ export interface StreamResult {
   source_type?: string;
   playback_mode?: string;
   provider?: string;
-  // Some HLS sources require Referer / User-Agent on segment requests.
-  // The extractor service forwards them so expo-av can replay them.
-  stream_headers?: {
-    referer?: string | null;
-    'user-agent'?: string | null;
-  };
+  // HLS CDNs gate segment requests on a mix of Referer/Origin/User-Agent.
+  // The extractor forwards whatever the inner page used so expo-av replays them.
+  stream_headers?: Record<string, string | null | undefined>;
 }
 
 // Client-side last-resort fallback if the server API is unreachable.

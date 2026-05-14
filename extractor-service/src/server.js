@@ -118,15 +118,27 @@ async function extractM3u8(url) {
       return { ok: false, error: 'No .m3u8 observed within budget', took_ms: Date.now() - start };
     }
 
+    // Forward every header the CDN is likely to gate on. Origin is the big one —
+    // browsers add it automatically on cross-origin fetches, ExoPlayer doesn't,
+    // and most HLS hotlink protection rejects requests without it.
+    const h = winner.headers || {};
+    const pick = (k) => h[k] || h[k.toLowerCase()] || h[k.toUpperCase()] || null;
+    let origin = pick('origin');
+    if (!origin) {
+      try { origin = new URL(PLAYER_BASE).origin; } catch { /* ignore */ }
+    }
+    const out = {
+      referer: pick('referer'),
+      origin,
+      'user-agent': pick('user-agent'),
+    };
+    console.log('extracted m3u8:', winner.url);
+    console.log('forwarded headers:', out);
+
     return {
       ok: true,
       m3u8: winner.url,
-      headers: {
-        // Pass through the headers the inner page used — most relevant for the client
-        // when fetching segments (Referer is often required)
-        referer: winner.headers['referer'] || winner.headers['Referer'] || null,
-        'user-agent': winner.headers['user-agent'] || winner.headers['User-Agent'] || null,
-      },
+      headers: out,
       took_ms: Date.now() - start,
     };
   } finally {
