@@ -78,6 +78,7 @@ const WEBVIEW_AFTER_LOAD_JS = `
 export default function PlayerScreen({ route, navigation }: Props) {
   const { item, season = 1, episode = 1 } = route.params;
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [streamHeaders, setStreamHeaders] = useState<Record<string, string>>({});
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,13 +107,18 @@ export default function PlayerScreen({ route, navigation }: Props) {
       setError('Stream not available. Check your connection or subscription.');
       return;
     }
+    if (result.stream_url) {
+      // Native playback path — preferred for Android TV (expo-av → ExoPlayer)
+      setStreamUrl(result.stream_url);
+      const h: Record<string, string> = {};
+      if (result.stream_headers?.referer) h.Referer = result.stream_headers.referer;
+      if (result.stream_headers?.['user-agent']) h['User-Agent'] = result.stream_headers['user-agent'];
+      setStreamHeaders(h);
+      return;
+    }
     if (result.playback_mode === 'iframe' || result.source_type === 'iframe') {
       if (!result.iframe_url) { setError('Player URL missing.'); return; }
       setIframeUrl(result.iframe_url);
-      return;
-    }
-    if (result.stream_url) {
-      setStreamUrl(result.stream_url);
       return;
     }
     setError('No playable source found.');
@@ -198,7 +204,12 @@ export default function PlayerScreen({ route, navigation }: Props) {
   return (
     <View style={styles.container} onTouchStart={resetControlsTimer}>
       <Video
-        source={{ uri: streamUrl! }}
+        source={{
+          uri: streamUrl!,
+          // Forward extracted Referer/User-Agent — some HLS CDNs require them on
+          // segment requests, otherwise they 403.
+          ...(Object.keys(streamHeaders).length > 0 ? { headers: streamHeaders } : {}),
+        }}
         style={styles.video}
         resizeMode={ResizeMode.CONTAIN}
         shouldPlay={!paused}

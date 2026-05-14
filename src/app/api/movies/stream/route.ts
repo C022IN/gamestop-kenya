@@ -9,6 +9,7 @@ import {
   buildCompatibleMoviePlayerUrl,
   buildCompatibleTvPlayerUrl,
 } from '@/lib/compatible-player';
+import { extractStream, isStreamExtractorConfigured } from '@/lib/stream-extractor';
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get(MOVIE_SESSION_COOKIE)?.value;
@@ -19,7 +20,8 @@ export async function GET(req: NextRequest) {
 
   const slug = req.nextUrl.searchParams.get('slug') ?? '';
   const id = req.nextUrl.searchParams.get('id') ?? '';
-  const mediaType = req.nextUrl.searchParams.get('media_type') ?? 'movie';
+  const rawMediaType = req.nextUrl.searchParams.get('media_type') ?? 'movie';
+  const mediaType: 'movie' | 'tv' = rawMediaType === 'tv' ? 'tv' : 'movie';
   const season = Number(req.nextUrl.searchParams.get('season') ?? '1');
   const episode = Number(req.nextUrl.searchParams.get('episode') ?? '1');
 
@@ -27,10 +29,32 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'slug or id required' }, { status: 400 });
   }
 
-  // TMDB numeric ID — hand straight to the compatible player (Videasy by default,
-  // overridable via COMPATIBLE_PLAYER_BASE_URL). No content DB lookup needed.
   const numericId = Number(id || slug);
   if (Number.isFinite(numericId) && numericId > 0) {
+    // Preferred path: ask the extractor service for a direct HLS URL.
+    // Android TV's ExoPlayer (via expo-av) plays HLS reliably; iframe playback
+    // doesn't work in the TV WebView. If extractor isn't configured or fails,
+    // we fall back to the iframe URL which still works on the web client.
+    if (isStreamExtractorConfigured()) {
+      const extracted = await extractStream({
+        tmdbId: numericId,
+        mediaType,
+        season,
+        episode,
+        signal: AbortSignal.timeout(25_000),
+      });
+      if (extracted) {
+        return NextResponse.json({
+          stream_url: extracted.m3u8,
+          source_type: 'hls',
+          playback_mode: 'video',
+          provider: 'Videasy (extracted)',
+          stream_headers: extracted.headers,
+        });
+      }
+      // fall through to iframe fallback
+    }
+
     const iframeUrl = mediaType === 'tv'
       ? buildCompatibleTvPlayerUrl(numericId, season, episode)
       : buildCompatibleMoviePlayerUrl(numericId);
