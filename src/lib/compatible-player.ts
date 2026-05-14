@@ -21,9 +21,11 @@ export interface CompatiblePlayerOptions {
   dub?: boolean;
 }
 
+const DEFAULT_PLAYER_BASE_URL = 'https://player.videasy.net';
+
 export function getCompatiblePlayerBaseUrl() {
   const raw = process.env.COMPATIBLE_PLAYER_BASE_URL?.trim() ?? '';
-  return raw ? trimTrailingSlash(raw) : '';
+  return raw ? trimTrailingSlash(raw) : DEFAULT_PLAYER_BASE_URL;
 }
 
 export function getCompatiblePlayerOrigin() {

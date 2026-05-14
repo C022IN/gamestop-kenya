@@ -133,6 +133,9 @@ export interface StreamResult {
   provider?: string;
 }
 
+// Client-side last-resort fallback if the server API is unreachable.
+// Mirrors the server default (Videasy). If you switch providers on the server,
+// update this too.
 export function buildDirectPlayerUrl(
   id: string | number,
   mediaType: string,
@@ -141,9 +144,9 @@ export function buildDirectPlayerUrl(
 ): string {
   const numId = Number(id);
   if (mediaType === 'tv') {
-    return `https://multiembed.mov/?video_id=${numId}&tmdb=1&s=${season}&e=${episode}`;
+    return `https://player.videasy.net/tv/${numId}/${season}/${episode}`;
   }
-  return `https://multiembed.mov/?video_id=${numId}&tmdb=1`;
+  return `https://player.videasy.net/movie/${numId}`;
 }
 
 export async function fetchStream(
