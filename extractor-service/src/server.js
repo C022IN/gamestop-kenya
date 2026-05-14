@@ -103,9 +103,10 @@ async function extractM3u8(embedUrl) {
   }
 
   try {
-    // waitUntil:'load' ensures React has hydrated and attached onClick handlers before
-    // we try to click. 'domcontentloaded' fires too early — clicks are silently dropped.
-    await page.goto(embedUrl, { waitUntil: 'load', timeout: PAGE_TIMEOUT_MS });
+    // domcontentloaded is fine here — the retry-click loop below handles React hydration
+    // timing. 'load' would block until all resources resolve (including HLS fetches),
+    // which never happens when media is being intercepted.
+    await page.goto(embedUrl, { waitUntil: 'domcontentloaded', timeout: PAGE_TIMEOUT_MS });
     await clickPlay();
 
     const deadline = Date.now() + M3U8_WAIT_MS;
