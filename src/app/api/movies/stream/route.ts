@@ -8,19 +8,7 @@ import {
 import {
   buildCompatibleMoviePlayerUrl,
   buildCompatibleTvPlayerUrl,
-  isCompatiblePlayerConfigured,
 } from '@/lib/compatible-player';
-
-// Primary fallback: multiembed.mov aggregates 10+ video servers, works in
-// Android WebView without WebView-detection blocking, uses TMDB IDs directly.
-// Secondary: vidlink.pro as an additional option if primary is down.
-function buildPrimaryMovieUrl(tmdbId: number): string {
-  return `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
-}
-
-function buildPrimaryTvUrl(tmdbId: number, season: number, episode: number): string {
-  return `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`;
-}
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get(MOVIE_SESSION_COOKIE)?.value;
@@ -39,29 +27,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'slug or id required' }, { status: 400 });
   }
 
-  // TMDB numeric ID — build player URL directly (no content DB lookup needed)
+  // TMDB numeric ID — hand straight to the compatible player (Videasy by default,
+  // overridable via COMPATIBLE_PLAYER_BASE_URL). No content DB lookup needed.
   const numericId = Number(id || slug);
   if (Number.isFinite(numericId) && numericId > 0) {
-    let iframeUrl: string;
-    let provider: string;
+    const iframeUrl = mediaType === 'tv'
+      ? buildCompatibleTvPlayerUrl(numericId, season, episode)
+      : buildCompatibleMoviePlayerUrl(numericId);
 
-    if (isCompatiblePlayerConfigured()) {
-      // Prefer the operator-configured provider (e.g. Videasy)
-      const built = mediaType === 'tv'
-        ? buildCompatibleTvPlayerUrl(numericId, season, episode)
-        : buildCompatibleMoviePlayerUrl(numericId);
-
-      if (!built) {
-        return NextResponse.json({ error: 'Player not configured' }, { status: 503 });
-      }
-      iframeUrl = built;
-      provider = 'Videasy';
-    } else {
-      // No env var configured — use multiembed.mov (10+ servers, Android WebView friendly)
-      iframeUrl = mediaType === 'tv'
-        ? buildPrimaryTvUrl(numericId, season, episode)
-        : buildPrimaryMovieUrl(numericId);
-      provider = 'MultiEmbed';
+    if (!iframeUrl) {
+      return NextResponse.json({ error: 'Player not configured' }, { status: 503 });
     }
 
     return NextResponse.json({
@@ -69,7 +44,7 @@ export async function GET(req: NextRequest) {
       stream_url: null,
       source_type: 'iframe',
       playback_mode: 'iframe',
-      provider,
+      provider: 'Videasy',
     });
   }
 
