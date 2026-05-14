@@ -1,6 +1,6 @@
 # Headless-Chrome stream extractor. Built on Puppeteer's official image which
 # bundles a compatible Chromium + all the libs Chrome needs to actually run.
-# Caller: the Next.js backend at /api/movies/stream/ via STREAM_EXTRACTOR_URL.
+# Caller: the Next.js backend at /api/movies/stream/ via EXTRACTOR_BASE_URL.
 
 FROM ghcr.io/puppeteer/puppeteer:23.11.1
 

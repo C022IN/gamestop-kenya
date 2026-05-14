@@ -27,7 +27,7 @@ If `EXTRACTOR_AUTH_TOKEN` is set, callers must send `Authorization: Bearer <toke
 | `EXTRACTOR_AUTH_TOKEN` | *(unset → public)* | Shared secret with the Next.js backend. **Set in production.** |
 | `PLAYER_BASE_URL` | `https://player.videasy.net` | Embed provider to scrape. Must accept `/movie/{id}` and `/tv/{id}/{s}/{e}` paths. |
 | `PAGE_TIMEOUT_MS` | `30000` | How long the page may take to reach DOMContentLoaded |
-| `M3U8_WAIT_MS` | `20000` | Budget for observing an `.m3u8` request after the page loads |
+| `M3U8_WAIT_MS` | `35000` | Budget for observing an `.m3u8` request after the page loads |
 
 ## Local run
 
@@ -53,8 +53,8 @@ Vercel serverless can't host this (Puppeteer + Chrome don't fit). Use a Docker h
    - `EXTRACTOR_AUTH_TOKEN` — generate with `openssl rand -hex 32`
 4. After deploy, you'll get a URL like `https://gamestop-extractor.up.railway.app`.
 5. Add to Vercel project env:
-   - `STREAM_EXTRACTOR_URL` = the URL above
-   - `STREAM_EXTRACTOR_TOKEN` = the same token
+   - `EXTRACTOR_BASE_URL` = the URL above
+   - `EXTRACTOR_AUTH_TOKEN` = the same token
 
 ### Anywhere else with Docker
 
