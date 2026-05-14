@@ -135,6 +135,7 @@ export interface StreamResult {
   // The extractor service forwards them so expo-av can replay them.
   stream_headers?: {
     referer?: string | null;
+    origin?: string | null;
     'user-agent'?: string | null;
   };
 }

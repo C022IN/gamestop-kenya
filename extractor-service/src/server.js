@@ -129,12 +129,16 @@ async function extractM3u8(embedUrl) {
       return { ok: false, error: 'No .m3u8 observed within budget', took_ms: Date.now() - start };
     }
 
+    const h = winner.headers;
+    console.log('[winner]', winner.url);
+    console.log('[headers]', JSON.stringify({ referer: h.referer || h.Referer, origin: h.origin || h.Origin, ua: (h['user-agent'] || h['User-Agent'] || '').slice(0, 60) }));
     return {
       ok: true,
       m3u8: winner.url,
       headers: {
-        referer: winner.headers['referer'] || winner.headers['Referer'] || null,
-        'user-agent': winner.headers['user-agent'] || winner.headers['User-Agent'] || null,
+        referer: h['referer'] || h['Referer'] || null,
+        origin: h['origin'] || h['Origin'] || null,
+        'user-agent': h['user-agent'] || h['User-Agent'] || null,
       },
       took_ms: Date.now() - start,
     };

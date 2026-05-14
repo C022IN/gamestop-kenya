@@ -112,6 +112,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
       setStreamUrl(result.stream_url);
       const h: Record<string, string> = {};
       if (result.stream_headers?.referer) h.Referer = result.stream_headers.referer;
+      if (result.stream_headers?.origin) h.Origin = result.stream_headers.origin;
       if (result.stream_headers?.['user-agent']) h['User-Agent'] = result.stream_headers['user-agent'];
       setStreamHeaders(h);
       return;
@@ -133,8 +134,15 @@ export default function PlayerScreen({ route, navigation }: Props) {
   }
 
   function onPlaybackStatusUpdate(status: AVPlaybackStatus) {
-    if (!status.isLoaded && status.error) {
-      setError(`Playback error: ${status.error}`);
+    if (!status.isLoaded) {
+      if (status.error) setError(`Playback error: ${status.error}`);
+      return;
+    }
+    // Auto-hide controls 3 s after playback starts; D-pad has no touch events so
+    // we can't rely on onTouchStart to kick the timer off.
+    if (status.isPlaying && showControls) {
+      if (controlsTimer.current) clearTimeout(controlsTimer.current);
+      controlsTimer.current = setTimeout(() => setShowControls(false), 3000);
     }
   }
 
