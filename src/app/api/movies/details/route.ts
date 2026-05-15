@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MOVIE_SESSION_COOKIE, getSessionByToken } from '@/lib/movie-platform';
 import { getDetails, tmdbBackdrop, tmdbPoster } from '@/lib/tmdb';
+import { extractDominantColor } from '@/lib/dominant-color';
 
 // GET /api/movies/details?id=550&type=movie
 // Returns full TMDB details: genres, runtime, seasons summary (for TV).
@@ -20,6 +21,13 @@ export async function GET(req: NextRequest) {
   const d = await getDetails(type, id);
   if (!d) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  const posterUrl = tmdbPoster(d.poster_path);
+  const backdropUrl = tmdbBackdrop(d.backdrop_path);
+  // Prefer the poster for color extraction — it's tighter framed than the
+  // backdrop, so the dominant color tends to be the title's signature colour
+  // rather than a wash from the background scene.
+  const accentColor = await extractDominantColor(posterUrl || backdropUrl);
+
   return NextResponse.json({
     id: d.id,
     media_type: type,
@@ -31,8 +39,9 @@ export async function GET(req: NextRequest) {
     status: d.status,
     vote_average: d.vote_average,
     release_date: d.release_date ?? d.first_air_date,
-    poster_url: tmdbPoster(d.poster_path),
-    backdrop_url: tmdbBackdrop(d.backdrop_path),
+    poster_url: posterUrl,
+    backdrop_url: backdropUrl,
+    accent_color: accentColor,
     genres: d.genres ?? [],
     number_of_seasons: d.number_of_seasons,
     number_of_episodes: d.number_of_episodes,

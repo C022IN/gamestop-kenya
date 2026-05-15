@@ -14,7 +14,12 @@ interface FocusableCardProps {
   hasTVPreferredFocus?: boolean;
   /** When true the card visually recedes (siblings of a focused card dim out) */
   dimmed?: boolean;
+  /** Larger image (typically the backdrop) to warm into expo-image's cache
+   *  while the card is focused, so navigating to Detail is instant. */
+  prefetchUrl?: string;
 }
+
+const PREFETCH_DELAY_MS = 300;
 
 const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 const GLOW_CFG   = { duration: 200, useNativeDriver: true };
@@ -31,10 +36,12 @@ export default function FocusableCard({
   onBlur,
   hasTVPreferredFocus = false,
   dimmed = false,
+  prefetchUrl,
 }: FocusableCardProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const glow  = useRef(new Animated.Value(0)).current;
   const dim   = useRef(new Animated.Value(1)).current;
+  const prefetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // External "should this card recede" signal — animated independently of self-focus
   useEffect(() => {
@@ -44,11 +51,23 @@ export default function FocusableCard({
   function handleFocus() {
     Animated.spring(scale, { toValue: 1.08, ...SPRING_CFG }).start();
     Animated.timing(glow,  { toValue: 1,    ...GLOW_CFG   }).start();
+    // Warm the detail backdrop into the image cache after a short debounce so
+    // rapid D-pad scrubbing doesn't trigger 20 simultaneous fetches.
+    if (prefetchUrl) {
+      if (prefetchTimer.current) clearTimeout(prefetchTimer.current);
+      prefetchTimer.current = setTimeout(() => {
+        Image.prefetch(prefetchUrl).catch(() => {});
+      }, PREFETCH_DELAY_MS);
+    }
     onFocus?.();
   }
   function handleBlur() {
     Animated.spring(scale, { toValue: 1, ...SPRING_CFG }).start();
     Animated.timing(glow,  { toValue: 0, ...GLOW_CFG   }).start();
+    if (prefetchTimer.current) {
+      clearTimeout(prefetchTimer.current);
+      prefetchTimer.current = null;
+    }
     onBlur?.();
   }
 

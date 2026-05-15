@@ -29,7 +29,17 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000' } }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: '#000' },
+          // Crossfade between screens — feels more "studio-app" than the
+          // default horizontal slide on TV, which is gesture-driven on phones
+          // and reads as random on a D-pad.
+          animation: 'fade',
+          animationDuration: 220,
+        }}
+      >
         {loggedIn ? (
           <>
             <Stack.Screen name="Home">

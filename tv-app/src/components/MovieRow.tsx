@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { Animated, View, Text, FlatList, StyleSheet, TVFocusGuideView } from 'react-native';
 import FocusableCard from './FocusableCard';
-import { tmdbPoster } from '@/api/client';
+import { tmdbPoster, tmdbBackdrop } from '@/api/client';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 
 type AnyItem = CatalogItem | TmdbItem;
@@ -28,6 +28,12 @@ const BLUR_DEBOUNCE_MS = 80;
 function getImage(item: AnyItem): string {
   if ('poster_url' in item && item.poster_url) return item.poster_url;
   if ('poster_path' in item) return tmdbPoster((item as TmdbItem).poster_path);
+  return '';
+}
+
+function getBackdrop(item: AnyItem): string {
+  if ('backdrop_url' in item && (item as any).backdrop_url) return (item as any).backdrop_url;
+  if ('backdrop_path' in item) return tmdbBackdrop((item as TmdbItem).backdrop_path);
   return '';
 }
 
@@ -113,6 +119,7 @@ export default function MovieRow({ title, items, onSelect, isFirstRow = false }:
               subtitle={getSubtitle(item)}
               hasTVPreferredFocus={isFirstRow && index === 0}
               dimmed={focusedIndex !== null && focusedIndex !== index}
+              prefetchUrl={getBackdrop(item)}
               onPress={() => onSelect(item)}
               onFocus={() => {
                 onCardFocus(index);

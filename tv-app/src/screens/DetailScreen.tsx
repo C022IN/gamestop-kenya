@@ -146,6 +146,7 @@ export default function DetailScreen({ route, navigation }: Props) {
   if (details?.number_of_seasons) meta.push(`${details.number_of_seasons} Season${details.number_of_seasons > 1 ? 's' : ''}`);
   if (details?.vote_average) meta.push(`★ ${details.vote_average.toFixed(1)}`);
   const genres = details?.genres?.slice(0, 3).map(g => g.name).join(' · ') ?? '';
+  const accent = details?.accent_color ?? null;
 
   return (
     <View style={styles.container}>
@@ -179,7 +180,7 @@ export default function DetailScreen({ route, navigation }: Props) {
           <View style={styles.actions}>
             {resumeEpisode ? (
               <TouchableHighlight
-                style={[styles.btn, styles.playBtn]}
+                style={[styles.btn, styles.playBtn, accent && { backgroundColor: accent }]}
                 underlayColor="#cc0000"
                 onPress={() => play(resumeEpisode.season, resumeEpisode.episode)}
                 hasTVPreferredFocus
@@ -190,7 +191,7 @@ export default function DetailScreen({ route, navigation }: Props) {
               </TouchableHighlight>
             ) : (
               <TouchableHighlight
-                style={[styles.btn, styles.playBtn]}
+                style={[styles.btn, styles.playBtn, accent && { backgroundColor: accent }]}
                 underlayColor="#cc0000"
                 onPress={() => play(1, 1)}
                 hasTVPreferredFocus

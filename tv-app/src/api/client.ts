@@ -249,6 +249,8 @@ export interface TitleDetails {
   release_date?: string;
   poster_url: string;
   backdrop_url: string;
+  /** Hex string like #e50914 extracted server-side from the poster. May be null. */
+  accent_color?: string | null;
   genres: { id: number; name: string }[];
   number_of_seasons?: number;
   number_of_episodes?: number;
