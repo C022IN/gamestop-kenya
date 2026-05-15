@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Video, ResizeMode, type AVPlaybackStatus } from 'expo-av';
 import { WebView } from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { fetchStream, buildDirectPlayerUrl } from '@/api/client';
@@ -38,6 +39,17 @@ function getTitle(item: AnyItem): string {
   if ('title' in item && item.title) return item.title;
   if ('name' in item && (item as TmdbItem).name) return (item as TmdbItem).name!;
   return 'Playing…';
+}
+function formatTime(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  return `${m}:${String(sec).padStart(2, '0')}`;
+}
+function progressKey(item: AnyItem, season: number, episode: number): string {
+  return `lastPos_${getId(item)}_s${season}_e${episode}`;
 }
 
 // Runs before any page script — removes WebView fingerprint so iframe players don't block us
@@ -78,6 +90,8 @@ const WEBVIEW_AFTER_LOAD_JS = `
 
 export default function PlayerScreen({ route, navigation }: Props) {
   const { item, season = 1, episode = 1 } = route.params;
+  const isTV = getMediaType(item) === 'tv';
+
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [streamHeaders, setStreamHeaders] = useState<Record<string, string>>({});
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
@@ -85,11 +99,25 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [positionMs, setPositionMs] = useState(0);
+  const [durationMs, setDurationMs] = useState(0);
+
+  const videoRef = useRef<Video>(null);
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasAutoHiddenRef = useRef(false);
+  const hasResumedRef = useRef(false);
+  const lastSavedPosRef = useRef(0);
 
   const loadStream = useCallback(async () => {
     setLoading(true);
     setError(null);
+    // Reset per-episode playback state
+    hasAutoHiddenRef.current = false;
+    hasResumedRef.current = false;
+    lastSavedPosRef.current = 0;
+    setPositionMs(0);
+    setDurationMs(0);
+
     const result = await fetchStream(
       getSlug(item),
       getId(item),
@@ -99,7 +127,6 @@ export default function PlayerScreen({ route, navigation }: Props) {
     );
     setLoading(false);
     if (!result) {
-      // Server API failed — for TMDB numeric IDs build the player URL directly
       const numericId = Number(getId(item));
       if (Number.isFinite(numericId) && numericId > 0) {
         setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
@@ -109,10 +136,6 @@ export default function PlayerScreen({ route, navigation }: Props) {
       return;
     }
     if (result.stream_url) {
-      // Native playback path — preferred for Android TV (expo-av → ExoPlayer).
-      // Forward every non-null header the extractor captured. Origin in particular
-      // is required by most HLS CDNs for hotlink protection — ExoPlayer doesn't
-      // add it on its own, so without forwarding it segments 403 silently.
       setStreamUrl(result.stream_url);
       const HEADER_CASE: Record<string, string> = {
         referer: 'Referer',
@@ -145,22 +168,62 @@ export default function PlayerScreen({ route, navigation }: Props) {
     controlsTimer.current = setTimeout(() => setShowControls(false), 4000);
   }, []);
 
-  // Android TV remote keys don't fire touch events, so we'd never hide the
-  // overlay. Wake the timer on any remote keypress instead.
+  const seek = useCallback((deltaMs: number) => {
+    setPositionMs(prev => {
+      const next = Math.max(0, Math.min(prev + deltaMs, durationMs || prev + deltaMs));
+      videoRef.current?.setPositionAsync(next);
+      return next;
+    });
+    resetControlsTimer();
+  }, [durationMs, resetControlsTimer]);
+
+  const goToEpisode = useCallback((ep: number) => {
+    (navigation as any).replace('Player', { item, season, episode: ep });
+  }, [navigation, item, season]);
+
+  // D-pad: left/right seeks when controls are hidden; all keys wake the overlay timer
   useTVEventHandler((evt) => {
-    if (evt?.eventType && evt.eventType !== 'blur' && evt.eventType !== 'focus') {
-      resetControlsTimer();
+    if (!evt?.eventType || evt.eventType === 'blur' || evt.eventType === 'focus') return;
+    if (!showControls) {
+      if (evt.eventType === 'left') { seek(-10000); return; }
+      if (evt.eventType === 'right') { seek(10000); return; }
     }
+    resetControlsTimer();
   });
 
-  const hasAutoHiddenRef = useRef(false);
-  function onPlaybackStatusUpdate(status: AVPlaybackStatus) {
+  async function onPlaybackStatusUpdate(status: AVPlaybackStatus) {
     if (!status.isLoaded) {
       if (status.error) setError(`Playback error: ${status.error}`);
       return;
     }
-    // Once playback actually begins, hide the controls overlay automatically.
-    // Only do it once per session so we don't fight the user reopening them.
+
+    const pos = status.positionMillis ?? 0;
+    const dur = status.durationMillis ?? 0;
+    setPositionMs(pos);
+    if (dur > 0) setDurationMs(dur);
+
+    // Auto-resume saved position once when video first loads
+    if (status.isLoaded && !hasResumedRef.current && dur > 0) {
+      hasResumedRef.current = true;
+      try {
+        const saved = await AsyncStorage.getItem(progressKey(item, season, episode));
+        if (saved) {
+          const savedPos = Number(saved);
+          // Only resume if more than 30s in and not within last 60s of content
+          if (savedPos > 30_000 && savedPos < dur - 60_000) {
+            videoRef.current?.setPositionAsync(savedPos);
+          }
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Save position to AsyncStorage every ~10s of watched content
+    if (status.isPlaying && pos > 0 && pos - lastSavedPosRef.current > 10_000) {
+      lastSavedPosRef.current = pos;
+      AsyncStorage.setItem(progressKey(item, season, episode), String(pos)).catch(() => {});
+    }
+
+    // Auto-hide controls once playback begins
     if (status.isPlaying && !hasAutoHiddenRef.current) {
       hasAutoHiddenRef.current = true;
       if (controlsTimer.current) clearTimeout(controlsTimer.current);
@@ -211,7 +274,6 @@ export default function PlayerScreen({ route, navigation }: Props) {
           mediaPlaybackRequiresUserAction={false}
           javaScriptEnabled
           domStorageEnabled
-          // Desktop Chrome UA — Videasy and similar players require a real browser UA
           userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           originWhitelist={['*']}
           mixedContentMode="always"
@@ -231,13 +293,14 @@ export default function PlayerScreen({ route, navigation }: Props) {
     );
   }
 
+  const progress = durationMs > 0 ? positionMs / durationMs : 0;
+
   return (
     <View style={styles.container} onTouchStart={resetControlsTimer}>
       <Video
+        ref={videoRef}
         source={{
           uri: streamUrl!,
-          // Forward extracted Referer/User-Agent — some HLS CDNs require them on
-          // segment requests, otherwise they 403.
           ...(Object.keys(streamHeaders).length > 0 ? { headers: streamHeaders } : {}),
         }}
         style={styles.video}
@@ -249,6 +312,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
       />
       {showControls && (
         <View style={styles.overlay}>
+          {/* Top bar */}
           <View style={styles.controlsTop}>
             <TouchableHighlight
               style={styles.controlBtn}
@@ -257,9 +321,20 @@ export default function PlayerScreen({ route, navigation }: Props) {
             >
               <Text style={styles.controlText}>← Back</Text>
             </TouchableHighlight>
-            <Text style={styles.titleText}>{getTitle(item)}</Text>
+            <Text style={styles.titleText}>
+              {getTitle(item)}{isTV ? `  ·  S${season} E${episode}` : ''}
+            </Text>
           </View>
+
+          {/* Centre: seek − play/pause + seek */}
           <View style={styles.controlsCenter}>
+            <TouchableHighlight
+              style={styles.seekBtn}
+              underlayColor="#333"
+              onPress={() => seek(-10000)}
+            >
+              <Text style={styles.seekText}>⏪ 10s</Text>
+            </TouchableHighlight>
             <TouchableHighlight
               style={styles.playPauseBtn}
               underlayColor="#333"
@@ -268,6 +343,46 @@ export default function PlayerScreen({ route, navigation }: Props) {
             >
               <Text style={styles.playPauseText}>{paused ? '▶' : '⏸'}</Text>
             </TouchableHighlight>
+            <TouchableHighlight
+              style={styles.seekBtn}
+              underlayColor="#333"
+              onPress={() => seek(10000)}
+            >
+              <Text style={styles.seekText}>10s ⏩</Text>
+            </TouchableHighlight>
+          </View>
+
+          {/* Bottom: progress bar + episode nav */}
+          <View style={styles.controlsBottom}>
+            {/* Progress bar */}
+            <View style={styles.progressRow}>
+              <Text style={styles.timeText}>{formatTime(positionMs)}</Text>
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
+              </View>
+              <Text style={styles.timeText}>{durationMs > 0 ? formatTime(durationMs) : '--:--'}</Text>
+            </View>
+            {/* Episode navigation (TV shows only) */}
+            {isTV && (
+              <View style={styles.episodeRow}>
+                {episode > 1 && (
+                  <TouchableHighlight
+                    style={styles.episodeBtn}
+                    underlayColor="#333"
+                    onPress={() => goToEpisode(episode - 1)}
+                  >
+                    <Text style={styles.episodeBtnText}>← Prev Ep</Text>
+                  </TouchableHighlight>
+                )}
+                <TouchableHighlight
+                  style={styles.episodeBtn}
+                  underlayColor="#333"
+                  onPress={() => goToEpisode(episode + 1)}
+                >
+                  <Text style={styles.episodeBtnText}>Next Ep →</Text>
+                </TouchableHighlight>
+              </View>
+            )}
           </View>
         </View>
       )}
@@ -289,12 +404,22 @@ const styles = StyleSheet.create({
   errorText: { color: '#e50914', fontSize: 18, textAlign: 'center', maxWidth: 500 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'space-between' },
   controlsTop: { flexDirection: 'row', alignItems: 'center', padding: 24, gap: 20 },
-  controlsCenter: { alignItems: 'center', paddingBottom: 48 },
+  controlsCenter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 32 },
+  controlsBottom: { paddingHorizontal: 32, paddingBottom: 32, gap: 16 },
   controlBtn: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 6 },
   controlText: { color: '#fff', fontSize: 16 },
   titleText: { color: '#fff', fontSize: 18, fontWeight: '700', flex: 1 },
   playPauseBtn: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(229,9,20,0.85)', alignItems: 'center', justifyContent: 'center' },
   playPauseText: { color: '#fff', fontSize: 28 },
+  seekBtn: { paddingHorizontal: 20, paddingVertical: 14, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8 },
+  seekText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  progressTrack: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: '#e50914', borderRadius: 2 },
+  timeText: { color: '#ccc', fontSize: 13, minWidth: 48, textAlign: 'center' },
+  episodeRow: { flexDirection: 'row', gap: 16 },
+  episodeBtn: { paddingHorizontal: 24, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 6 },
+  episodeBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   backBtn: { backgroundColor: '#333', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 6 },
   backBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
