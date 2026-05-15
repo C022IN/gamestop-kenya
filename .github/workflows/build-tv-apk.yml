@@ -61,7 +61,7 @@ jobs:
             '        t.doFirst {' \
             '          def f = proj.file("build/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt")' \
             '          if (f.exists() && !f.text.contains("@file:Suppress")) {' \
-            '            def suppress = "@file:Suppress(\\"OPT_IN_USAGE_ERROR\\", \\"OPT_IN_USAGE\\", \\"EXPERIMENTAL_API_USAGE_ERROR\\", \\"EXPERIMENTAL_API_USAGE\\")\n"' \
+            '            def suppress = '"'"'@file:Suppress("OPT_IN_USAGE_ERROR", "OPT_IN_USAGE", "EXPERIMENTAL_API_USAGE_ERROR", "EXPERIMENTAL_API_USAGE")'"'"' + System.lineSeparator()' \
             '            f.text = suppress + f.text' \
             '          }' \
             '        }' \
@@ -70,6 +70,9 @@ jobs:
             '  }' \
             '}' \
             > ~/.gradle/init.d/opt-in.gradle
+          echo "---- generated init script ----"
+          cat ~/.gradle/init.d/opt-in.gradle
+          echo "---- end ----"
 
       - name: Build APK with Gradle
         working-directory: tv-app/android
