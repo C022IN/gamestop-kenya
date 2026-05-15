@@ -27,6 +27,7 @@ module.exports = {
   plugins: [
     'expo-image',
     'expo-av',
+    'expo-video',
     'expo-splash-screen',
     [
       'expo-build-properties',

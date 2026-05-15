@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -8,17 +8,19 @@ import {
   View,
   useTVEventHandler,
 } from 'react-native';
-import { Video, ResizeMode, type AVPlaybackStatus } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { fetchStream, buildDirectPlayerUrl, recordResume, clearResume } from '@/api/client';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
+import TrackPicker from '@/components/TrackPicker';
 
 const { width, height } = Dimensions.get('window');
 
 type AnyItem = CatalogItem | TmdbItem;
+type MediaTrack = { id: string; language?: string; label?: string; name?: string };
 
 interface Props {
   route: RouteProp<{ Player: { item: AnyItem; season?: number; episode?: number } }, 'Player'>;
@@ -31,8 +33,8 @@ function getSlug(item: AnyItem): string {
 function getId(item: AnyItem): string {
   return String(item.id ?? '');
 }
-function getMediaType(item: AnyItem): string {
-  if ('media_type' in item && (item as TmdbItem).media_type) return (item as TmdbItem).media_type!;
+function getMediaType(item: AnyItem): 'movie' | 'tv' {
+  if ('media_type' in item && (item as TmdbItem).media_type === 'tv') return 'tv';
   if ('kind' in item && (item as CatalogItem).kind === 'series') return 'tv';
   return 'movie';
 }
@@ -41,8 +43,8 @@ function getTitle(item: AnyItem): string {
   if ('name' in item && (item as TmdbItem).name) return (item as TmdbItem).name!;
   return 'Playing…';
 }
-function formatTime(ms: number): string {
-  const s = Math.floor(ms / 1000);
+function formatTime(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
@@ -53,40 +55,27 @@ function progressKey(item: AnyItem, season: number, episode: number): string {
   return `lastPos_${getId(item)}_s${season}_e${episode}`;
 }
 
-// Runs before any page script — removes WebView fingerprint so iframe players don't block us
 const WEBVIEW_BEFORE_LOAD_JS = `
   (function() {
-    try {
-      Object.defineProperty(window, 'ReactNativeWebView', { get: function() { return undefined; } });
-    } catch(e) {}
-  })();
-  true;
+    try { Object.defineProperty(window, 'ReactNativeWebView', { get: function() { return undefined; } }); } catch(e) {}
+  })(); true;
 `;
-
-// Runs after page loads — polls for a video element and forces play
 const WEBVIEW_AFTER_LOAD_JS = `
   (function() {
     var tries = 0;
     var t = setInterval(function() {
       var videos = document.querySelectorAll('video');
       if (videos.length > 0) {
-        videos.forEach(function(v) {
-          v.muted = false;
-          v.play().catch(function(){});
-        });
-        clearInterval(t);
-        return;
+        videos.forEach(function(v) { v.muted = false; v.play().catch(function(){}); });
+        clearInterval(t); return;
       }
-      // Also try clicking any visible play button
-      var btns = document.querySelectorAll('button, [role="button"]');
-      btns.forEach(function(b) {
+      document.querySelectorAll('button, [role="button"]').forEach(function(b) {
         var label = (b.getAttribute('aria-label') || b.textContent || '').toLowerCase();
-        if (label.indexOf('play') !== -1) { b.click(); }
+        if (label.indexOf('play') !== -1) b.click();
       });
       if (++tries >= 20) clearInterval(t);
     }, 600);
-  })();
-  true;
+  })(); true;
 `;
 
 export default function PlayerScreen({ route, navigation }: Props) {
@@ -100,29 +89,39 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [positionMs, setPositionMs] = useState(0);
-  const [durationMs, setDurationMs] = useState(0);
+  const [positionSec, setPositionSec] = useState(0);
+  const [durationSec, setDurationSec] = useState(0);
   const [buffering, setBuffering] = useState(false);
+  const [availableSubs, setAvailableSubs] = useState<MediaTrack[]>([]);
+  const [availableAudios, setAvailableAudios] = useState<MediaTrack[]>([]);
+  const [currentSubId, setCurrentSubId] = useState<string | null>(null);
+  const [currentAudioId, setCurrentAudioId] = useState<string | null>(null);
+  const [picker, setPicker] = useState<null | 'subs' | 'audio'>(null);
 
-  const videoRef = useRef<Video>(null);
+  const player = useVideoPlayer(null, (p) => {
+    p.timeUpdateEventInterval = 0.5;
+    p.audioMixingMode = 'auto';
+  });
+
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAutoHiddenRef = useRef(false);
   const hasResumedRef = useRef(false);
   const lastSavedPosRef = useRef(0);
-  // Accelerating scrub: track timestamp + magnitude of consecutive seeks so the
-  // step grows from 10s → 30s → 60s when the user holds direction.
   const lastSeekAtRef = useRef(0);
-  const lastSeekStepRef = useRef(10_000);
+  const lastSeekStepRef = useRef(10);
 
   const loadStream = useCallback(async () => {
     setLoading(true);
     setError(null);
-    // Reset per-episode playback state
     hasAutoHiddenRef.current = false;
     hasResumedRef.current = false;
     lastSavedPosRef.current = 0;
-    setPositionMs(0);
-    setDurationMs(0);
+    setPositionSec(0);
+    setDurationSec(0);
+    setAvailableSubs([]);
+    setAvailableAudios([]);
+    setCurrentSubId(null);
+    setCurrentAudioId(null);
 
     const result = await fetchStream(
       getSlug(item),
@@ -142,7 +141,6 @@ export default function PlayerScreen({ route, navigation }: Props) {
       return;
     }
     if (result.stream_url) {
-      setStreamUrl(result.stream_url);
       const HEADER_CASE: Record<string, string> = {
         referer: 'Referer',
         origin: 'Origin',
@@ -155,6 +153,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
           h[HEADER_CASE[k.toLowerCase()] ?? k] = v;
         }
       }
+      setStreamUrl(result.stream_url);
       setStreamHeaders(h);
       return;
     }
@@ -166,7 +165,121 @@ export default function PlayerScreen({ route, navigation }: Props) {
     setError('No playable source found.');
   }, [item, season, episode]);
 
-  React.useEffect(() => { loadStream(); }, [loadStream]);
+  useEffect(() => { loadStream(); }, [loadStream]);
+
+  // When we have a stream URL, hand it to the player. replaceAsync (vs replace)
+  // resolves only once metadata is loaded, so we can safely auto-seek after.
+  useEffect(() => {
+    if (!streamUrl) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await player.replaceAsync({ uri: streamUrl, headers: streamHeaders, contentType: 'hls' });
+        if (cancelled) return;
+        player.play();
+      } catch (e: any) {
+        if (!cancelled) setError(`Playback error: ${e?.message ?? e}`);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [streamUrl, streamHeaders, player]);
+
+  // Subscribe to player events. expo-video uses an EventEmitter on the shared object.
+  useEffect(() => {
+    const subTime = player.addListener('timeUpdate', (e) => {
+      setPositionSec(e.currentTime);
+    });
+    const subStatus = player.addListener('statusChange', (e) => {
+      if (e.status === 'error' && e.error) setError(`Playback error: ${e.error.message}`);
+      setBuffering(e.status === 'loading');
+    });
+    const subSource = player.addListener('sourceLoad', (e) => {
+      setDurationSec(e.duration);
+      setAvailableSubs((e.availableSubtitleTracks ?? []).map(t => ({
+        id: (t as any).id, language: (t as any).language, label: (t as any).label, name: (t as any).name,
+      })));
+      setAvailableAudios((e.availableAudioTracks ?? []).map(t => ({
+        id: (t as any).id, language: (t as any).language, label: (t as any).label, name: (t as any).name,
+      })));
+    });
+    const subPlaying = player.addListener('playingChange', (e) => {
+      setPaused(!e.isPlaying);
+    });
+    const subSubTrack = player.addListener('subtitleTrackChange', (e) => {
+      setCurrentSubId((e.subtitleTrack as any)?.id ?? null);
+    });
+    const subAudioTrack = player.addListener('audioTrackChange', (e) => {
+      setCurrentAudioId((e.audioTrack as any)?.id ?? null);
+    });
+    const subEnd = player.addListener('playToEnd', () => {
+      // Clear resume so the title doesn't keep showing up as Continue Watching
+      clearResume(getId(item), getMediaType(item), season, episode).catch(() => {});
+    });
+
+    return () => {
+      subTime.remove();
+      subStatus.remove();
+      subSource.remove();
+      subPlaying.remove();
+      subSubTrack.remove();
+      subAudioTrack.remove();
+      subEnd.remove();
+    };
+  }, [player, item, season, episode]);
+
+  // Auto-resume saved position once duration becomes known
+  useEffect(() => {
+    if (durationSec <= 0 || hasResumedRef.current) return;
+    hasResumedRef.current = true;
+    (async () => {
+      try {
+        const saved = await AsyncStorage.getItem(progressKey(item, season, episode));
+        if (saved) {
+          const savedSec = Number(saved) / 1000;
+          if (savedSec > 30 && savedSec < durationSec - 60) {
+            player.currentTime = savedSec;
+          }
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [durationSec, item, season, episode, player]);
+
+  // Auto-hide overlay once playback begins
+  useEffect(() => {
+    if (paused || hasAutoHiddenRef.current) return;
+    if (!showControls) return;
+    hasAutoHiddenRef.current = true;
+    if (controlsTimer.current) clearTimeout(controlsTimer.current);
+    controlsTimer.current = setTimeout(() => setShowControls(false), 2500);
+  }, [paused, showControls]);
+
+  // Persist progress every ~10s
+  useEffect(() => {
+    const posMs = positionSec * 1000;
+    if (paused || posMs <= 0 || durationSec <= 0) return;
+    if (posMs - lastSavedPosRef.current < 10_000) return;
+    lastSavedPosRef.current = posMs;
+
+    const nearEnd = posMs > durationSec * 1000 - 90_000;
+    if (nearEnd) {
+      clearResume(getId(item), getMediaType(item), season, episode).catch(() => {});
+    } else {
+      AsyncStorage.setItem(progressKey(item, season, episode), String(posMs)).catch(() => {});
+      recordResume({
+        id: getId(item),
+        mediaType: getMediaType(item),
+        season: isTV ? season : undefined,
+        episode: isTV ? episode : undefined,
+        positionMs: posMs,
+        updatedAt: Date.now(),
+        title: getTitle(item),
+        posterUrl: ('poster_url' in item ? (item as any).poster_url : '') ||
+                   ('poster_path' in item ? `https://image.tmdb.org/t/p/w342${(item as TmdbItem).poster_path}` : ''),
+        backdropUrl: ('backdrop_url' in item ? (item as any).backdrop_url : '') ||
+                     ('backdrop_path' in item ? `https://image.tmdb.org/t/p/w780${(item as TmdbItem).backdrop_path}` : ''),
+      }).catch(() => {});
+    }
+  }, [positionSec, durationSec, paused, item, isTV, season, episode]);
 
   const resetControlsTimer = useCallback(() => {
     setShowControls(true);
@@ -174,108 +287,52 @@ export default function PlayerScreen({ route, navigation }: Props) {
     controlsTimer.current = setTimeout(() => setShowControls(false), 4000);
   }, []);
 
-  const seek = useCallback((deltaMs: number) => {
-    setPositionMs(prev => {
-      const next = Math.max(0, Math.min(prev + deltaMs, durationMs || prev + deltaMs));
-      videoRef.current?.setPositionAsync(next);
-      return next;
-    });
+  const seek = useCallback((deltaSec: number) => {
+    if (durationSec <= 0) return;
+    const next = Math.max(0, Math.min(durationSec, positionSec + deltaSec));
+    player.currentTime = next;
+    setPositionSec(next);
     resetControlsTimer();
-  }, [durationMs, resetControlsTimer]);
+  }, [durationSec, positionSec, player, resetControlsTimer]);
 
-  // Accelerating scrub: 10s → 20s → 40s → 60s (cap) when consecutive arrow
-  // presses fire within 500ms. Resets after 600ms of no input.
+  // Accelerating arrow seek: 10 → 20 → 40 → 60s when held
   const acceleratingSeek = useCallback((dir: -1 | 1) => {
     const now = Date.now();
     let step = lastSeekStepRef.current;
-    if (now - lastSeekAtRef.current < 500) {
-      step = Math.min(step * 2, 60_000);
-    } else {
-      step = 10_000;
-    }
+    step = now - lastSeekAtRef.current < 500 ? Math.min(step * 2, 60) : 10;
     lastSeekStepRef.current = step;
     lastSeekAtRef.current = now;
     seek(dir * step);
   }, [seek]);
 
+  const togglePlay = useCallback(() => {
+    if (paused) player.play(); else player.pause();
+    resetControlsTimer();
+  }, [paused, player, resetControlsTimer]);
+
   const goToEpisode = useCallback((ep: number) => {
     (navigation as any).replace('Player', { item, season, episode: ep });
   }, [navigation, item, season]);
 
-  useHardwareBack(useCallback(() => { navigation.goBack(); return true; }, [navigation]));
+  useHardwareBack(useCallback(() => {
+    if (picker) { setPicker(null); return true; }
+    navigation.goBack();
+    return true;
+  }, [navigation, picker]));
 
-  // D-pad: left/right always seeks (accelerates when held). All keys wake the
-  // overlay timer so anything brings the controls back.
   useTVEventHandler((evt) => {
     if (!evt?.eventType || evt.eventType === 'blur' || evt.eventType === 'focus') return;
+    if (picker) return; // let the picker handle its own focus
     if (evt.eventType === 'left') { acceleratingSeek(-1); return; }
     if (evt.eventType === 'right') { acceleratingSeek(1); return; }
-    resetControlsTimer();
-  });
-
-  async function onPlaybackStatusUpdate(status: AVPlaybackStatus) {
-    if (!status.isLoaded) {
-      if (status.error) setError(`Playback error: ${status.error}`);
+    if (evt.eventType === 'playPause' || evt.eventType === 'select') {
+      // 'select' / 'playPause' bubble up here only when no button is focused;
+      // we still want them to toggle play.
+      togglePlay();
       return;
     }
-
-    const pos = status.positionMillis ?? 0;
-    const dur = status.durationMillis ?? 0;
-    setPositionMs(pos);
-    if (dur > 0) setDurationMs(dur);
-    setBuffering(Boolean(status.isBuffering) && !status.isPlaying);
-
-    // Auto-resume saved position once when video first loads
-    if (status.isLoaded && !hasResumedRef.current && dur > 0) {
-      hasResumedRef.current = true;
-      try {
-        const saved = await AsyncStorage.getItem(progressKey(item, season, episode));
-        if (saved) {
-          const savedPos = Number(saved);
-          // Only resume if more than 30s in and not within last 60s of content
-          if (savedPos > 30_000 && savedPos < dur - 60_000) {
-            videoRef.current?.setPositionAsync(savedPos);
-          }
-        }
-      } catch { /* ignore */ }
-    }
-
-    // Save position every ~10s of watched content. Two stores:
-    //   1. Per-episode key (legacy) — used by per-screen "resume from last position" loop.
-    //   2. Resume index — powers the Continue Watching row on Home.
-    if (status.isPlaying && pos > 0 && pos - lastSavedPosRef.current > 10_000) {
-      lastSavedPosRef.current = pos;
-      AsyncStorage.setItem(progressKey(item, season, episode), String(pos)).catch(() => {});
-
-      // If the user is in the last 90s of the title, clear the resume entry so
-      // Home doesn't show a fully-watched movie as "Continue Watching".
-      const nearEnd = dur > 0 && pos > dur - 90_000;
-      if (nearEnd) {
-        clearResume(getId(item), getMediaType(item) as 'movie' | 'tv', season, episode).catch(() => {});
-      } else {
-        recordResume({
-          id: getId(item),
-          mediaType: getMediaType(item) as 'movie' | 'tv',
-          season: isTV ? season : undefined,
-          episode: isTV ? episode : undefined,
-          positionMs: pos,
-          updatedAt: Date.now(),
-          title: getTitle(item),
-          posterUrl: ('poster_url' in item ? (item as any).poster_url : '') ||
-                     ('poster_path' in item ? `https://image.tmdb.org/t/p/w342${(item as TmdbItem).poster_path}` : ''),
-          backdropUrl: ('backdrop_url' in item ? (item as any).backdrop_url : '') ||
-                       ('backdrop_path' in item ? `https://image.tmdb.org/t/p/w780${(item as TmdbItem).backdrop_path}` : ''),
-        }).catch(() => {});
-      }
-    }
-
-    // Auto-hide controls once playback begins
-    if (status.isPlaying && !hasAutoHiddenRef.current) {
-      hasAutoHiddenRef.current = true;
-      if (controlsTimer.current) clearTimeout(controlsTimer.current);
-      controlsTimer.current = setTimeout(() => setShowControls(false), 2500);
-    }
-  }
+    resetControlsTimer();
+  });
 
   if (loading) {
     return (
@@ -339,31 +396,23 @@ export default function PlayerScreen({ route, navigation }: Props) {
     );
   }
 
-  const progress = durationMs > 0 ? positionMs / durationMs : 0;
+  const progress = durationSec > 0 ? positionSec / durationSec : 0;
 
   return (
     <View style={styles.container} onTouchStart={resetControlsTimer}>
-      <Video
-        ref={videoRef}
-        source={{
-          uri: streamUrl!,
-          ...(Object.keys(streamHeaders).length > 0 ? { headers: streamHeaders } : {}),
-        }}
+      <VideoView
+        player={player}
         style={styles.video}
-        resizeMode={ResizeMode.CONTAIN}
-        shouldPlay={!paused}
-        onPlaybackStatusUpdate={onPlaybackStatusUpdate}
-        isLooping={false}
-        useNativeControls={false}
+        nativeControls={false}
+        contentFit="contain"
       />
       {buffering && !showControls && (
         <View style={styles.bufferingOverlay} pointerEvents="none">
           <ActivityIndicator size="large" color="#fff" />
         </View>
       )}
-      {showControls && (
+      {showControls && !picker && (
         <View style={styles.overlay}>
-          {/* Top bar */}
           <View style={styles.controlsTop}>
             <TouchableHighlight
               style={styles.controlBtn}
@@ -377,19 +426,18 @@ export default function PlayerScreen({ route, navigation }: Props) {
             </Text>
           </View>
 
-          {/* Centre: seek − play/pause + seek */}
           <View style={styles.controlsCenter}>
             <TouchableHighlight
               style={styles.seekBtn}
               underlayColor="#333"
-              onPress={() => seek(-10000)}
+              onPress={() => seek(-10)}
             >
               <Text style={styles.seekText}>⏪ 10s</Text>
             </TouchableHighlight>
             <TouchableHighlight
               style={styles.playPauseBtn}
               underlayColor="#333"
-              onPress={() => { setPaused(p => !p); resetControlsTimer(); }}
+              onPress={togglePlay}
               hasTVPreferredFocus
             >
               <Text style={styles.playPauseText}>{paused ? '▶' : '⏸'}</Text>
@@ -397,45 +445,85 @@ export default function PlayerScreen({ route, navigation }: Props) {
             <TouchableHighlight
               style={styles.seekBtn}
               underlayColor="#333"
-              onPress={() => seek(10000)}
+              onPress={() => seek(10)}
             >
               <Text style={styles.seekText}>10s ⏩</Text>
             </TouchableHighlight>
           </View>
 
-          {/* Bottom: progress bar + episode nav */}
           <View style={styles.controlsBottom}>
-            {/* Progress bar */}
             <View style={styles.progressRow}>
-              <Text style={styles.timeText}>{formatTime(positionMs)}</Text>
+              <Text style={styles.timeText}>{formatTime(positionSec)}</Text>
               <View style={styles.progressTrack}>
                 <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
               </View>
-              <Text style={styles.timeText}>{durationMs > 0 ? formatTime(durationMs) : '--:--'}</Text>
+              <Text style={styles.timeText}>{durationSec > 0 ? formatTime(durationSec) : '--:--'}</Text>
             </View>
-            {/* Episode navigation (TV shows only) */}
-            {isTV && (
-              <View style={styles.episodeRow}>
-                {episode > 1 && (
-                  <TouchableHighlight
-                    style={styles.episodeBtn}
-                    underlayColor="#333"
-                    onPress={() => goToEpisode(episode - 1)}
-                  >
-                    <Text style={styles.episodeBtnText}>← Prev Ep</Text>
-                  </TouchableHighlight>
-                )}
+
+            <View style={styles.bottomActionsRow}>
+              {availableSubs.length > 0 && (
                 <TouchableHighlight
-                  style={styles.episodeBtn}
+                  style={styles.actionBtn}
+                  underlayColor="#333"
+                  onPress={() => setPicker('subs')}
+                >
+                  <Text style={styles.actionBtnText}>CC  Subtitles</Text>
+                </TouchableHighlight>
+              )}
+              {availableAudios.length > 1 && (
+                <TouchableHighlight
+                  style={styles.actionBtn}
+                  underlayColor="#333"
+                  onPress={() => setPicker('audio')}
+                >
+                  <Text style={styles.actionBtnText}>🎧  Audio</Text>
+                </TouchableHighlight>
+              )}
+              {isTV && episode > 1 && (
+                <TouchableHighlight
+                  style={styles.actionBtn}
+                  underlayColor="#333"
+                  onPress={() => goToEpisode(episode - 1)}
+                >
+                  <Text style={styles.actionBtnText}>← Prev Ep</Text>
+                </TouchableHighlight>
+              )}
+              {isTV && (
+                <TouchableHighlight
+                  style={styles.actionBtn}
                   underlayColor="#333"
                   onPress={() => goToEpisode(episode + 1)}
                 >
-                  <Text style={styles.episodeBtnText}>Next Ep →</Text>
+                  <Text style={styles.actionBtnText}>Next Ep →</Text>
                 </TouchableHighlight>
-              </View>
-            )}
+              )}
+            </View>
           </View>
         </View>
+      )}
+
+      {picker === 'subs' && (
+        <TrackPicker
+          title="Subtitles"
+          tracks={availableSubs}
+          currentId={currentSubId}
+          onSelect={(track) => {
+            player.subtitleTrack = track ? (track as any) : null;
+          }}
+          onClose={() => setPicker(null)}
+        />
+      )}
+      {picker === 'audio' && (
+        <TrackPicker
+          title="Audio Track"
+          tracks={availableAudios}
+          currentId={currentAudioId}
+          includeOff={false}
+          onSelect={(track) => {
+            if (track) player.audioTrack = track as any;
+          }}
+          onClose={() => setPicker(null)}
+        />
       )}
     </View>
   );
@@ -473,9 +561,9 @@ const styles = StyleSheet.create({
   progressTrack: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 2, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: '#e50914', borderRadius: 2 },
   timeText: { color: '#ccc', fontSize: 13, minWidth: 48, textAlign: 'center' },
-  episodeRow: { flexDirection: 'row', gap: 16 },
-  episodeBtn: { paddingHorizontal: 24, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 6 },
-  episodeBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  bottomActionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  actionBtn: { paddingHorizontal: 18, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 6 },
+  actionBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   backBtn: { backgroundColor: '#333', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 6 },
   backBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
