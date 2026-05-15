@@ -50,17 +50,21 @@ jobs:
           APP_VARIANT: tv
         run: npx expo prebuild --platform android --clean --no-install
 
-      - name: Allow experimental Kotlin APIs (required by expo-video)
+      - name: Patch ExpoModulesPackageList to opt-in to experimental APIs
         run: |
           mkdir -p ~/.gradle/init.d
           printf '%s\n' \
-            'allprojects {' \
-            '  afterEvaluate {' \
-            '    tasks.all { task ->' \
-            '      try {' \
-            '        task.kotlinOptions.freeCompilerArgs += ["-opt-in=kotlin.RequiresOptIn"]' \
-            '        task.kotlinOptions.allWarningsAsErrors = false' \
-            '      } catch (Throwable ignored) {}' \
+            'gradle.projectsEvaluated {' \
+            '  allprojects { proj ->' \
+            '    if (proj.name == "expo") {' \
+            '      proj.tasks.matching { it.name == "compileReleaseKotlin" }.configureEach { t ->' \
+            '        t.doFirst {' \
+            '          def f = proj.file("build/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt")' \
+            '          if (f.exists() && !f.text.contains("@file:OptIn")) {' \
+            '            f.text = "@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)\n" + f.text' \
+            '          }' \
+            '        }' \
+            '      }' \
             '    }' \
             '  }' \
             '}' \
