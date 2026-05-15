@@ -102,6 +102,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const [showControls, setShowControls] = useState(true);
   const [positionMs, setPositionMs] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
+  const [buffering, setBuffering] = useState(false);
 
   const videoRef = useRef<Video>(null);
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -222,6 +223,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
     const dur = status.durationMillis ?? 0;
     setPositionMs(pos);
     if (dur > 0) setDurationMs(dur);
+    setBuffering(Boolean(status.isBuffering) && !status.isPlaying);
 
     // Auto-resume saved position once when video first loads
     if (status.isLoaded && !hasResumedRef.current && dur > 0) {
@@ -354,6 +356,11 @@ export default function PlayerScreen({ route, navigation }: Props) {
         isLooping={false}
         useNativeControls={false}
       />
+      {buffering && !showControls && (
+        <View style={styles.bufferingOverlay} pointerEvents="none">
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      )}
       {showControls && (
         <View style={styles.overlay}>
           {/* Top bar */}
@@ -447,6 +454,11 @@ const styles = StyleSheet.create({
   loadingText: { color: '#fff', fontSize: 16, marginTop: 12 },
   errorText: { color: '#e50914', fontSize: 18, textAlign: 'center', maxWidth: 500 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'space-between' },
+  bufferingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
   controlsTop: { flexDirection: 'row', alignItems: 'center', padding: 24, gap: 20 },
   controlsCenter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 32 },
   controlsBottom: { paddingHorizontal: 32, paddingBottom: 32, gap: 16 },

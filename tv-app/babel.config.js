@@ -11,6 +11,8 @@ module.exports = function (api) {
           alias: { '@': './src' },
         },
       ],
+      // Required by react-native-reanimated v4. MUST be the last plugin.
+      'react-native-worklets/plugin',
     ],
   };
 };

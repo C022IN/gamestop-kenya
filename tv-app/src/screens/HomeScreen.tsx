@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   BackHandler,
   FlatList,
   StyleSheet,
   Text,
   ToastAndroid,
-  TouchableHighlight,
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -16,6 +14,8 @@ import { fetchCatalog, getStoredPhone, getContinueWatching, type ResumeEntry } f
 import HeroBanner from '@/components/HeroBanner';
 import MovieRow from '@/components/MovieRow';
 import ContinueWatchingRow from '@/components/ContinueWatchingRow';
+import { HeroSkeleton, PosterRowSkeleton } from '@/components/Skeleton';
+import FocusableButton from '@/components/FocusableButton';
 
 type AnyItem = CatalogItem | TmdbItem;
 
@@ -141,8 +141,16 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#e50914" />
+      <View style={styles.container}>
+        <View style={styles.topBar}>
+          <Text style={styles.brand}>GameStop Movies</Text>
+        </View>
+        <HeroSkeleton />
+        <View style={{ paddingTop: 24 }}>
+          <PosterRowSkeleton />
+          <PosterRowSkeleton />
+          <PosterRowSkeleton />
+        </View>
       </View>
     );
   }
@@ -151,9 +159,7 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableHighlight style={styles.retryBtn} onPress={load} hasTVPreferredFocus>
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableHighlight>
+        <FocusableButton label="Retry" onPress={load} variant="primary" hasTVPreferredFocus />
       </View>
     );
   }
@@ -164,16 +170,8 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
         <Text style={styles.brand}>GameStop Movies</Text>
         <View style={styles.topActions}>
           {phone ? <Text style={styles.phoneText}>{phone}</Text> : null}
-          <TouchableHighlight
-            style={styles.topBtn}
-            underlayColor="#333"
-            onPress={() => navigation.navigate('Search')}
-          >
-            <Text style={styles.topBtnText}>Search</Text>
-          </TouchableHighlight>
-          <TouchableHighlight style={styles.topBtn} underlayColor="#333" onPress={onLogout}>
-            <Text style={styles.topBtnText}>Sign Out</Text>
-          </TouchableHighlight>
+          <FocusableButton label="Search" onPress={() => navigation.navigate('Search')} />
+          <FocusableButton label="Sign Out" onPress={onLogout} />
         </View>
       </View>
 
