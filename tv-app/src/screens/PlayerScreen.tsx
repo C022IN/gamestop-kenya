@@ -13,7 +13,7 @@ import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
-import { fetchStream, buildDirectPlayerUrl } from '@/api/client';
+import { fetchStream, buildDirectPlayerUrl, recordResume, clearResume } from '@/api/client';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 const { width, height } = Dimensions.get('window');
@@ -108,6 +108,10 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const hasAutoHiddenRef = useRef(false);
   const hasResumedRef = useRef(false);
   const lastSavedPosRef = useRef(0);
+  // Accelerating scrub: track timestamp + magnitude of consecutive seeks so the
+  // step grows from 10s → 30s → 60s when the user holds direction.
+  const lastSeekAtRef = useRef(0);
+  const lastSeekStepRef = useRef(10_000);
 
   const loadStream = useCallback(async () => {
     setLoading(true);
@@ -178,19 +182,33 @@ export default function PlayerScreen({ route, navigation }: Props) {
     resetControlsTimer();
   }, [durationMs, resetControlsTimer]);
 
+  // Accelerating scrub: 10s → 20s → 40s → 60s (cap) when consecutive arrow
+  // presses fire within 500ms. Resets after 600ms of no input.
+  const acceleratingSeek = useCallback((dir: -1 | 1) => {
+    const now = Date.now();
+    let step = lastSeekStepRef.current;
+    if (now - lastSeekAtRef.current < 500) {
+      step = Math.min(step * 2, 60_000);
+    } else {
+      step = 10_000;
+    }
+    lastSeekStepRef.current = step;
+    lastSeekAtRef.current = now;
+    seek(dir * step);
+  }, [seek]);
+
   const goToEpisode = useCallback((ep: number) => {
     (navigation as any).replace('Player', { item, season, episode: ep });
   }, [navigation, item, season]);
 
   useHardwareBack(useCallback(() => { navigation.goBack(); return true; }, [navigation]));
 
-  // D-pad: left/right seeks when controls are hidden; all keys wake the overlay timer
+  // D-pad: left/right always seeks (accelerates when held). All keys wake the
+  // overlay timer so anything brings the controls back.
   useTVEventHandler((evt) => {
     if (!evt?.eventType || evt.eventType === 'blur' || evt.eventType === 'focus') return;
-    if (!showControls) {
-      if (evt.eventType === 'left') { seek(-10000); return; }
-      if (evt.eventType === 'right') { seek(10000); return; }
-    }
+    if (evt.eventType === 'left') { acceleratingSeek(-1); return; }
+    if (evt.eventType === 'right') { acceleratingSeek(1); return; }
     resetControlsTimer();
   });
 
@@ -220,10 +238,33 @@ export default function PlayerScreen({ route, navigation }: Props) {
       } catch { /* ignore */ }
     }
 
-    // Save position to AsyncStorage every ~10s of watched content
+    // Save position every ~10s of watched content. Two stores:
+    //   1. Per-episode key (legacy) — used by per-screen "resume from last position" loop.
+    //   2. Resume index — powers the Continue Watching row on Home.
     if (status.isPlaying && pos > 0 && pos - lastSavedPosRef.current > 10_000) {
       lastSavedPosRef.current = pos;
       AsyncStorage.setItem(progressKey(item, season, episode), String(pos)).catch(() => {});
+
+      // If the user is in the last 90s of the title, clear the resume entry so
+      // Home doesn't show a fully-watched movie as "Continue Watching".
+      const nearEnd = dur > 0 && pos > dur - 90_000;
+      if (nearEnd) {
+        clearResume(getId(item), getMediaType(item) as 'movie' | 'tv', season, episode).catch(() => {});
+      } else {
+        recordResume({
+          id: getId(item),
+          mediaType: getMediaType(item) as 'movie' | 'tv',
+          season: isTV ? season : undefined,
+          episode: isTV ? episode : undefined,
+          positionMs: pos,
+          updatedAt: Date.now(),
+          title: getTitle(item),
+          posterUrl: ('poster_url' in item ? (item as any).poster_url : '') ||
+                     ('poster_path' in item ? `https://image.tmdb.org/t/p/w342${(item as TmdbItem).poster_path}` : ''),
+          backdropUrl: ('backdrop_url' in item ? (item as any).backdrop_url : '') ||
+                       ('backdrop_path' in item ? `https://image.tmdb.org/t/p/w780${(item as TmdbItem).backdrop_path}` : ''),
+        }).catch(() => {});
+      }
     }
 
     // Auto-hide controls once playback begins

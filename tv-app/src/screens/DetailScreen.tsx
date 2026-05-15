@@ -1,10 +1,30 @@
-import React, { useCallback, useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, TouchableHighlight, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableHighlight,
+  View,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
-import type { CatalogItem, TmdbItem } from '@/api/client';
-import { tmdbBackdrop, tmdbPoster } from '@/api/client';
+import type { CatalogItem, TmdbItem, SeasonEpisodes, TitleDetails, CastMember } from '@/api/client';
+import {
+  tmdbBackdrop,
+  tmdbPoster,
+  fetchDetails,
+  fetchEpisodes,
+  fetchCredits,
+  fetchSimilar,
+  getContinueWatching,
+} from '@/api/client';
+import EpisodeTile, { EpisodeListLoading } from '@/components/EpisodeTile';
+import SeasonTabs from '@/components/SeasonTabs';
+import CastStrip from '@/components/CastStrip';
+import MovieRow from '@/components/MovieRow';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 const { width } = Dimensions.get('window');
@@ -15,6 +35,9 @@ interface Props {
   navigation: NavigationProp<any>;
 }
 
+function getId(item: AnyItem): string {
+  return String(item.id ?? '');
+}
 function getTitle(item: AnyItem): string {
   if ('title' in item && item.title) return item.title;
   if ('name' in item && (item as TmdbItem).name) return (item as TmdbItem).name!;
@@ -33,92 +56,107 @@ function getPoster(item: AnyItem): string {
   if ('poster_path' in item) return tmdbPoster((item as TmdbItem).poster_path);
   return '';
 }
-function getMeta(item: AnyItem): string[] {
-  const parts: string[] = [];
-  if ('year' in item && (item as CatalogItem).year) parts.push(String((item as CatalogItem).year));
-  if ('release_date' in item && (item as TmdbItem).release_date)
-    parts.push(((item as TmdbItem).release_date ?? '').slice(0, 4));
-  if ('vote_average' in item && (item as any).vote_average)
-    parts.push(`⭐ ${Number((item as any).vote_average).toFixed(1)}`);
-  if ('genres' in item && (item as CatalogItem).genres?.length)
-    parts.push(((item as CatalogItem).genres ?? []).slice(0, 3).join(' • '));
-  return parts;
-}
 function isTvShow(item: AnyItem): boolean {
   if ('media_type' in item && (item as TmdbItem).media_type === 'tv') return true;
   if ('kind' in item && (item as CatalogItem).kind === 'series') return true;
   return false;
 }
 
-function NumberPicker({
-  label,
-  value,
-  min = 1,
-  max = 20,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min?: number;
-  max?: number;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <View style={pickerStyles.row}>
-      <Text style={pickerStyles.label}>{label}</Text>
-      <TouchableHighlight
-        style={pickerStyles.btn}
-        underlayColor="#333"
-        onPress={() => onChange(Math.max(min, value - 1))}
-      >
-        <Text style={pickerStyles.btnText}>−</Text>
-      </TouchableHighlight>
-      <Text style={pickerStyles.value}>{value}</Text>
-      <TouchableHighlight
-        style={pickerStyles.btn}
-        underlayColor="#333"
-        onPress={() => onChange(Math.min(max, value + 1))}
-      >
-        <Text style={pickerStyles.btnText}>+</Text>
-      </TouchableHighlight>
-    </View>
-  );
-}
-
-const pickerStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  label: { color: '#aaa', fontSize: 15, width: 80 },
-  btn: {
-    width: 36, height: 36, borderRadius: 6,
-    backgroundColor: '#222', alignItems: 'center', justifyContent: 'center',
-  },
-  btnText: { color: '#fff', fontSize: 20, lineHeight: 22 },
-  value: { color: '#fff', fontSize: 18, fontWeight: '700', minWidth: 32, textAlign: 'center' },
-});
-
 export default function DetailScreen({ route, navigation }: Props) {
   const { item } = route.params;
-  const [playFocused, setPlayFocused] = useState(false);
-  const [season, setSeason] = useState(1);
-  const [episode, setEpisode] = useState(1);
   const tv = isTvShow(item);
+  const numericId = useMemo(() => {
+    const n = Number(getId(item));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }, [item]);
 
   useHardwareBack(useCallback(() => { navigation.goBack(); return true; }, [navigation]));
 
-  function handlePlay() {
-    navigation.navigate('Player', tv ? { item, season, episode } : { item });
+  const [details, setDetails] = useState<TitleDetails | null>(null);
+  const [cast, setCast] = useState<CastMember[]>([]);
+  const [similar, setSimilar] = useState<TmdbItem[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const [seasonData, setSeasonData] = useState<SeasonEpisodes | null>(null);
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+  const [resumeEpisode, setResumeEpisode] = useState<{ season: number; episode: number; positionMs: number; durationMs?: number } | null>(null);
+
+  // Fetch full details + cast + similar in parallel as soon as we mount
+  useEffect(() => {
+    if (!numericId) return;
+    let cancelled = false;
+    const t: 'movie' | 'tv' = tv ? 'tv' : 'movie';
+    (async () => {
+      const [d, c, s] = await Promise.all([
+        fetchDetails(numericId, t),
+        fetchCredits(numericId, t),
+        fetchSimilar(numericId, t),
+      ]);
+      if (cancelled) return;
+      setDetails(d);
+      setCast(c);
+      setSimilar(s);
+    })();
+    return () => { cancelled = true; };
+  }, [numericId, tv]);
+
+  // Look up the most recent saved position for this title to surface "Resume" / progress on episode tiles
+  useEffect(() => {
+    if (!numericId) return;
+    (async () => {
+      const list = await getContinueWatching();
+      const match = list.find(e => e.id === String(numericId) && e.mediaType === (tv ? 'tv' : 'movie'));
+      if (match) {
+        setResumeEpisode({
+          season: match.season ?? 1,
+          episode: match.episode ?? 1,
+          positionMs: match.positionMs,
+        });
+        if (tv && match.season) setSelectedSeason(match.season);
+      }
+    })();
+  }, [numericId, tv]);
+
+  // Fetch episode list whenever the user switches seasons (TV only)
+  useEffect(() => {
+    if (!tv || !numericId) return;
+    let cancelled = false;
+    setLoadingEpisodes(true);
+    setSeasonData(null);
+    fetchEpisodes(numericId, selectedSeason).then(d => {
+      if (cancelled) return;
+      setSeasonData(d);
+      setLoadingEpisodes(false);
+    });
+    return () => { cancelled = true; };
+  }, [tv, numericId, selectedSeason]);
+
+  function play(season?: number, episode?: number) {
+    if (tv) {
+      navigation.navigate('Player', { item, season: season ?? 1, episode: episode ?? 1 });
+    } else {
+      navigation.navigate('Player', { item });
+    }
   }
+
+  const title = details?.title || details?.name || getTitle(item);
+  const overview = details?.overview || getOverview(item);
+  const meta: string[] = [];
+  if (details?.release_date) meta.push(details.release_date.slice(0, 4));
+  if (details?.runtime) meta.push(`${details.runtime}m`);
+  if (details?.number_of_seasons) meta.push(`${details.number_of_seasons} Season${details.number_of_seasons > 1 ? 's' : ''}`);
+  if (details?.vote_average) meta.push(`★ ${details.vote_average.toFixed(1)}`);
+  const genres = details?.genres?.slice(0, 3).map(g => g.name).join(' · ') ?? '';
 
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: getBackdrop(item) || getPoster(item) }}
+        source={{ uri: getBackdrop(item) || details?.backdrop_url || getPoster(item) }}
         style={[styles.backdrop, { width }]}
         contentFit="cover"
         priority="high"
       />
       <LinearGradient
-        colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.75)', '#000']}
+        colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.6)', '#000']}
         style={[styles.gradient, { width }]}
       />
       <TouchableHighlight
@@ -128,38 +166,110 @@ export default function DetailScreen({ route, navigation }: Props) {
       >
         <Text style={styles.backText}>← Back</Text>
       </TouchableHighlight>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.main}>
-          <Image
-            source={{ uri: getPoster(item) }}
-            style={styles.poster}
-            contentFit="cover"
-          />
-          <View style={styles.info}>
-            <Text style={styles.title}>{getTitle(item)}</Text>
-            <Text style={styles.meta}>{getMeta(item).join('  ·  ')}</Text>
-            {tv && (
-              <View style={styles.episodePicker}>
-                <Text style={styles.episodeHeading}>Select Episode</Text>
-                <NumberPicker label="Season" value={season} min={1} max={30} onChange={setSeason} />
-                <NumberPicker label="Episode" value={episode} min={1} max={50} onChange={setEpisode} />
-              </View>
-            )}
-            <Text style={styles.overview}>{getOverview(item)}</Text>
-            <View style={styles.actions}>
+
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Hero block: title + meta + Play */}
+        <View style={styles.heroBlock}>
+          <Text style={styles.title}>{title}</Text>
+          {details?.tagline ? <Text style={styles.tagline}>{details.tagline}</Text> : null}
+          <Text style={styles.metaLine}>{meta.join('  ·  ')}</Text>
+          {genres ? <Text style={styles.genreLine}>{genres}</Text> : null}
+          <Text style={styles.overview}>{overview}</Text>
+
+          <View style={styles.actions}>
+            {resumeEpisode ? (
               <TouchableHighlight
-                style={[styles.btn, styles.playBtn, playFocused && styles.btnFocused]}
+                style={[styles.btn, styles.playBtn]}
                 underlayColor="#cc0000"
-                onFocus={() => setPlayFocused(true)}
-                onBlur={() => setPlayFocused(false)}
-                onPress={handlePlay}
+                onPress={() => play(resumeEpisode.season, resumeEpisode.episode)}
                 hasTVPreferredFocus
               >
-                <Text style={styles.playBtnText}>▶  {tv ? `Play S${season} E${episode}` : 'Play Now'}</Text>
+                <Text style={styles.playBtnText}>
+                  ▶ Resume{tv ? `  S${resumeEpisode.season} E${resumeEpisode.episode}` : ''}
+                </Text>
               </TouchableHighlight>
-            </View>
+            ) : (
+              <TouchableHighlight
+                style={[styles.btn, styles.playBtn]}
+                underlayColor="#cc0000"
+                onPress={() => play(1, 1)}
+                hasTVPreferredFocus
+              >
+                <Text style={styles.playBtnText}>▶ {tv ? 'Play S1 E1' : 'Play Now'}</Text>
+              </TouchableHighlight>
+            )}
+            {resumeEpisode ? (
+              <TouchableHighlight
+                style={[styles.btn, styles.secondaryBtn]}
+                underlayColor="#333"
+                onPress={() => play(1, 1)}
+              >
+                <Text style={styles.secondaryText}>↺ Start Over</Text>
+              </TouchableHighlight>
+            ) : null}
           </View>
         </View>
+
+        {/* TV: season tabs + episodes list */}
+        {tv && details?.seasons && details.seasons.length > 0 && (
+          <>
+            <SeasonTabs
+              seasons={details.seasons}
+              selected={selectedSeason}
+              onSelect={setSelectedSeason}
+            />
+            <View style={styles.episodesWrap}>
+              {loadingEpisodes ? (
+                <EpisodeListLoading />
+              ) : seasonData && seasonData.episodes.length ? (
+                seasonData.episodes.map((ep, idx) => {
+                  const pct = resumeEpisode &&
+                    resumeEpisode.season === ep.season_number &&
+                    resumeEpisode.episode === ep.episode_number &&
+                    ep.runtime
+                      ? resumeEpisode.positionMs / (ep.runtime * 60_000)
+                      : undefined;
+                  return (
+                    <EpisodeTile
+                      key={ep.id}
+                      episodeNumber={ep.episode_number}
+                      title={ep.name}
+                      overview={ep.overview}
+                      stillUrl={ep.still_url}
+                      runtime={ep.runtime}
+                      airDate={ep.air_date}
+                      resumePct={pct}
+                      hasTVPreferredFocus={idx === 0 && !resumeEpisode}
+                      onPress={() => play(ep.season_number, ep.episode_number)}
+                    />
+                  );
+                })
+              ) : (
+                <Text style={styles.empty}>No episodes available for this season.</Text>
+              )}
+            </View>
+          </>
+        )}
+
+        {/* Cast (movies + TV) */}
+        {cast.length > 0 && <CastStrip cast={cast} />}
+
+        {/* Similar titles */}
+        {similar.length > 0 && (
+          <View style={styles.similarWrap}>
+            <MovieRow
+              title="More Like This"
+              items={similar}
+              onSelect={(it) => (navigation as any).replace('Detail', { item: it })}
+            />
+          </View>
+        )}
+
+        {!details && (
+          <View style={styles.spinner}>
+            <ActivityIndicator color="#666" />
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -167,32 +277,29 @@ export default function DetailScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  backdrop: { position: 'absolute', top: 0, left: 0, height: 420 },
-  gradient: { position: 'absolute', top: 0, left: 0, height: 480 },
+  backdrop: { position: 'absolute', top: 0, left: 0, height: 520 },
+  gradient: { position: 'absolute', top: 0, left: 0, height: 600 },
   backBtn: {
-    position: 'absolute', top: 20, left: 24,
+    position: 'absolute', top: 20, left: 24, zIndex: 10,
     paddingHorizontal: 16, paddingVertical: 8,
-    backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 6, zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 6,
   },
   backText: { color: '#fff', fontSize: 16 },
-  content: { paddingTop: 220, paddingHorizontal: 40, paddingBottom: 60 },
-  main: { flexDirection: 'row', gap: 32 },
-  poster: { width: 180, height: 270, borderRadius: 8 },
-  info: { flex: 1 },
-  title: { color: '#fff', fontSize: 32, fontWeight: '800', marginBottom: 10 },
-  meta: { color: '#aaa', fontSize: 15, marginBottom: 16 },
-  episodePicker: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 20,
-    alignSelf: 'flex-start',
-  },
-  episodeHeading: { color: '#e50914', fontSize: 13, fontWeight: '700', marginBottom: 12, letterSpacing: 1 },
-  overview: { color: '#ccc', fontSize: 15, lineHeight: 24, marginBottom: 28, maxWidth: 620 },
-  actions: { flexDirection: 'row', gap: 16 },
-  btn: { paddingHorizontal: 32, paddingVertical: 14, borderRadius: 6, minWidth: 180, alignItems: 'center' },
+  content: { paddingTop: 220, paddingBottom: 80 },
+  heroBlock: { paddingHorizontal: 40, maxWidth: 900 },
+  title: { color: '#fff', fontSize: 38, fontWeight: '800', marginBottom: 6 },
+  tagline: { color: '#aaa', fontSize: 14, fontStyle: 'italic', marginBottom: 10 },
+  metaLine: { color: '#bbb', fontSize: 14, marginBottom: 4 },
+  genreLine: { color: '#888', fontSize: 13, marginBottom: 14 },
+  overview: { color: '#ddd', fontSize: 15, lineHeight: 22, marginBottom: 20, maxWidth: 720 },
+  actions: { flexDirection: 'row', gap: 12, marginBottom: 8 },
+  btn: { paddingHorizontal: 28, paddingVertical: 12, borderRadius: 6, minWidth: 160, alignItems: 'center' },
   playBtn: { backgroundColor: '#e50914' },
-  btnFocused: { borderWidth: 2, borderColor: '#fff' },
-  playBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  secondaryBtn: { backgroundColor: 'rgba(255,255,255,0.15)' },
+  playBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  secondaryText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  episodesWrap: { paddingHorizontal: 30, paddingTop: 8 },
+  empty: { color: '#666', textAlign: 'center', paddingVertical: 30 },
+  similarWrap: { marginTop: 20 },
+  spinner: { paddingVertical: 30 },
 });

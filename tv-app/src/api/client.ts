@@ -191,3 +191,174 @@ export async function searchMovies(query: string): Promise<SearchResult> {
     return { libraryResults: [], tmdbResults: [] };
   }
 }
+
+// ---- Episode list (Series) ---------------------------------------------------
+
+export interface Episode {
+  id: number;
+  episode_number: number;
+  season_number: number;
+  name: string;
+  overview: string;
+  still_path: string | null;
+  still_url: string;
+  air_date?: string;
+  runtime?: number;
+  vote_average: number;
+}
+
+export interface SeasonEpisodes {
+  season_number: number;
+  name: string;
+  overview: string;
+  episodes: Episode[];
+}
+
+export async function fetchEpisodes(tvId: number | string, season: number): Promise<SeasonEpisodes | null> {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/movies/episodes/?tv_id=${tvId}&season=${season}`,
+      { headers: await headers() },
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch { return null; }
+}
+
+// ---- Full title details (genres, seasons summary, runtime) ------------------
+
+export interface SeasonSummary {
+  season_number: number;
+  name: string;
+  overview: string;
+  episode_count: number;
+  air_date?: string;
+  poster_url: string;
+}
+
+export interface TitleDetails {
+  id: number;
+  media_type: 'movie' | 'tv';
+  title?: string;
+  name?: string;
+  overview: string;
+  tagline?: string;
+  runtime?: number;
+  status?: string;
+  vote_average: number;
+  release_date?: string;
+  poster_url: string;
+  backdrop_url: string;
+  genres: { id: number; name: string }[];
+  number_of_seasons?: number;
+  number_of_episodes?: number;
+  seasons?: SeasonSummary[];
+}
+
+export async function fetchDetails(id: number | string, type: 'movie' | 'tv'): Promise<TitleDetails | null> {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/movies/details/?id=${id}&type=${type}`,
+      { headers: await headers() },
+    );
+    if (!res.ok) return null;
+    return res.json();
+  } catch { return null; }
+}
+
+// ---- Cast --------------------------------------------------------------------
+
+export interface CastMember {
+  name: string;
+  character: string;
+  profile_url: string;
+}
+
+export async function fetchCredits(id: number | string, type: 'movie' | 'tv'): Promise<CastMember[]> {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/movies/credits/?id=${id}&type=${type}`,
+      { headers: await headers() },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.cast ?? [];
+  } catch { return []; }
+}
+
+// ---- Similar / Discover ------------------------------------------------------
+
+export async function fetchSimilar(id: number | string, type: 'movie' | 'tv'): Promise<TmdbItem[]> {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/movies/similar/?id=${id}&type=${type}`,
+      { headers: await headers() },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.items ?? [];
+  } catch { return []; }
+}
+
+export async function fetchDiscover(type: 'movie' | 'tv', genreId: number): Promise<TmdbItem[]> {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/movies/discover/?type=${type}&genre_id=${genreId}`,
+      { headers: await headers() },
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.items ?? [];
+  } catch { return []; }
+}
+
+// ---- Continue Watching (local) ----------------------------------------------
+
+export interface ResumeEntry {
+  id: string;            // tmdb id or slug
+  mediaType: 'movie' | 'tv';
+  season?: number;
+  episode?: number;
+  positionMs: number;
+  updatedAt: number;
+  // Title/poster hydrated from the most recent Detail/Player visit
+  title?: string;
+  posterUrl?: string;
+  backdropUrl?: string;
+}
+
+const RESUME_INDEX_KEY = 'resume_index_v1';
+
+export async function recordResume(entry: ResumeEntry): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(RESUME_INDEX_KEY);
+    const arr: ResumeEntry[] = raw ? JSON.parse(raw) : [];
+    const k = (e: ResumeEntry) =>
+      `${e.id}_${e.mediaType}_${e.season ?? 0}_${e.episode ?? 0}`;
+    const key = k(entry);
+    const next = arr.filter(e => k(e) !== key);
+    next.unshift({ ...entry, updatedAt: Date.now() });
+    await AsyncStorage.setItem(RESUME_INDEX_KEY, JSON.stringify(next.slice(0, 30)));
+  } catch { /* ignore */ }
+}
+
+export async function clearResume(id: string, mediaType: 'movie' | 'tv', season?: number, episode?: number): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(RESUME_INDEX_KEY);
+    if (!raw) return;
+    const arr: ResumeEntry[] = JSON.parse(raw);
+    const next = arr.filter(e =>
+      !(e.id === id && e.mediaType === mediaType && (e.season ?? 0) === (season ?? 0) && (e.episode ?? 0) === (episode ?? 0))
+    );
+    await AsyncStorage.setItem(RESUME_INDEX_KEY, JSON.stringify(next));
+  } catch { /* ignore */ }
+}
+
+export async function getContinueWatching(): Promise<ResumeEntry[]> {
+  try {
+    const raw = await AsyncStorage.getItem(RESUME_INDEX_KEY);
+    if (!raw) return [];
+    const arr: ResumeEntry[] = JSON.parse(raw);
+    return arr.sort((a, b) => b.updatedAt - a.updatedAt);
+  } catch { return []; }
+}

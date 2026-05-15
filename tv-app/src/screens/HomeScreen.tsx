@@ -12,14 +12,16 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
-import { fetchCatalog, getStoredPhone } from '@/api/client';
+import { fetchCatalog, getStoredPhone, getContinueWatching, type ResumeEntry } from '@/api/client';
 import HeroBanner from '@/components/HeroBanner';
 import MovieRow from '@/components/MovieRow';
+import ContinueWatchingRow from '@/components/ContinueWatchingRow';
 
 type AnyItem = CatalogItem | TmdbItem;
 
 type FeedRow =
   | { type: 'hero'; id: string; item: AnyItem }
+  | { type: 'continue'; id: string; entries: ResumeEntry[] }
   | { type: 'section'; id: string; title: string; items: AnyItem[]; isFirst: boolean };
 
 interface Props {
@@ -63,7 +65,10 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const data = await fetchCatalog();
+    const [data, resumeEntries] = await Promise.all([
+      fetchCatalog(),
+      getContinueWatching(),
+    ]);
     if (!data) {
       setError('Failed to load content. Please check your connection.');
       setLoading(false);
@@ -77,6 +82,11 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
       rows.push({ type: 'hero', id: 'hero', item: allItems[0] });
     }
 
+    // Continue Watching directly under hero, so the first focusable row picks it up.
+    if (resumeEntries.length) {
+      rows.push({ type: 'continue', id: 'continue', entries: resumeEntries });
+    }
+
     const sections = data.sections ?? [];
     sections.forEach((s, i) => {
       rows.push({
@@ -84,22 +94,49 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
         id: s.id,
         title: s.title,
         items: s.items as AnyItem[],
-        isFirst: i === 0,
+        isFirst: i === 0 && !resumeEntries.length,
       });
     });
 
     if (!sections.length && allItems.length) {
-      rows.push({ type: 'section', id: 'all', title: 'All Content', items: allItems, isFirst: true });
+      rows.push({
+        type: 'section',
+        id: 'all',
+        title: 'All Content',
+        items: allItems,
+        isFirst: !resumeEntries.length,
+      });
     }
 
     setFeed(rows);
     setLoading(false);
   }, []);
 
+  // Reload Continue Watching every time Home regains focus (covers Player → Home)
+  useFocusEffect(useCallback(() => { load(); }, [load]));
   useEffect(() => { load(); }, [load]);
 
   function goToDetail(item: AnyItem) {
     navigation.navigate('Detail', { item });
+  }
+
+  function resumeEntry(entry: ResumeEntry) {
+    // Jump straight to the player; PlayerScreen will auto-seek to the saved position.
+    const stubItem = {
+      id: Number(entry.id),
+      media_type: entry.mediaType,
+      title: entry.title,
+      name: entry.title,
+      poster_url: entry.posterUrl,
+      backdrop_url: entry.backdropUrl,
+      overview: '',
+      vote_average: 0,
+    } as unknown as TmdbItem;
+    navigation.navigate('Player', {
+      item: stubItem,
+      season: entry.season ?? 1,
+      episode: entry.episode ?? 1,
+    });
   }
 
   if (loading) {
@@ -158,6 +195,9 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
                 onMore={() => goToDetail(row.item)}
               />
             );
+          }
+          if (row.type === 'continue') {
+            return <ContinueWatchingRow entries={row.entries} onSelect={resumeEntry} />;
           }
           return (
             <MovieRow
