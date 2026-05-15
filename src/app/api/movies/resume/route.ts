@@ -34,7 +34,8 @@ export async function GET(req: NextRequest) {
 
   if (error || !data) return NextResponse.json({ items: [] });
 
-  const items: ResumeEntry[] = data.map((r: any) => ({
+  type Row = { tmdb_id: string; media_type: 'movie' | 'tv'; season: number; episode: number; position_ms: number; duration_ms: number | null; title: string | null; poster_url: string | null; backdrop_url: string | null; updated_at: string };
+  const items: ResumeEntry[] = (data as Row[]).map((r) => ({
     tmdbId: r.tmdb_id,
     mediaType: r.media_type,
     season: r.season,

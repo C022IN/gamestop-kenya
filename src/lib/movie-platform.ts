@@ -745,9 +745,10 @@ export async function getResumePositions(profileId: string, limit = 20): Promise
 
   if (error || !data) return [];
 
-  return (data as any[]).map(r => ({
+  type ResumeRow = { tmdb_id: string; media_type: string; season: number; episode: number; position_ms: number; duration_ms: number | null; title: string | null; poster_url: string | null; backdrop_url: string | null; updated_at: string };
+  return (data as ResumeRow[]).map(r => ({
     tmdbId:      r.tmdb_id,
-    mediaType:   r.media_type,
+    mediaType:   r.media_type as 'movie' | 'tv',
     season:      r.season,
     episode:     r.episode,
     positionMs:  r.position_ms,
