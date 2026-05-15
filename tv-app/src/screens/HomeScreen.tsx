@@ -10,7 +10,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
-import { fetchCatalog, getStoredPhone, getContinueWatching, type ResumeEntry } from '@/api/client';
+import { fetchCatalog, getStoredPhone, getContinueWatching, fetchDiscover, type ResumeEntry } from '@/api/client';
 import HeroBanner from '@/components/HeroBanner';
 import MovieRow from '@/components/MovieRow';
 import ContinueWatchingRow from '@/components/ContinueWatchingRow';
@@ -20,9 +20,19 @@ import FocusableButton from '@/components/FocusableButton';
 type AnyItem = CatalogItem | TmdbItem;
 
 type FeedRow =
-  | { type: 'hero'; id: string; item: AnyItem }
+  | { type: 'hero'; id: string; items: AnyItem[] }
   | { type: 'continue'; id: string; entries: ResumeEntry[] }
   | { type: 'section'; id: string; title: string; items: AnyItem[]; isFirst: boolean };
+
+// Genre rails fetched in parallel after the main catalog. TMDB genre IDs.
+const GENRE_RAILS: { title: string; type: 'movie' | 'tv'; genreId: number }[] = [
+  { title: 'Action',          type: 'movie', genreId: 28 },
+  { title: 'Comedy',          type: 'movie', genreId: 35 },
+  { title: 'Drama',           type: 'movie', genreId: 18 },
+  { title: 'Sci-Fi',          type: 'movie', genreId: 878 },
+  { title: 'Action & Adventure (Series)', type: 'tv', genreId: 10759 },
+  { title: 'Crime',           type: 'movie', genreId: 80 },
+];
 
 interface Props {
   navigation: NavigationProp<any>;
@@ -78,11 +88,14 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
     const rows: FeedRow[] = [];
     const allItems = data.items ?? [];
 
-    if (allItems.length) {
-      rows.push({ type: 'hero', id: 'hero', item: allItems[0] });
+    // Rotating hero: pick the top 5 most relevant items (richest backdrops)
+    const heroPool = allItems
+      .filter(i => ('backdrop_url' in i && (i as any).backdrop_url) || ('backdrop_path' in i && (i as TmdbItem).backdrop_path))
+      .slice(0, 5);
+    if (heroPool.length) {
+      rows.push({ type: 'hero', id: 'hero', items: heroPool });
     }
 
-    // Continue Watching directly under hero, so the first focusable row picks it up.
     if (resumeEntries.length) {
       rows.push({ type: 'continue', id: 'continue', entries: resumeEntries });
     }
@@ -110,6 +123,17 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
 
     setFeed(rows);
     setLoading(false);
+
+    // Fetch genre rails in parallel, append as they arrive so the page doesn't
+    // wait for all six to come back before rendering anything.
+    GENRE_RAILS.forEach(async (g) => {
+      const items = await fetchDiscover(g.type, g.genreId);
+      if (!items.length) return;
+      setFeed(prev => [
+        ...prev,
+        { type: 'section', id: `genre_${g.type}_${g.genreId}`, title: g.title, items: items as AnyItem[], isFirst: false },
+      ]);
+    });
   }, []);
 
   // Reload Continue Watching every time Home regains focus (covers Player → Home)
@@ -188,9 +212,9 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
           if (row.type === 'hero') {
             return (
               <HeroBanner
-                item={row.item}
-                onPlay={() => navigation.navigate('Player', { item: row.item })}
-                onMore={() => goToDetail(row.item)}
+                items={row.items}
+                onPlay={(it) => navigation.navigate('Player', { item: it })}
+                onMore={(it) => goToDetail(it)}
               />
             );
           }
