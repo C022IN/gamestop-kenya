@@ -51,15 +51,19 @@ await check('VPS Extractor — health', async () => {
 });
 
 await check('VPS Extractor — auth token accepted', async () => {
-  // Probe with a known movie id (Inception = 27205) without full extraction
+  // Probe with a known movie id (Inception = 27205).
+  // Full extraction can take up to 35 s on the VPS — use a 50 s timeout here
+  // so we distinguish a real auth failure (401) from a slow-but-working extractor.
   const res = await fetch(`${EXTRACTOR_URL}/extract?tmdb_id=27205&type=movie`, {
     headers: { Authorization: `Bearer ${EXTRACTOR_TOKEN}` },
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(50000),
   });
   if (res.status === 401) throw new Error('401 — token rejected');
   if (res.status === 403) throw new Error('403 — forbidden');
-  // 200 or any non-auth error means token is accepted
-  return `token accepted (HTTP ${res.status})`;
+  // 200 = extracted ok, 502 = extraction failed but token accepted
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 200 && data.ok) return `token accepted, m3u8 extracted in ${data.took_ms}ms`;
+  return `token accepted (HTTP ${res.status} — ${data.error ?? 'no m3u8'})`;
 });
 
 await check('TMDB API key', async () => {

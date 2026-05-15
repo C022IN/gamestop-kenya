@@ -11,6 +11,11 @@ import {
 } from '@/lib/compatible-player';
 import { extractStream, isStreamExtractorConfigured } from '@/lib/stream-extractor';
 
+// Allow up to 60 s on Vercel so the extractor (which waits up to 35 s for an
+// m3u8) has room to finish. Without this the default 10 s hobby/25 s pro limit
+// can fire before extraction completes, causing a silent iframe fallback.
+export const maxDuration = 60;
+
 export async function GET(req: NextRequest) {
   const token = req.cookies.get(MOVIE_SESSION_COOKIE)?.value;
   if (!token) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 });
@@ -41,7 +46,7 @@ export async function GET(req: NextRequest) {
         mediaType,
         season,
         episode,
-        signal: AbortSignal.timeout(25_000),
+        signal: AbortSignal.timeout(45_000),
       });
       if (extracted) {
         return NextResponse.json({
