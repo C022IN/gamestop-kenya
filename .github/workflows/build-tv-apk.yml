@@ -61,7 +61,8 @@ jobs:
             '        t.doFirst {' \
             '          def f = proj.file("build/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt")' \
             '          if (f.exists() && !f.text.contains("@file:OptIn")) {' \
-            '            f.text = "@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)\n" + f.text' \
+            '            def optins = "@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class, kotlinx.coroutines.InternalCoroutinesApi::class, expo.modules.kotlin.jni.ExpType::class)\n"' \
+            '            f.text = optins + f.text' \
             '          }' \
             '        }' \
             '      }' \
