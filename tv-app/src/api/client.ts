@@ -312,6 +312,21 @@ export async function fetchDiscover(type: 'movie' | 'tv', genreId: number): Prom
   } catch { return []; }
 }
 
+// ---- Title Logo (transparent PNG for hero) ----------------------------------
+
+export async function fetchTitleLogo(id: number | string, type: 'movie' | 'tv'): Promise<{ url: string; aspect: number } | null> {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/movies/images/?id=${id}&type=${type}`,
+      { headers: await headers() },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.logo_url) return null;
+    return { url: data.logo_url, aspect: data.aspect ?? 2 };
+  } catch { return null; }
+}
+
 // ---- Continue Watching (local) ----------------------------------------------
 
 export interface ResumeEntry {

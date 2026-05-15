@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, View, Text } from 'react-native';
 import { Image } from 'expo-image';
 
@@ -10,11 +10,15 @@ interface FocusableCardProps {
   height?: number;
   onPress: () => void;
   onFocus?: () => void;
+  onBlur?: () => void;
   hasTVPreferredFocus?: boolean;
+  /** When true the card visually recedes (siblings of a focused card dim out) */
+  dimmed?: boolean;
 }
 
 const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 const GLOW_CFG   = { duration: 200, useNativeDriver: true };
+const DIM_CFG    = { duration: 220, useNativeDriver: true };
 
 export default function FocusableCard({
   title,
@@ -24,10 +28,18 @@ export default function FocusableCard({
   height = 240,
   onPress,
   onFocus,
+  onBlur,
   hasTVPreferredFocus = false,
+  dimmed = false,
 }: FocusableCardProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const glow  = useRef(new Animated.Value(0)).current;
+  const dim   = useRef(new Animated.Value(1)).current;
+
+  // External "should this card recede" signal — animated independently of self-focus
+  useEffect(() => {
+    Animated.timing(dim, { toValue: dimmed ? 0.55 : 1, ...DIM_CFG }).start();
+  }, [dim, dimmed]);
 
   function handleFocus() {
     Animated.spring(scale, { toValue: 1.08, ...SPRING_CFG }).start();
@@ -37,14 +49,24 @@ export default function FocusableCard({
   function handleBlur() {
     Animated.spring(scale, { toValue: 1, ...SPRING_CFG }).start();
     Animated.timing(glow,  { toValue: 0, ...GLOW_CFG   }).start();
+    onBlur?.();
   }
 
-  // Border overlay fades in via opacity (native driver compatible)
-  const borderOpacity = glow;
   const titleColor = glow.interpolate({ inputRange: [0, 1], outputRange: ['#bbb', '#fff'] });
 
   return (
-    <Animated.View style={[styles.shadowWrap, { transform: [{ scale }] }]}>
+    <Animated.View
+      style={[
+        styles.shadowWrap,
+        {
+          // Bottom-anchored scale: card grows upward like Netflix instead of
+          // expanding equally in all directions from center.
+          transformOrigin: 'bottom',
+          transform: [{ scale }],
+          opacity: dim,
+        },
+      ]}
+    >
       <Pressable
         onPress={onPress}
         onFocus={handleFocus}
@@ -66,17 +88,12 @@ export default function FocusableCard({
               <Text style={styles.placeholderText} numberOfLines={3}>{title}</Text>
             </View>
           )}
-          {/* Glow border overlay — fades in on focus, native driver via opacity */}
           <Animated.View
             pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFill,
-              styles.glowBorder,
-              { opacity: borderOpacity },
-            ]}
+            style={[StyleSheet.absoluteFill, styles.glowBorder, { opacity: glow }]}
           />
         </View>
-        <Animated.View style={[styles.info, { width }, { opacity: borderOpacity }]}>
+        <Animated.View style={[styles.info, { width }, { opacity: glow }]}>
           <View style={styles.infoBg} />
         </Animated.View>
         <View style={[styles.info, { width }]}>
@@ -91,28 +108,11 @@ export default function FocusableCard({
 }
 
 const styles = StyleSheet.create({
-  shadowWrap: {
-    marginHorizontal: 6,
-  },
-  outerWrapper: {
-    borderRadius: 8,
-  },
-  card: {
-    borderRadius: 6,
-    overflow: 'hidden',
-    backgroundColor: '#1a1a2e',
-  },
-  glowBorder: {
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  placeholder: {
-    backgroundColor: '#2a2a3e',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-  },
+  shadowWrap: { marginHorizontal: 6 },
+  outerWrapper: { borderRadius: 8 },
+  card: { borderRadius: 6, overflow: 'hidden', backgroundColor: '#1a1a2e' },
+  glowBorder: { borderRadius: 6, borderWidth: 2, borderColor: '#fff' },
+  placeholder: { backgroundColor: '#2a2a3e', alignItems: 'center', justifyContent: 'center', padding: 10 },
   placeholderText: { color: '#aaa', textAlign: 'center', fontSize: 13 },
   info: {
     paddingHorizontal: 8,

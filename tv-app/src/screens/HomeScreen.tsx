@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   BackHandler,
-  FlatList,
   StyleSheet,
   Text,
   ToastAndroid,
@@ -46,6 +46,19 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
   const [phone, setPhone] = useState<string | null>(null);
   const backPressedOnce = useRef(false);
   const backTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Top bar fades + translates up as the feed scrolls down (Netflix-style).
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const topBarOpacity = scrollY.interpolate({
+    inputRange: [0, 60, 140],
+    outputRange: [1, 0.85, 0.4],
+    extrapolate: 'clamp',
+  });
+  const topBarTranslateY = scrollY.interpolate({
+    inputRange: [0, 140],
+    outputRange: [0, -8],
+    extrapolate: 'clamp',
+  });
 
   // Require two back presses within 2s to exit — prevents accidental OS kick-out.
   useFocusEffect(
@@ -190,17 +203,22 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
+      <Animated.View
+        style={[
+          styles.topBar,
+          { opacity: topBarOpacity, transform: [{ translateY: topBarTranslateY }] },
+        ]}
+      >
         <Text style={styles.brand}>GameStop Movies</Text>
         <View style={styles.topActions}>
           {phone ? <Text style={styles.phoneText}>{phone}</Text> : null}
           <FocusableButton label="Search" onPress={() => navigation.navigate('Search')} />
           <FocusableButton label="Sign Out" onPress={onLogout} />
         </View>
-      </View>
+      </Animated.View>
 
       {/* FlatList for vertical rows — Android TV D-pad navigates between sections correctly */}
-      <FlatList
+      <Animated.FlatList
         data={feed}
         keyExtractor={row => row.id}
         showsVerticalScrollIndicator={false}
@@ -208,6 +226,11 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
         initialNumToRender={3}
         maxToRenderPerBatch={2}
         windowSize={5}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+        scrollEventThrottle={16}
         renderItem={({ item: row }) => {
           if (row.type === 'hero') {
             return (
