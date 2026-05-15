@@ -53,16 +53,20 @@ jobs:
       - name: Allow experimental Kotlin APIs (required by expo-video)
         run: |
           mkdir -p ~/.gradle/init.d
-          cat > ~/.gradle/init.d/opt-in.gradle << 'GRADLE'
-          allprojects {
-            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-              kotlinOptions {
-                freeCompilerArgs += ["-opt-in=kotlin.RequiresOptIn"]
-                allWarningsAsErrors = false
-              }
-            }
-          }
-          GRADLE
+          printf '%s\n' \
+            'allprojects {' \
+            '  afterEvaluate {' \
+            '    tasks.all { task ->' \
+            '      if (task.hasProperty("kotlinOptions")) {' \
+            '        try {' \
+            '          task.kotlinOptions.freeCompilerArgs += ["-opt-in=kotlin.RequiresOptIn"]' \
+            '          task.kotlinOptions.allWarningsAsErrors = false' \
+            '        } catch (ignored) {}' \
+            '      }' \
+            '    }' \
+            '  }' \
+            '}' \
+            > ~/.gradle/init.d/opt-in.gradle
 
       - name: Build APK with Gradle
         working-directory: tv-app/android
