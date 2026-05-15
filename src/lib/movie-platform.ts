@@ -717,6 +717,48 @@ export async function canAccessContent(
   return entitlements.some((item) => item.contentItemId === contentItemId);
 }
 
+// ---- Continue Watching (resume positions) ------------------------------------
+
+export interface ResumePosition {
+  tmdbId: string;
+  mediaType: 'movie' | 'tv';
+  season: number;
+  episode: number;
+  positionMs: number;
+  durationMs: number | null;
+  title: string | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  updatedAt: string;
+}
+
+export async function getResumePositions(profileId: string, limit = 20): Promise<ResumePosition[]> {
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('movie_resume_positions')
+    .select('tmdb_id, media_type, season, episode, position_ms, duration_ms, title, poster_url, backdrop_url, updated_at')
+    .eq('profile_id', profileId)
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+
+  return (data as any[]).map(r => ({
+    tmdbId:      r.tmdb_id,
+    mediaType:   r.media_type,
+    season:      r.season,
+    episode:     r.episode,
+    positionMs:  r.position_ms,
+    durationMs:  r.duration_ms ?? null,
+    title:       r.title ?? null,
+    posterUrl:   r.poster_url ?? null,
+    backdropUrl: r.backdrop_url ?? null,
+    updatedAt:   r.updated_at,
+  }));
+}
+
 export async function buildPlaybackSource(content: ContentItem): Promise<PlaybackSource | null> {
   if (content.playbackUrl) {
     const sourceType = content.playbackSourceType ?? inferMoviePlaybackSourceType(content.playbackUrl);

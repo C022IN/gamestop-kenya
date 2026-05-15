@@ -349,16 +349,16 @@ export async function fetchTrailerKey(id: number | string, type: 'movie' | 'tv')
   } catch { return null; }
 }
 
-// ---- Continue Watching (local) ----------------------------------------------
+// ---- Continue Watching (AsyncStorage + server sync) -------------------------
 
 export interface ResumeEntry {
-  id: string;            // tmdb id or slug
+  id: string;            // tmdb id
   mediaType: 'movie' | 'tv';
   season?: number;
   episode?: number;
   positionMs: number;
   updatedAt: number;
-  // Title/poster hydrated from the most recent Detail/Player visit
+  // Metadata cached locally so the row renders without an extra fetch
   title?: string;
   posterUrl?: string;
   backdropUrl?: string;
@@ -366,17 +366,35 @@ export interface ResumeEntry {
 
 const RESUME_INDEX_KEY = 'resume_index_v1';
 
+// Write to AsyncStorage immediately, then fire-and-forget sync to the server.
 export async function recordResume(entry: ResumeEntry): Promise<void> {
+  const now = Date.now();
   try {
     const raw = await AsyncStorage.getItem(RESUME_INDEX_KEY);
     const arr: ResumeEntry[] = raw ? JSON.parse(raw) : [];
-    const k = (e: ResumeEntry) =>
-      `${e.id}_${e.mediaType}_${e.season ?? 0}_${e.episode ?? 0}`;
+    const k = (e: ResumeEntry) => `${e.id}_${e.mediaType}_${e.season ?? 0}_${e.episode ?? 0}`;
     const key = k(entry);
     const next = arr.filter(e => k(e) !== key);
-    next.unshift({ ...entry, updatedAt: Date.now() });
+    next.unshift({ ...entry, updatedAt: now });
     await AsyncStorage.setItem(RESUME_INDEX_KEY, JSON.stringify(next.slice(0, 30)));
   } catch { /* ignore */ }
+
+  // Server sync — best-effort, never blocks playback
+  fetch(`${BASE_URL}/movies/resume`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'User-Agent': 'GameStopMoviesTV/1.0' },
+    credentials: 'include',
+    body: JSON.stringify({
+      tmdbId:      entry.id,
+      mediaType:   entry.mediaType,
+      season:      entry.season  ?? 0,
+      episode:     entry.episode ?? 0,
+      positionMs:  entry.positionMs,
+      title:       entry.title       ?? null,
+      posterUrl:   entry.posterUrl   ?? null,
+      backdropUrl: entry.backdropUrl ?? null,
+    }),
+  }).catch(() => {});
 }
 
 export async function clearResume(id: string, mediaType: 'movie' | 'tv', season?: number, episode?: number): Promise<void> {
@@ -389,9 +407,42 @@ export async function clearResume(id: string, mediaType: 'movie' | 'tv', season?
     );
     await AsyncStorage.setItem(RESUME_INDEX_KEY, JSON.stringify(next));
   } catch { /* ignore */ }
+
+  const s = season ?? 0;
+  const ep = episode ?? 0;
+  fetch(`${BASE_URL}/movies/resume?tmdbId=${id}&mediaType=${mediaType}&season=${s}&episode=${ep}`, {
+    method: 'DELETE',
+    headers: { 'User-Agent': 'GameStopMoviesTV/1.0' },
+    credentials: 'include',
+  }).catch(() => {});
 }
 
+// Read from server first (cross-device sync), fall back to AsyncStorage.
 export async function getContinueWatching(): Promise<ResumeEntry[]> {
+  try {
+    const res = await fetch(`${BASE_URL}/movies/resume`, { headers: await headers() });
+    if (res.ok) {
+      const data = await res.json();
+      const items: ResumeEntry[] = (data.items ?? []).map((r: any) => ({
+        id:          r.tmdbId,
+        mediaType:   r.mediaType,
+        season:      r.season  || undefined,
+        episode:     r.episode || undefined,
+        positionMs:  r.positionMs,
+        updatedAt:   new Date(r.updatedAt).getTime(),
+        title:       r.title       ?? undefined,
+        posterUrl:   r.posterUrl   ?? undefined,
+        backdropUrl: r.backdropUrl ?? undefined,
+      }));
+      // Persist server results locally so the next cold start is instant
+      await AsyncStorage.setItem(RESUME_INDEX_KEY, JSON.stringify(
+        items.map(i => ({ ...i, updatedAt: new Date(i.updatedAt).getTime() })).slice(0, 30)
+      ));
+      return items;
+    }
+  } catch { /* fall through */ }
+
+  // Fallback: local cache
   try {
     const raw = await AsyncStorage.getItem(RESUME_INDEX_KEY);
     if (!raw) return [];

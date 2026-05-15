@@ -4,6 +4,7 @@ import {
   type IptvCatalogEntry,
   type IptvCatalogSections,
 } from '@/lib/iptv-catalog';
+import type { ResumePosition } from '@/lib/movie-platform';
 import { tmdbBackdrop, tmdbPoster, type TmdbDetails, type TmdbItem } from '@/lib/tmdb';
 
 export const MOVIE_HUB_LIMIT = 12;
@@ -197,6 +198,35 @@ export function toCatalogTiles(items: IptvCatalogEntry[], limit = MOVIE_HUB_LIMI
         ? item.liveEvent?.competition
         : item.maturityRating ?? item.territory,
   }));
+}
+
+export function toResumeTiles(entries: ResumePosition[]): MoviesHubTile[] {
+  return entries
+    .filter(e => e.positionMs > 0)
+    .map(e => {
+      const pct = e.durationMs && e.durationMs > 0
+        ? Math.min(100, Math.round((e.positionMs / e.durationMs) * 100))
+        : null;
+      const label = e.mediaType === 'tv' && e.season && e.episode
+        ? `S${e.season} E${e.episode}`
+        : e.mediaType === 'tv' ? 'TV' : 'Movie';
+      return {
+        id:           `${e.mediaType}-${e.tmdbId}`,
+        title:        e.title ?? 'Unknown',
+        imageUrl:     e.backdropUrl ?? e.posterUrl ?? undefined,
+        heroImageUrl: e.backdropUrl ?? e.posterUrl ?? undefined,
+        href:         `/movies/film/${e.mediaType}-${e.tmdbId}`,
+        meta:         label,
+        badge:        pct != null ? `${pct}%` : undefined,
+        ctaLabel:     'Resume',
+        playable:     false,
+        genres:       [],
+        source:       'tmdb' as const,
+        tmdbType:     e.mediaType,
+        kindLabel:    e.mediaType === 'tv' ? 'Series' : 'Movie',
+        secondaryMeta: pct != null ? `${pct}% watched` : undefined,
+      };
+    });
 }
 
 export function uniqueTilesById(items: MoviesHubTile[]) {

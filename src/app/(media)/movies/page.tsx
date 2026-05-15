@@ -13,9 +13,11 @@ import {
 import {
   MOVIE_HUB_TOP_10_LIMIT,
   toCatalogTiles,
+  toResumeTiles,
   toTmdbTiles,
   uniqueTilesById,
 } from '@/lib/movie-hub';
+import { getResumePositions } from '@/lib/movie-platform';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +46,7 @@ export default async function MoviesPage() {
   const [
     catalog,
     membership,
+    resumePositions,
     trendingMovies,
     popularMovies,
     popularTv,
@@ -53,6 +56,7 @@ export default async function MoviesPage() {
   ] = await Promise.all([
     getIptvCatalogSections(),
     getMovieMembershipState(profile.profileId),
+    getResumePositions(profile.profileId),
     getTrending('movie'),
     getPopular('movie'),
     getPopular('tv'),
@@ -99,7 +103,17 @@ export default async function MoviesPage() {
     ...featuredTiles.slice(0, 1),
   ]).slice(0, 5);
 
+  const continueTiles = toResumeTiles(resumePositions);
+
   const sections: MoviesHubSection[] = [
+    ...(continueTiles.length > 0
+      ? [{
+          id: 'continue-watching',
+          title: 'Continue Watching',
+          items: continueTiles,
+          eyebrow: 'Pick up where you left off',
+        }]
+      : []),
     {
       id: 'featured',
       title: 'Featured on GameStop',
