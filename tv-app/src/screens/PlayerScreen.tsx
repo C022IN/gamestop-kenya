@@ -67,7 +67,16 @@ const WEBVIEW_AFTER_LOAD_JS = `
       var videos = document.querySelectorAll('video');
       if (videos.length > 0) {
         videos.forEach(function(v) { v.muted = false; v.play().catch(function(){}); });
-        clearInterval(t); return;
+        clearInterval(t);
+        // Report progress back to RN every 15s
+        setInterval(function() {
+          var v = document.querySelector('video');
+          if (!v || v.paused || v.currentTime <= 0) return;
+          window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
+            JSON.stringify({ type: 'progress', currentTime: v.currentTime, duration: v.duration || 0 })
+          );
+        }, 15000);
+        return;
       }
       document.querySelectorAll('button, [role="button"]').forEach(function(b) {
         var label = (b.getAttribute('aria-label') || b.textContent || '').toLowerCase();
@@ -253,17 +262,21 @@ export default function PlayerScreen({ route, navigation }: Props) {
     controlsTimer.current = setTimeout(() => setShowControls(false), 2500);
   }, [paused, showControls]);
 
-  // Persist progress every ~10s
+  // Persist progress every ~10s. durationSec may be 0 for some HLS streams — still save.
   useEffect(() => {
     const posMs = positionSec * 1000;
-    if (paused || posMs <= 0 || durationSec <= 0) return;
+    if (paused || posMs <= 0) return;
     if (posMs - lastSavedPosRef.current < 10_000) return;
     lastSavedPosRef.current = posMs;
 
-    const nearEnd = posMs > durationSec * 1000 - 90_000;
+    const nearEnd = durationSec > 0 && posMs > durationSec * 1000 - 90_000;
     if (nearEnd) {
       clearResume(getId(item), getMediaType(item), season, episode).catch(() => {});
     } else {
+      const posterUrl = ('poster_url' in item ? (item as any).poster_url : '') ||
+                        ('poster_path' in item ? `https://image.tmdb.org/t/p/w342${(item as TmdbItem).poster_path}` : '');
+      const backdropUrl = ('backdrop_url' in item ? (item as any).backdrop_url : '') ||
+                          ('backdrop_path' in item ? `https://image.tmdb.org/t/p/w780${(item as TmdbItem).backdrop_path}` : '');
       AsyncStorage.setItem(progressKey(item, season, episode), String(posMs)).catch(() => {});
       recordResume({
         id: getId(item),
@@ -273,10 +286,8 @@ export default function PlayerScreen({ route, navigation }: Props) {
         positionMs: posMs,
         updatedAt: Date.now(),
         title: getTitle(item),
-        posterUrl: ('poster_url' in item ? (item as any).poster_url : '') ||
-                   ('poster_path' in item ? `https://image.tmdb.org/t/p/w342${(item as TmdbItem).poster_path}` : ''),
-        backdropUrl: ('backdrop_url' in item ? (item as any).backdrop_url : '') ||
-                     ('backdrop_path' in item ? `https://image.tmdb.org/t/p/w780${(item as TmdbItem).backdrop_path}` : ''),
+        posterUrl,
+        backdropUrl,
       }).catch(() => {});
     }
   }, [positionSec, durationSec, paused, item, isTV, season, episode]);
@@ -367,6 +378,10 @@ export default function PlayerScreen({ route, navigation }: Props) {
   }
 
   if (iframeUrl) {
+    const posterUrl = ('poster_url' in item ? (item as any).poster_url : '') ||
+                      ('poster_path' in item ? `https://image.tmdb.org/t/p/w342${(item as TmdbItem).poster_path}` : '');
+    const backdropUrl = ('backdrop_url' in item ? (item as any).backdrop_url : '') ||
+                        ('backdrop_path' in item ? `https://image.tmdb.org/t/p/w780${(item as TmdbItem).backdrop_path}` : '');
     return (
       <View style={styles.container}>
         <WebView
@@ -384,6 +399,26 @@ export default function PlayerScreen({ route, navigation }: Props) {
           injectedJavaScriptBeforeContentLoaded={WEBVIEW_BEFORE_LOAD_JS}
           injectedJavaScript={WEBVIEW_AFTER_LOAD_JS}
           onError={e => setError(`WebView error: ${e.nativeEvent.description}`)}
+          onMessage={(e) => {
+            try {
+              const msg = JSON.parse(e.nativeEvent.data);
+              if (msg.type !== 'progress' || !(msg.currentTime > 30)) return;
+              const posMs = Math.round(msg.currentTime * 1000);
+              const durMs = msg.duration > 0 ? msg.duration * 1000 : 0;
+              const nearEnd = durMs > 0 && posMs > durMs - 90_000;
+              if (nearEnd) {
+                clearResume(getId(item), getMediaType(item), season, episode).catch(() => {});
+              } else {
+                AsyncStorage.setItem(progressKey(item, season, episode), String(posMs)).catch(() => {});
+                recordResume({
+                  id: getId(item), mediaType: getMediaType(item),
+                  season: isTV ? season : undefined, episode: isTV ? episode : undefined,
+                  positionMs: posMs, updatedAt: Date.now(),
+                  title: getTitle(item), posterUrl, backdropUrl,
+                }).catch(() => {});
+              }
+            } catch { /* ignore non-JSON messages from iframe */ }
+          }}
         />
         <TouchableHighlight
           style={styles.webviewBackBtn}
