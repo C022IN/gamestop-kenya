@@ -329,6 +329,23 @@ export async function fetchTitleLogo(id: number | string, type: 'movie' | 'tv'):
   } catch { return null; }
 }
 
+// ---- YouTube trailer key (used by hero auto-preview) ------------------------
+// NOTE: This powers an unattended autoplay preview which violates YouTube's
+// Terms of Service. Acceptable for sideload distribution; must be removed
+// before Play Store submission. See tv-app/STORE_SUBMISSION.md.
+
+export async function fetchTrailerKey(id: number | string, type: 'movie' | 'tv'): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `${BASE_URL}/movies/videos/?id=${id}&type=${type}`,
+      { headers: await headers() },
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.key ?? null;
+  } catch { return null; }
+}
+
 // ---- Continue Watching (local) ----------------------------------------------
 
 export interface ResumeEntry {

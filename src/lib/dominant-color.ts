@@ -1,5 +1,8 @@
 import 'server-only';
 import sharp from 'sharp';
+import { promises as fs } from 'fs';
+import path from 'path';
+import os from 'os';
 
 // In-memory cache: TMDB image URLs are stable, so once extracted we keep the
 // color for the process lifetime. Bounded so a long-running server doesn't
@@ -7,12 +10,52 @@ import sharp from 'sharp';
 const cache = new Map<string, string | null>();
 const MAX_CACHE_ENTRIES = 2000;
 
+// Disk persistence: warms the in-memory cache on cold start by reading a tiny
+// JSON file written by previous requests. On Vercel, /tmp is writable and
+// persists across invocations on the same instance. Override path via the
+// COLOR_CACHE_FILE env var for self-hosted setups.
+const CACHE_FILE = process.env.COLOR_CACHE_FILE ?? path.join(os.tmpdir(), 'gamestop-color-cache.json');
+
+let cacheLoaded = false;
+let writePending: ReturnType<typeof setTimeout> | null = null;
+const WRITE_DEBOUNCE_MS = 2000;
+
+async function loadFromDisk() {
+  if (cacheLoaded) return;
+  cacheLoaded = true; // mark even on failure so we don't keep retrying every request
+  try {
+    const text = await fs.readFile(CACHE_FILE, 'utf8');
+    const obj = JSON.parse(text) as Record<string, string | null>;
+    for (const [k, v] of Object.entries(obj)) {
+      if (cache.size >= MAX_CACHE_ENTRIES) break;
+      cache.set(k, v);
+    }
+  } catch { /* file missing or corrupt — start with empty cache */ }
+}
+
+function scheduleDiskWrite() {
+  if (writePending) return;
+  writePending = setTimeout(async () => {
+    writePending = null;
+    const obj: Record<string, string | null> = {};
+    for (const [k, v] of cache.entries()) obj[k] = v;
+    const tmp = `${CACHE_FILE}.${process.pid}.tmp`;
+    try {
+      // Atomic write: tmp file then rename so concurrent readers never see a
+      // half-written JSON document.
+      await fs.writeFile(tmp, JSON.stringify(obj));
+      await fs.rename(tmp, CACHE_FILE);
+    } catch { /* best-effort — fall back to in-memory caching */ }
+  }, WRITE_DEBOUNCE_MS);
+}
+
 function rememberInCache(url: string, color: string | null) {
   if (cache.size >= MAX_CACHE_ENTRIES) {
     const oldest = cache.keys().next().value;
     if (oldest !== undefined) cache.delete(oldest);
   }
   cache.set(url, color);
+  scheduleDiskWrite();
 }
 
 function toHex(r: number, g: number, b: number): string {
@@ -62,6 +105,7 @@ async function computeDominantColor(buf: Buffer): Promise<string | null> {
 
 export async function extractDominantColor(url: string | null | undefined): Promise<string | null> {
   if (!url) return null;
+  await loadFromDisk();
   if (cache.has(url)) return cache.get(url) ?? null;
   try {
     const res = await fetch(url, { next: { revalidate: 86400 } });

@@ -121,3 +121,50 @@ Enable: Settings → Device Preferences → Developer Options → USB Debugging
 1. Copy APK to USB drive
 2. Insert in TV → open File Manager
 3. Navigate to APK → Install
+
+---
+
+## Pre-Play-Store Checklist (REMOVE BEFORE PUBLISHING)
+
+The current build contains one feature that violates YouTube's Terms of Service
+for Play-Store-distributed apps and **must be removed** before submission to
+Google Play. It is acceptable for sideload distribution and internal testing.
+
+### What needs to go
+
+**Hero auto-preview** — silently autoplays a muted YouTube trailer inside the
+home-screen hero banner ~2.5 seconds after a slide stabilises. YouTube's
+embedded-player policy forbids unattended autoplay outside YouTube apps; Google
+Play has pulled apps for this in the past.
+
+### Where to remove it
+
+1. `tv-app/src/components/HeroBanner.tsx`
+   - Delete the `WebView` import and the `fetchTrailerKey` import.
+   - Delete the `trailerKey` / `showTrailer` / `trailerOpacity` state and
+     associated `useEffect` blocks (search for "Trailer auto-preview").
+   - Delete the `<Animated.View>` block that wraps `<WebView>` between the
+     backdrop and the gradient (it has a `// Trailer auto-preview overlay`
+     comment marking it).
+   - Drop the `PREVIEW_DELAY_MS`, `PREVIEW_FADE_IN_DELAY_MS`, and `trailerView`
+     style constants.
+
+2. `tv-app/src/api/client.ts`
+   - Delete the `fetchTrailerKey` function and its TOS-warning comment block.
+
+3. `src/app/api/movies/videos/route.ts`
+   - Delete this file outright. No other code depends on it.
+
+4. `src/lib/tmdb.ts`
+   - `getVideos` becomes unused. Either leave it (harmless) or remove for
+     cleanliness.
+
+### Smoke test after removal
+
+- Home screen still loads with the rotating hero, logos, parallax, etc.
+- Detail screen unaffected (it doesn't use trailers).
+- `npm run typecheck` (or `npx tsc --noEmit` in `tv-app/` and the repo root)
+  passes.
+
+The rest of the build — episode list, Continue Watching, scrubable player,
+subtitle/audio pickers, accent-tinted Play button — is fully Play-Store-safe.

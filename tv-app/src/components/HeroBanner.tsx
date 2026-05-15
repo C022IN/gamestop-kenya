@@ -2,14 +2,26 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { WebView } from 'react-native-webview';
 import type { CatalogItem, TmdbItem } from '@/api/client';
-import { tmdbBackdrop, fetchTitleLogo } from '@/api/client';
+import { tmdbBackdrop, fetchTitleLogo, fetchTrailerKey } from '@/api/client';
 
 const { width } = Dimensions.get('window');
 const HERO_HEIGHT = Math.round(width * 0.5);
 const ROTATE_INTERVAL_MS = 8000;
 const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 const PARALLAX_PX = 20; // backdrop slides this far when D-pad nav moves focus
+
+// Auto-preview: wait this long on a slide before fetching + showing the trailer.
+// Long enough that rapid hero rotation doesn't trigger needless YouTube loads.
+const PREVIEW_DELAY_MS = 2500;
+// Extra cushion after the WebView starts loading before we crossfade to it.
+const PREVIEW_FADE_IN_DELAY_MS = 900;
+
+// NOTE: Embedded YouTube auto-preview is incompatible with YouTube's Terms of
+// Service for unattended playback. This block is acceptable for sideload
+// distribution and MUST be removed before Play Store submission. See
+// tv-app/STORE_SUBMISSION.md for the removal checklist.
 
 type HeroItem = CatalogItem | TmdbItem;
 
@@ -50,10 +62,14 @@ export default function HeroBanner({ item, items, onPlay, onMore }: HeroBannerPr
   const [focused, setFocused] = useState(false);
   const [logo, setLogo] = useState<{ url: string; aspect: number } | null>(null);
   const [logoMissing, setLogoMissing] = useState(false);
+  const [trailerKey, setTrailerKey] = useState<string | null>(null);
+  const [showTrailer, setShowTrailer] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Parallax: drives an X offset for the backdrop. -1 = Play focused (slide right), +1 = More focused (slide left).
   const parallaxX = useRef(new Animated.Value(0)).current;
+  // Crossfade between still backdrop and the trailer WebView once loaded.
+  const trailerOpacity = useRef(new Animated.Value(0)).current;
 
   const current = list[idx];
 
@@ -82,6 +98,44 @@ export default function HeroBanner({ item, items, onPlay, onMore }: HeroBannerPr
     return () => { cancelled = true; };
   }, [current]);
 
+  // Trailer auto-preview: after the slide has been visible PREVIEW_DELAY_MS
+  // without focus, fetch + load + crossfade in a muted YouTube embed.
+  // Reset whenever the slide changes or focus arrives.
+  useEffect(() => {
+    setTrailerKey(null);
+    setShowTrailer(false);
+    if (!current || focused) return;
+    const id = getId(current);
+    if (!id) return;
+
+    let cancelled = false;
+    let fadeTimer: ReturnType<typeof setTimeout> | null = null;
+    const fetchTimer = setTimeout(async () => {
+      const key = await fetchTrailerKey(id, getMediaType(current));
+      if (cancelled || !key) return;
+      setTrailerKey(key);
+      // Give the WebView time to start playback before we crossfade
+      fadeTimer = setTimeout(() => {
+        if (!cancelled) setShowTrailer(true);
+      }, PREVIEW_FADE_IN_DELAY_MS);
+    }, PREVIEW_DELAY_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(fetchTimer);
+      if (fadeTimer) clearTimeout(fadeTimer);
+    };
+  }, [current, focused]);
+
+  // Drive the trailer-vs-backdrop crossfade
+  useEffect(() => {
+    Animated.timing(trailerOpacity, {
+      toValue: showTrailer ? 1 : 0,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
+  }, [showTrailer, trailerOpacity]);
+
   function animateParallax(dir: -1 | 0 | 1) {
     Animated.spring(parallaxX, { toValue: dir * PARALLAX_PX, ...SPRING_CFG }).start();
   }
@@ -99,6 +153,32 @@ export default function HeroBanner({ item, items, onPlay, onMore }: HeroBannerPr
           transition={500}
         />
       </Animated.View>
+      {/* Trailer auto-preview overlay — sits between backdrop and gradient so
+          the gradient still darkens the bottom for legibility. Pointer events
+          disabled so the WebView never steals D-pad focus from hero buttons. */}
+      {trailerKey && (
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { opacity: trailerOpacity }]}
+        >
+          <WebView
+            source={{
+              uri: `https://www.youtube-nocookie.com/embed/${trailerKey}` +
+                `?autoplay=1&mute=1&controls=0&loop=1&playlist=${trailerKey}` +
+                `&modestbranding=1&playsinline=1&rel=0&iv_load_policy=3&disablekb=1`,
+            }}
+            style={styles.trailerView}
+            allowsInlineMediaPlayback
+            mediaPlaybackRequiresUserAction={false}
+            javaScriptEnabled
+            domStorageEnabled
+            scrollEnabled={false}
+            userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            originWhitelist={['*']}
+            mixedContentMode="always"
+          />
+        </Animated.View>
+      )}
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)', '#000']}
         locations={[0, 0.4, 0.85, 1]}
@@ -198,6 +278,7 @@ function HeroButton({
 
 const styles = StyleSheet.create({
   container: { width, backgroundColor: '#000', overflow: 'hidden' },
+  trailerView: { flex: 1, backgroundColor: 'transparent' },
   content: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 40 },
   logo: { marginBottom: 12 },
   logoPlaceholder: { height: 80, marginBottom: 12 },
