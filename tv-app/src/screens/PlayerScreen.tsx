@@ -199,7 +199,20 @@ export default function PlayerScreen({ route, navigation }: Props) {
       setPositionSec(e.currentTime);
     });
     const subStatus = player.addListener('statusChange', (e) => {
-      if (e.status === 'error' && e.error) setError(`Playback error: ${e.error.message}`);
+      if (e.status === 'error' && e.error) {
+        const msg = e.error.message ?? '';
+        // 410 Gone / 403 Forbidden / 404 Not Found = stream URL expired or revoked.
+        // Fall back to the Videasy iframe silently rather than showing an error screen.
+        if (/\b(410|403|404)\b/.test(msg)) {
+          const numericId = Number(getId(item));
+          if (Number.isFinite(numericId) && numericId > 0) {
+            setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
+            setStreamUrl(null);
+            return;
+          }
+        }
+        setError(`Playback error: ${msg}`);
+      }
       setBuffering(e.status === 'loading');
     });
     const subSource = player.addListener('sourceLoad', (e) => {
@@ -556,6 +569,19 @@ export default function PlayerScreen({ route, navigation }: Props) {
                   <Text style={styles.actionBtnText}>Next Ep →</Text>
                 </TouchableHighlight>
               )}
+              <TouchableHighlight
+                style={[styles.actionBtn, styles.webPlayerBtn]}
+                underlayColor="#1a4a8a"
+                onPress={() => {
+                  const numericId = Number(getId(item));
+                  if (Number.isFinite(numericId) && numericId > 0) {
+                    setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
+                    setStreamUrl(null);
+                  }
+                }}
+              >
+                <Text style={styles.actionBtnText}>🌐  Web Player</Text>
+              </TouchableHighlight>
             </View>
           </View>
         </View>
@@ -623,6 +649,7 @@ const styles = StyleSheet.create({
   timeText: { color: '#ccc', fontSize: 13, minWidth: 48, textAlign: 'center' },
   bottomActionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   actionBtn: { paddingHorizontal: 18, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 6 },
+  webPlayerBtn: { backgroundColor: 'rgba(30,90,180,0.5)' },
   actionBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   backBtn: { backgroundColor: '#333', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 6 },
   backBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
