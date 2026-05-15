@@ -50,7 +50,7 @@ jobs:
           APP_VARIANT: tv
         run: npx expo prebuild --platform android --clean --no-install
 
-      - name: Patch ExpoModulesPackageList to opt-in to experimental APIs
+      - name: Patch ExpoModulesPackageList to suppress experimental-API errors
         run: |
           mkdir -p ~/.gradle/init.d
           printf '%s\n' \
@@ -60,9 +60,9 @@ jobs:
             '      proj.tasks.matching { it.name == "compileReleaseKotlin" }.configureEach { t ->' \
             '        t.doFirst {' \
             '          def f = proj.file("build/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt")' \
-            '          if (f.exists() && !f.text.contains("@file:OptIn")) {' \
-            '            def optins = "@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class, kotlinx.coroutines.InternalCoroutinesApi::class, expo.modules.kotlin.jni.ExpType::class)\n"' \
-            '            f.text = optins + f.text' \
+            '          if (f.exists() && !f.text.contains("@file:Suppress")) {' \
+            '            def suppress = "@file:Suppress(\\"OPT_IN_USAGE_ERROR\\", \\"OPT_IN_USAGE\\", \\"EXPERIMENTAL_API_USAGE_ERROR\\", \\"EXPERIMENTAL_API_USAGE\\")\n"' \
+            '            f.text = suppress + f.text' \
             '          }' \
             '        }' \
             '      }' \
