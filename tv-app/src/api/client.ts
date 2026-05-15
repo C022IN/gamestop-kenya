@@ -138,7 +138,10 @@ export interface StreamResult {
 
 // Client-side last-resort fallback if the server API is unreachable.
 // Mirrors the server default (Videasy). If you switch providers on the server,
-// update this too.
+// update this too. Options match what buildCompatibleMoviePlayerUrl appends
+// server-side so the iframe experience is identical on web and TV.
+const VIDEASY_OPTIONS = 'color=7C3AED&nextEpisode=true&episodeSelector=true&autoplayNextEpisode=true&overlay=true';
+
 export function buildDirectPlayerUrl(
   id: string | number,
   mediaType: string,
@@ -147,9 +150,9 @@ export function buildDirectPlayerUrl(
 ): string {
   const numId = Number(id);
   if (mediaType === 'tv') {
-    return `https://player.videasy.net/tv/${numId}/${season}/${episode}`;
+    return `https://player.videasy.net/tv/${numId}/${season}/${episode}?${VIDEASY_OPTIONS}`;
   }
-  return `https://player.videasy.net/movie/${numId}`;
+  return `https://player.videasy.net/movie/${numId}?${VIDEASY_OPTIONS}`;
 }
 
 export async function fetchStream(
