@@ -11,14 +11,21 @@ export default async function AdminIptvPage() {
     redirect('/admin/login?next=/admin/iptv');
   }
 
+  const { admin } = current;
+  const isSuperAdmin = admin.role === 'super_admin';
+
+  if (!isSuperAdmin && admin.adminType !== 'iptv') {
+    redirect('/admin');
+  }
+
   return (
     <AdminIptvDashboard
       admin={{
-        id: current.admin.id,
-        role: current.admin.role,
-        name: current.admin.name,
-        email: current.admin.email,
-        phone: current.admin.phone,
+        id: admin.id,
+        role: admin.role,
+        name: admin.name,
+        email: admin.email,
+        phone: admin.phone,
       }}
     />
   );

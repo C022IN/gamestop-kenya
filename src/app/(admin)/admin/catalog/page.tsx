@@ -11,14 +11,21 @@ export default async function AdminCatalogPage() {
     redirect('/admin/login?next=/admin/catalog');
   }
 
+  const { admin } = current;
+  const isSuperAdmin = admin.role === 'super_admin';
+
+  if (!isSuperAdmin && admin.adminType !== 'catalog') {
+    redirect('/admin');
+  }
+
   return (
     <AdminCatalogMediaDashboard
       admin={{
-        id: current.admin.id,
-        role: current.admin.role,
-        name: current.admin.name,
-        email: current.admin.email,
-        phone: current.admin.phone,
+        id: admin.id,
+        role: admin.role,
+        name: admin.name,
+        email: admin.email,
+        phone: admin.phone,
       }}
     />
   );

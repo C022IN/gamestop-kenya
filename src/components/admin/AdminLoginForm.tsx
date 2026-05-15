@@ -15,8 +15,6 @@ export default function AdminLoginForm({ configured, nextPath }: AdminLoginFormP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const next = nextPath || '/admin/iptv';
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -35,7 +33,23 @@ export default function AdminLoginForm({ configured, nextPath }: AdminLoginFormP
         return;
       }
 
-      window.location.href = next;
+      // Redirect to the explicit next path if provided, otherwise route by admin type
+      if (nextPath) {
+        window.location.href = nextPath;
+        return;
+      }
+
+      const adminType: string | null = data.admin?.adminType ?? null;
+      const role: string = data.admin?.role ?? '';
+      if (role === 'super_admin' || adminType === 'iptv') {
+        window.location.href = '/admin/iptv';
+      } else if (adminType === 'catalog') {
+        window.location.href = '/admin/catalog/listings';
+      } else if (adminType === 'movies') {
+        window.location.href = '/admin/movies/users';
+      } else {
+        window.location.href = '/admin';
+      }
     } catch {
       setError('Network error. Please try again.');
     } finally {

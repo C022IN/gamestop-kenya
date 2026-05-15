@@ -54,12 +54,21 @@ export async function signInAdminSession(params: {
     userAgent: params.metadata.userAgent,
   });
 
+  const dashboardLabel =
+    auth.admin.role === 'super_admin'
+      ? 'super admin dashboard'
+      : auth.admin.adminType === 'catalog'
+        ? 'catalog admin dashboard'
+        : auth.admin.adminType === 'movies'
+          ? 'movies admin dashboard'
+          : 'IPTV admin dashboard';
+
   await recordAdminAudit({
     action: 'admin_sign_in',
     status: 'success',
     actorId: auth.admin.id,
     actorLabel: auth.admin.name,
-    summary: 'Signed in to the IPTV admin dashboard.',
+    summary: `Signed in to the ${dashboardLabel}.`,
     target: null,
     ipAddress: params.metadata.ipAddress,
     userAgent: params.metadata.userAgent,
@@ -79,12 +88,21 @@ export async function signOutAdminSession(
   }
 
   if (current) {
+    const dashboardLabel =
+      current.admin.role === 'super_admin'
+        ? 'super admin dashboard'
+        : current.admin.adminType === 'catalog'
+          ? 'catalog admin dashboard'
+          : current.admin.adminType === 'movies'
+            ? 'movies admin dashboard'
+            : 'IPTV admin dashboard';
+
     await recordAdminAudit({
       action: 'admin_sign_out',
       status: 'success',
       actorId: current.admin.id,
       actorLabel: current.admin.name,
-      summary: 'Signed out of the IPTV admin dashboard.',
+      summary: `Signed out of the ${dashboardLabel}.`,
       target: null,
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,

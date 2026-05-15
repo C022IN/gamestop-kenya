@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       admin: {
         id: signIn.admin.id,
         role: signIn.admin.role,
+        adminType: signIn.admin.adminType,
         name: signIn.admin.name,
         email: signIn.admin.email,
         phone: signIn.admin.phone,

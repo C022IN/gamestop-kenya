@@ -13,7 +13,7 @@ interface AdminLoginPageProps {
 export default async function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
   const current = await getCurrentAdmin();
   if (current) {
-    redirect('/admin/iptv');
+    redirect('/admin');
   }
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
