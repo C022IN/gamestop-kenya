@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View, Text, Platform } from 'react-native';
+import React, { useRef } from 'react';
+import { Animated, Pressable, StyleSheet, View, Text } from 'react-native';
 import { Image } from 'expo-image';
 
 interface FocusableCardProps {
@@ -14,6 +14,7 @@ interface FocusableCardProps {
 }
 
 const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
+const GLOW_CFG   = { duration: 200, useNativeDriver: true };
 
 export default function FocusableCard({
   title,
@@ -25,25 +26,25 @@ export default function FocusableCard({
   onFocus,
   hasTVPreferredFocus = false,
 }: FocusableCardProps) {
-  const [focused, setFocused] = useState(false);
   const scale = useRef(new Animated.Value(1)).current;
+  const glow  = useRef(new Animated.Value(0)).current;
 
   function handleFocus() {
-    setFocused(true);
     Animated.spring(scale, { toValue: 1.08, ...SPRING_CFG }).start();
+    Animated.timing(glow,  { toValue: 1,    ...GLOW_CFG   }).start();
     onFocus?.();
   }
   function handleBlur() {
-    setFocused(false);
     Animated.spring(scale, { toValue: 1, ...SPRING_CFG }).start();
+    Animated.timing(glow,  { toValue: 0, ...GLOW_CFG   }).start();
   }
 
+  // Border overlay fades in via opacity (native driver compatible)
+  const borderOpacity = glow;
+  const titleColor = glow.interpolate({ inputRange: [0, 1], outputRange: ['#bbb', '#fff'] });
+
   return (
-    <Animated.View style={[
-      styles.shadowWrap,
-      { transform: [{ scale }] },
-      focused && Platform.OS === 'android' && { elevation: 12 },
-    ]}>
+    <Animated.View style={[styles.shadowWrap, { transform: [{ scale }] }]}>
       <Pressable
         onPress={onPress}
         onFocus={handleFocus}
@@ -65,9 +66,23 @@ export default function FocusableCard({
               <Text style={styles.placeholderText} numberOfLines={3}>{title}</Text>
             </View>
           )}
+          {/* Glow border overlay — fades in on focus, native driver via opacity */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              styles.glowBorder,
+              { opacity: borderOpacity },
+            ]}
+          />
         </View>
-        <View style={[styles.info, { width }, focused && styles.infoBorderFocused]}>
-          <Text style={[styles.titleText, focused && styles.titleFocused]} numberOfLines={1}>{title}</Text>
+        <Animated.View style={[styles.info, { width }, { opacity: borderOpacity }]}>
+          <View style={styles.infoBg} />
+        </Animated.View>
+        <View style={[styles.info, { width }]}>
+          <Animated.Text style={[styles.titleText, { color: titleColor }]} numberOfLines={1}>
+            {title}
+          </Animated.Text>
           {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
         </View>
       </Pressable>
@@ -78,10 +93,6 @@ export default function FocusableCard({
 const styles = StyleSheet.create({
   shadowWrap: {
     marginHorizontal: 6,
-    shadowColor: '#e50914',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
   },
   outerWrapper: {
     borderRadius: 8,
@@ -90,6 +101,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: 'hidden',
     backgroundColor: '#1a1a2e',
+  },
+  glowBorder: {
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   placeholder: {
     backgroundColor: '#2a2a3e',
@@ -104,17 +120,17 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     borderWidth: 2,
     borderTopWidth: 0,
-    borderColor: 'transparent',
+    borderColor: '#fff',
     borderRadius: 0,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
-    backgroundColor: 'transparent',
   },
-  infoBorderFocused: {
-    borderColor: '#fff',
+  infoBg: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: '#1a0003',
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
   },
-  titleText: { color: '#bbb', fontSize: 13, fontWeight: '600' },
-  titleFocused: { color: '#fff' },
+  titleText: { fontSize: 13, fontWeight: '600' },
   subtitle: { color: '#e50914', fontSize: 11, marginTop: 2 },
 });
