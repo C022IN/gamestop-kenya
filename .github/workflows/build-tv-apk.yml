@@ -57,12 +57,10 @@ jobs:
             'allprojects {' \
             '  afterEvaluate {' \
             '    tasks.all { task ->' \
-            '      if (task.hasProperty("kotlinOptions")) {' \
-            '        try {' \
-            '          task.kotlinOptions.freeCompilerArgs += ["-opt-in=kotlin.RequiresOptIn"]' \
-            '          task.kotlinOptions.allWarningsAsErrors = false' \
-            '        } catch (ignored) {}' \
-            '      }' \
+            '      try {' \
+            '        task.kotlinOptions.freeCompilerArgs += ["-opt-in=kotlin.RequiresOptIn"]' \
+            '        task.kotlinOptions.allWarningsAsErrors = false' \
+            '      } catch (Throwable ignored) {}' \
             '    }' \
             '  }' \
             '}' \
