@@ -51,13 +51,18 @@ jobs:
         run: npx expo prebuild --platform android --clean --no-install
 
       - name: Allow experimental Kotlin APIs (required by expo-video)
-        working-directory: tv-app/android
         run: |
-          echo "" >> gradle.properties
-          echo "# expo-video uses experimental coroutines API — suppress compiler error" >> gradle.properties
-          echo "kotlin.suppressExperimentalFeatureWarning=enable" >> gradle.properties
-          # Also add via allprojects kotlinOptions in root build.gradle
-          sed -i '/^allprojects {/a\    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {\n        kotlinOptions { freeCompilerArgs += ["-opt-in=kotlin.RequiresOptIn"] }\n    }' build.gradle || true
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/opt-in.gradle << 'GRADLE'
+          allprojects {
+            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+              kotlinOptions {
+                freeCompilerArgs += ["-opt-in=kotlin.RequiresOptIn"]
+                allWarningsAsErrors = false
+              }
+            }
+          }
+          GRADLE
 
       - name: Build APK with Gradle
         working-directory: tv-app/android
