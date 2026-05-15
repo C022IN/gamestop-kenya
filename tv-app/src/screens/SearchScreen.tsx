@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import type { NavigationProp } from '@react-navigation/native';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { searchMovies, tmdbPoster } from '@/api/client';
 import FocusableCard from '@/components/FocusableCard';
@@ -42,6 +43,8 @@ export default function SearchScreen({ navigation }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<AnyItem[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useHardwareBack(useCallback(() => { navigation.goBack(); return true; }, [navigation]));
   const [searched, setSearched] = useState(false);
   const inputRef = useRef<TextInput>(null);
 

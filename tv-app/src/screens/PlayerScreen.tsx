@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { fetchStream, buildDirectPlayerUrl } from '@/api/client';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 const { width, height } = Dimensions.get('window');
 
@@ -180,6 +181,8 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const goToEpisode = useCallback((ep: number) => {
     (navigation as any).replace('Player', { item, season, episode: ep });
   }, [navigation, item, season]);
+
+  useHardwareBack(useCallback(() => { navigation.goBack(); return true; }, [navigation]));
 
   // D-pad: left/right seeks when controls are hidden; all keys wake the overlay timer
   useTVEventHandler((evt) => {

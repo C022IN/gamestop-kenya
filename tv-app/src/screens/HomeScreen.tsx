@@ -1,12 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   FlatList,
   StyleSheet,
   Text,
+  ToastAndroid,
   TouchableHighlight,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { fetchCatalog, getStoredPhone } from '@/api/client';
@@ -29,6 +32,29 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [phone, setPhone] = useState<string | null>(null);
+  const backPressedOnce = useRef(false);
+  const backTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Require two back presses within 2s to exit — prevents accidental OS kick-out.
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (backPressedOnce.current) {
+          BackHandler.exitApp();
+          return true;
+        }
+        backPressedOnce.current = true;
+        ToastAndroid.show('Press Back again to exit', ToastAndroid.SHORT);
+        if (backTimer.current) clearTimeout(backTimer.current);
+        backTimer.current = setTimeout(() => { backPressedOnce.current = false; }, 2000);
+        return true;
+      });
+      return () => {
+        sub.remove();
+        if (backTimer.current) clearTimeout(backTimer.current);
+      };
+    }, []),
+  );
 
   useEffect(() => {
     getStoredPhone().then(setPhone);

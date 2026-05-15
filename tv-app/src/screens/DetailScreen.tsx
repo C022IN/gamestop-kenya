@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, TouchableHighlight, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { tmdbBackdrop, tmdbPoster } from '@/api/client';
+import { useHardwareBack } from '@/hooks/useHardwareBack';
 
 const { width } = Dimensions.get('window');
 type AnyItem = CatalogItem | TmdbItem;
@@ -101,6 +102,8 @@ export default function DetailScreen({ route, navigation }: Props) {
   const [season, setSeason] = useState(1);
   const [episode, setEpisode] = useState(1);
   const tv = isTvShow(item);
+
+  useHardwareBack(useCallback(() => { navigation.goBack(); return true; }, [navigation]));
 
   function handlePlay() {
     navigation.navigate('Player', tv ? { item, season, episode } : { item });
