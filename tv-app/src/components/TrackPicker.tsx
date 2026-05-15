@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import React, { useRef, useState } from 'react';
+import { Animated, View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 
 interface Track {
   id: string;
@@ -18,7 +17,7 @@ interface TrackPickerProps {
   includeOff?: boolean;
 }
 
-const SPRING = { damping: 18, stiffness: 220, mass: 0.6 };
+const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 
 export default function TrackPicker({
   title,
@@ -71,15 +70,20 @@ function Row({
   hasTVPreferredFocus?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
-  const scale = useSharedValue(1);
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const scale = useRef(new Animated.Value(1)).current;
 
   return (
-    <Animated.View style={animStyle}>
+    <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
         onPress={onPress}
-        onFocus={() => { setFocused(true); scale.value = withSpring(1.02, SPRING); }}
-        onBlur={() => { setFocused(false); scale.value = withSpring(1, SPRING); }}
+        onFocus={() => {
+          setFocused(true);
+          Animated.spring(scale, { toValue: 1.02, ...SPRING_CFG }).start();
+        }}
+        onBlur={() => {
+          setFocused(false);
+          Animated.spring(scale, { toValue: 1, ...SPRING_CFG }).start();
+        }}
         hasTVPreferredFocus={hasTVPreferredFocus}
         isTVSelectable
         style={[styles.row, active && styles.rowActive, focused && styles.rowFocused]}

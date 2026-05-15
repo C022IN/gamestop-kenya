@@ -48,16 +48,7 @@ jobs:
         working-directory: tv-app
         env:
           APP_VARIANT: tv
-          EXPO_NO_NEW_ARCHITECTURE: '1'
         run: npx expo prebuild --platform android --clean --no-install
-
-      - name: Force old architecture in gradle.properties
-        working-directory: tv-app/android
-        run: |
-          sed -i 's/newArchEnabled=true/newArchEnabled=false/g' gradle.properties
-          grep -q "^newArchEnabled" gradle.properties || echo "newArchEnabled=false" >> gradle.properties
-          echo "--- gradle.properties newArch line ---"
-          grep newArch gradle.properties || echo "(not present)"
 
       - name: Patch ExpoModulesPackageList to opt-in to experimental APIs
         run: |

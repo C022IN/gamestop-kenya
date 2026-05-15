@@ -11,8 +11,6 @@ module.exports = function (api) {
           alias: { '@': './src' },
         },
       ],
-      // Required by react-native-reanimated v3. MUST be the last plugin.
-      'react-native-reanimated/plugin',
     ],
   };
 };

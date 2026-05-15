@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, View, Text, Platform } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Animated, Pressable, StyleSheet, View, Text, Platform } from 'react-native';
 import { Image } from 'expo-image';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 
 interface FocusableCardProps {
   title: string;
@@ -14,7 +13,7 @@ interface FocusableCardProps {
   hasTVPreferredFocus?: boolean;
 }
 
-const SPRING = { damping: 18, stiffness: 220, mass: 0.6 };
+const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 
 export default function FocusableCard({
   title,
@@ -27,36 +26,24 @@ export default function FocusableCard({
   hasTVPreferredFocus = false,
 }: FocusableCardProps) {
   const [focused, setFocused] = useState(false);
-  const scale = useSharedValue(1);
-  const glow = useSharedValue(0);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    // Soft glow ring via shadow on iOS, elevation animated value on Android (cap'd to safe values)
-    shadowOpacity: glow.value,
-    shadowRadius: 16 * glow.value,
-    elevation: Platform.OS === 'android' ? Math.round(glow.value * 12) : 0,
-  }));
-
-  const borderStyle = useAnimatedStyle(() => ({
-    borderColor: focused ? '#fff' : 'transparent',
-    backgroundColor: focused ? '#1a0003' : 'transparent',
-  }));
+  const scale = useRef(new Animated.Value(1)).current;
 
   function handleFocus() {
     setFocused(true);
-    scale.value = withSpring(1.08, SPRING);
-    glow.value = withTiming(1, { duration: 200 });
+    Animated.spring(scale, { toValue: 1.08, ...SPRING_CFG }).start();
     onFocus?.();
   }
   function handleBlur() {
     setFocused(false);
-    scale.value = withSpring(1, SPRING);
-    glow.value = withTiming(0, { duration: 200 });
+    Animated.spring(scale, { toValue: 1, ...SPRING_CFG }).start();
   }
 
   return (
-    <Animated.View style={[styles.shadowWrap, animatedStyle]}>
+    <Animated.View style={[
+      styles.shadowWrap,
+      { transform: [{ scale }] },
+      focused && Platform.OS === 'android' && { elevation: 12 },
+    ]}>
       <Pressable
         onPress={onPress}
         onFocus={handleFocus}
@@ -79,10 +66,10 @@ export default function FocusableCard({
             </View>
           )}
         </View>
-        <Animated.View style={[styles.info, { width }, borderStyle]}>
+        <View style={[styles.info, { width }, focused && styles.infoBorderFocused]}>
           <Text style={[styles.titleText, focused && styles.titleFocused]} numberOfLines={1}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
-        </Animated.View>
+        </View>
       </Pressable>
     </Animated.View>
   );
@@ -93,6 +80,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     shadowColor: '#e50914',
     shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
   },
   outerWrapper: {
     borderRadius: 8,
@@ -115,9 +104,15 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     borderWidth: 2,
     borderTopWidth: 0,
+    borderColor: 'transparent',
     borderRadius: 0,
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
+    backgroundColor: 'transparent',
+  },
+  infoBorderFocused: {
+    borderColor: '#fff',
+    backgroundColor: '#1a0003',
   },
   titleText: { color: '#bbb', fontSize: 13, fontWeight: '600' },
   titleFocused: { color: '#fff' },

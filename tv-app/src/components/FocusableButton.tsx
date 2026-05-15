@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, type ViewStyle, type TextStyle } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import React, { useRef, useState } from 'react';
+import { Animated, Pressable, StyleSheet, Text, type ViewStyle, type TextStyle } from 'react-native';
 
 interface FocusableButtonProps {
   label: string;
@@ -11,7 +10,7 @@ interface FocusableButtonProps {
   textStyle?: TextStyle;
 }
 
-const SPRING = { damping: 18, stiffness: 220, mass: 0.6 };
+const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 
 export default function FocusableButton({
   label,
@@ -22,10 +21,7 @@ export default function FocusableButton({
   textStyle,
 }: FocusableButtonProps) {
   const [focused, setFocused] = useState(false);
-  const scale = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const scale = useRef(new Animated.Value(1)).current;
 
   const baseColors =
     variant === 'primary' ? styles.primary
@@ -37,11 +33,17 @@ export default function FocusableButton({
       : styles.secondaryText;
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
         onPress={onPress}
-        onFocus={() => { setFocused(true); scale.value = withSpring(1.06, SPRING); }}
-        onBlur={() => { setFocused(false); scale.value = withSpring(1, SPRING); }}
+        onFocus={() => {
+          setFocused(true);
+          Animated.spring(scale, { toValue: 1.06, ...SPRING_CFG }).start();
+        }}
+        onBlur={() => {
+          setFocused(false);
+          Animated.spring(scale, { toValue: 1, ...SPRING_CFG }).start();
+        }}
         hasTVPreferredFocus={hasTVPreferredFocus}
         isTVSelectable
         style={[styles.base, baseColors, focused && styles.focused, style]}

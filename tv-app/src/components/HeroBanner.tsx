@@ -1,20 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { Animated, View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import type { CatalogItem, TmdbItem } from '@/api/client';
 import { tmdbBackdrop } from '@/api/client';
 
 const { width } = Dimensions.get('window');
 const HERO_HEIGHT = Math.round(width * 0.5);
 const ROTATE_INTERVAL_MS = 8000;
-const SPRING = { damping: 18, stiffness: 220, mass: 0.6 };
+const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 
 type HeroItem = CatalogItem | TmdbItem;
 
 interface HeroBannerProps {
-  // Accept either a single item (static) or an array (auto-rotates every 8s when not focused).
   item?: HeroItem;
   items?: HeroItem[];
   onPlay: (item: HeroItem) => void;
@@ -43,7 +41,6 @@ export default function HeroBanner({ item, items, onPlay, onMore }: HeroBannerPr
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const current = list[idx];
 
-  // Auto-advance while no hero button is focused
   useEffect(() => {
     if (list.length <= 1) return;
     if (focused) return;
@@ -58,7 +55,6 @@ export default function HeroBanner({ item, items, onPlay, onMore }: HeroBannerPr
   return (
     <View style={[styles.container, { height: HERO_HEIGHT }]}>
       <Image
-        // Keyed by URI so expo-image's transition triggers between slides
         source={{ uri: getBackdrop(current) }}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
@@ -118,16 +114,23 @@ function HeroButton({
   onFocus: () => void;
   onBlur: () => void;
 }) {
-  const scale = useSharedValue(1);
+  const scale = useRef(new Animated.Value(1)).current;
   const [focused, setFocused] = useState(false);
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <Animated.View style={animStyle}>
+    <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
         onPress={onPress}
-        onFocus={() => { setFocused(true); scale.value = withSpring(1.06, SPRING); onFocus(); }}
-        onBlur={() => { setFocused(false); scale.value = withSpring(1, SPRING); onBlur(); }}
+        onFocus={() => {
+          setFocused(true);
+          Animated.spring(scale, { toValue: 1.06, ...SPRING_CFG }).start();
+          onFocus();
+        }}
+        onBlur={() => {
+          setFocused(false);
+          Animated.spring(scale, { toValue: 1, ...SPRING_CFG }).start();
+          onBlur();
+        }}
         hasTVPreferredFocus={hasTVPreferredFocus}
         isTVSelectable
         style={[

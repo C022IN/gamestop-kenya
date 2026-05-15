@@ -26,7 +26,6 @@
     "expo-video": "~3.0.0",
     "react": "19.2.6",
     "react-native": "npm:react-native-tvos@0.83.6-0",
-    "react-native-reanimated": "~3.17.0",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.25.0",
     "react-native-webview": "13.16.1"
