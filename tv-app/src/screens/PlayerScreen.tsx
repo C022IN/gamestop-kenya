@@ -420,10 +420,17 @@ export default function PlayerScreen({ route, navigation }: Props) {
             } catch { /* ignore non-JSON messages from iframe */ }
           }}
         />
+        {/* Back button always visible for iframe path — WebView captures all
+            D-pad events internally so useTVEventHandler won't fire. The user
+            navigates the iframe player with the remote directly; we only
+            surface a RN-controlled Back button via hasTVPreferredFocus so it
+            can be reached by pressing Up until focus escapes the WebView. */}
         <TouchableHighlight
           style={styles.webviewBackBtn}
           underlayColor="#333"
           onPress={() => navigation.goBack()}
+          hasTVPreferredFocus
+          isTVSelectable
         >
           <Text style={styles.controlText}>← Back</Text>
         </TouchableHighlight>
@@ -440,7 +447,24 @@ export default function PlayerScreen({ route, navigation }: Props) {
         style={styles.video}
         nativeControls={false}
         contentFit="contain"
+        focusable={false}
       />
+      {/* Focus anchor: sits above VideoView in Z-order so Android routes key
+          events to React Native instead of ExoPlayer. When controls are hidden
+          this view holds TV focus; pressing OK shows controls, left/right seeks
+          via useTVEventHandler. When controls appear it unmounts and
+          hasTVPreferredFocus on the play/pause button takes over. */}
+      {!showControls && !picker && (
+        <TouchableHighlight
+          style={styles.focusAnchor}
+          underlayColor="transparent"
+          onPress={resetControlsTimer}
+          hasTVPreferredFocus
+          isTVSelectable
+        >
+          <View />
+        </TouchableHighlight>
+      )}
       {buffering && !showControls && (
         <View style={styles.bufferingOverlay} pointerEvents="none">
           <ActivityIndicator size="large" color="#fff" />
@@ -567,6 +591,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   video: { width, height },
+  focusAnchor: { ...StyleSheet.absoluteFillObject, zIndex: 1 },
   webview: { flex: 1, backgroundColor: '#000' },
   webviewBackBtn: {
     position: 'absolute', top: 16, left: 16,
