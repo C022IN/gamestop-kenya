@@ -25,8 +25,8 @@ export default function FocusableCard({
   title,
   imageUri,
   subtitle,
-  width = 160,
-  height = 240,
+  width = 180,
+  height = 270,
   onPress,
   onFocus,
   onBlur,
@@ -88,8 +88,8 @@ export default function FocusableCard({
           )}
         </View>
 
-        {/* Label row — single view, border + bg switch via state */}
-        <View style={[styles.label, { width }, focused && styles.labelFocused]}>
+        {/* Label row — clean text below poster, no border box */}
+        <View style={[styles.label, { width }]}>
           <Animated.Text style={[styles.title, { color: titleColor }]} numberOfLines={1}>
             {title}
           </Animated.Text>
@@ -122,18 +122,9 @@ const styles = StyleSheet.create({
   },
   placeholderText: { color: '#aaa', textAlign: 'center', fontSize: 13 },
   label: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderWidth: 2,
-    borderTopWidth: 0,
-    borderColor: 'transparent',
-    borderBottomLeftRadius: 6,
-    borderBottomRightRadius: 6,
-    backgroundColor: 'transparent',
-  },
-  labelFocused: {
-    borderColor: '#fff',
-    backgroundColor: '#1a0003',
+    paddingHorizontal: 4,
+    paddingTop: 6,
+    paddingBottom: 2,
   },
   title: { fontSize: 13, fontWeight: '600' },
   subtitle: { color: '#e50914', fontSize: 11, marginTop: 2 },

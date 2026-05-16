@@ -7,7 +7,7 @@ import type { CatalogItem, TmdbItem } from '@/api/client';
 import { tmdbBackdrop, fetchTitleLogo, fetchTrailerKey } from '@/api/client';
 
 const { width } = Dimensions.get('window');
-const HERO_HEIGHT = Math.round(width * 0.5);
+const HERO_HEIGHT = Math.round(width * 0.58);
 const ROTATE_INTERVAL_MS = 8000;
 const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 const PARALLAX_PX = 20; // backdrop slides this far when D-pad nav moves focus
@@ -279,11 +279,11 @@ function HeroButton({
 const styles = StyleSheet.create({
   container: { width, backgroundColor: '#000', overflow: 'hidden' },
   trailerView: { flex: 1, backgroundColor: 'transparent' },
-  content: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 40 },
-  logo: { marginBottom: 12 },
-  logoPlaceholder: { height: 80, marginBottom: 12 },
-  title: { color: '#fff', fontSize: 38, fontWeight: '800', marginBottom: 8 },
-  overview: { color: '#ddd', fontSize: 15, lineHeight: 22, marginBottom: 20, maxWidth: 560 },
+  content: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 48, paddingBottom: 48, paddingTop: 0 },
+  logo: { marginBottom: 14 },
+  logoPlaceholder: { height: 80, marginBottom: 14 },
+  title: { color: '#fff', fontSize: 40, fontWeight: '800', marginBottom: 10 },
+  overview: { color: '#ddd', fontSize: 16, lineHeight: 24, marginBottom: 24, maxWidth: 640 },
   buttons: { flexDirection: 'row', gap: 16 },
   btn: {
     paddingHorizontal: 28,

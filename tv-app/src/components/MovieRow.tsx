@@ -13,12 +13,12 @@ interface MovieRowProps {
   isFirstRow?: boolean;
 }
 
-const CARD_WIDTH = 160;
-const CARD_MARGIN = 12;
+const CARD_WIDTH = 180;
+const CARD_MARGIN = 14;
 const ITEM_SIZE = CARD_WIDTH + CARD_MARGIN;
 
-// Netflix-style row lift: focused row rises slightly toward viewer.
-const ROW_LIFT_PX = 24;
+// Row lift when focused — kept subtle so cards don't clip the heading above.
+const ROW_LIFT_PX = 12;
 const LIFT_SPRING = { damping: 16, stiffness: 180, mass: 0.7, useNativeDriver: true };
 // Time to wait after a blur before deciding the row has truly lost focus.
 // Card-to-card navigation fires blur(A) then focus(B) on the next tick — this
