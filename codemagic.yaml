@@ -21,13 +21,64 @@ workflows:
     scripts:
       - name: Install Node dependencies
         working_directory: tv-app
-        script: npm ci
+        script: npm install --legacy-peer-deps
 
-      - name: Bootstrap Gradle wrapper
+      - name: Expo prebuild (TV variant)
+        working_directory: tv-app
+        script: APP_VARIANT=tv npx expo prebuild --platform android --clean --no-install
+
+      - name: Patch ExpoModulesPackageList to suppress experimental-API errors
+        script: |
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/opt-in.gradle << 'GRADLE'
+          gradle.projectsEvaluated {
+            allprojects { proj ->
+              if (proj.name == "expo") {
+                proj.tasks.matching { it.name == "compileReleaseKotlin" }.configureEach { t ->
+                  t.doFirst {
+                    def f = proj.file("build/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt")
+                    if (f.exists() && !f.text.contains("@file:Suppress")) {
+                      def suppress = '@file:Suppress("OPT_IN_USAGE_ERROR", "OPT_IN_USAGE", "EXPERIMENTAL_API_USAGE_ERROR", "EXPERIMENTAL_API_USAGE")' + System.lineSeparator()
+                      f.text = suppress + f.text
+                    }
+                  }
+                }
+              }
+            }
+          }
+          GRADLE
+
+      - name: Wire release signing to Codemagic keystore
         working_directory: tv-app/android
         script: |
-          gradle wrapper --gradle-version=8.8 --distribution-type=bin
           chmod +x gradlew
+          cat > /tmp/patch_signing.py << 'PYEOF'
+          import re, sys
+          with open('app/build.gradle', 'r') as f:
+              content = f.read()
+
+          release_config = (
+              '        release {\n'
+              '            def ks = System.getenv("CM_KEYSTORE_PATH")\n'
+              '            storeFile ks ? file(ks) : file("debug.keystore")\n'
+              '            storePassword System.getenv("CM_KEYSTORE_PASSWORD") ?: "android"\n'
+              '            keyAlias System.getenv("CM_KEY_ALIAS") ?: "androiddebugkey"\n'
+              '            keyPassword System.getenv("CM_KEY_PASSWORD") ?: "android"\n'
+              '        }\n'
+              '    }\n'
+              '    buildTypes {'
+          )
+          patched = content.replace('    }\n    buildTypes {', release_config, 1)
+          patched = re.sub(
+              r'(release \{[^\}]*?)signingConfig signingConfigs\.debug',
+              r'\1signingConfig signingConfigs.release',
+              patched, count=1, flags=re.DOTALL
+          )
+          with open('app/build.gradle', 'w') as f:
+              f.write(patched)
+          print('build.gradle patched for Codemagic release signing')
+          PYEOF
+          python3 /tmp/patch_signing.py
 
       - name: Build Release APK + AAB
         working_directory: tv-app/android
@@ -44,7 +95,7 @@ workflows:
     publishing:
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal          # Start on internal track, promote to production manually
+        track: internal
         submit_as_draft: true
 
       email:
