@@ -108,7 +108,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const [availableAudios, setAvailableAudios] = useState<MediaTrack[]>([]);
   const [currentSubId, setCurrentSubId] = useState<string | null>(null);
   const [currentAudioId, setCurrentAudioId] = useState<string | null>(null);
-  const [picker, setPicker] = useState<null | 'subs' | 'audio'>(null);
+  const [picker, setPicker] = useState<null | 'subs' | 'audio' | 'sources'>(null);
 
   const player = useVideoPlayer(null, (p) => {
     p.timeUpdateEventInterval = 0.5;
@@ -349,15 +349,15 @@ export default function PlayerScreen({ route, navigation }: Props) {
 
   useTVEventHandler((evt) => {
     if (!evt?.eventType || evt.eventType === 'blur' || evt.eventType === 'focus') return;
-    if (picker) return; // let the picker handle its own focus
-    if (evt.eventType === 'left') { acceleratingSeek(-1); return; }
-    if (evt.eventType === 'right') { acceleratingSeek(1); return; }
-    if (evt.eventType === 'playPause' || evt.eventType === 'select') {
-      // 'select' / 'playPause' bubble up here only when no button is focused;
-      // we still want them to toggle play.
-      togglePlay();
-      return;
+    if (picker) return; // picker handles its own focus
+    if (!showControls) {
+      // Controls hidden: directional keys seek, any key shows controls.
+      if (evt.eventType === 'left') { acceleratingSeek(-1); return; }
+      if (evt.eventType === 'right') { acceleratingSeek(1); return; }
     }
+    // playPause physical key always toggles, regardless of controls state.
+    if (evt.eventType === 'playPause') { togglePlay(); return; }
+    // Any other key shows/refreshes controls timer.
     resetControlsTimer();
   });
 
@@ -493,6 +493,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
               style={styles.controlBtn}
               underlayColor="#333"
               onPress={() => navigation.goBack()}
+              isTVSelectable
             >
               <Text style={styles.controlText}>← Back</Text>
             </TouchableHighlight>
@@ -506,6 +507,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
               style={styles.seekBtn}
               underlayColor="#333"
               onPress={() => seek(-10)}
+              isTVSelectable
             >
               <Text style={styles.seekText}>⏪ 10s</Text>
             </TouchableHighlight>
@@ -514,6 +516,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
               underlayColor="#333"
               onPress={togglePlay}
               hasTVPreferredFocus
+              isTVSelectable
             >
               <Text style={styles.playPauseText}>{paused ? '▶' : '⏸'}</Text>
             </TouchableHighlight>
@@ -521,6 +524,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
               style={styles.seekBtn}
               underlayColor="#333"
               onPress={() => seek(10)}
+              isTVSelectable
             >
               <Text style={styles.seekText}>10s ⏩</Text>
             </TouchableHighlight>
@@ -541,6 +545,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
                   style={styles.actionBtn}
                   underlayColor="#333"
                   onPress={() => setPicker('subs')}
+                  isTVSelectable
                 >
                   <Text style={styles.actionBtnText}>CC  Subtitles</Text>
                 </TouchableHighlight>
@@ -550,6 +555,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
                   style={styles.actionBtn}
                   underlayColor="#333"
                   onPress={() => setPicker('audio')}
+                  isTVSelectable
                 >
                   <Text style={styles.actionBtnText}>🎧  Audio</Text>
                 </TouchableHighlight>
@@ -559,6 +565,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
                   style={styles.actionBtn}
                   underlayColor="#333"
                   onPress={() => goToEpisode(episode - 1)}
+                  isTVSelectable
                 >
                   <Text style={styles.actionBtnText}>← Prev Ep</Text>
                 </TouchableHighlight>
@@ -568,22 +575,18 @@ export default function PlayerScreen({ route, navigation }: Props) {
                   style={styles.actionBtn}
                   underlayColor="#333"
                   onPress={() => goToEpisode(episode + 1)}
+                  isTVSelectable
                 >
                   <Text style={styles.actionBtnText}>Next Ep →</Text>
                 </TouchableHighlight>
               )}
               <TouchableHighlight
-                style={[styles.actionBtn, styles.webPlayerBtn]}
+                style={[styles.actionBtn, styles.sourcesBtn]}
                 underlayColor="#1a4a8a"
-                onPress={() => {
-                  const numericId = Number(getId(item));
-                  if (Number.isFinite(numericId) && numericId > 0) {
-                    setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
-                    setStreamUrl(null);
-                  }
-                }}
+                onPress={() => setPicker('sources')}
+                isTVSelectable
               >
-                <Text style={styles.actionBtnText}>🌐  Web Player</Text>
+                <Text style={styles.actionBtnText}>📡  Sources</Text>
               </TouchableHighlight>
             </View>
           </View>
@@ -609,6 +612,33 @@ export default function PlayerScreen({ route, navigation }: Props) {
           includeOff={false}
           onSelect={(track) => {
             if (track) player.audioTrack = track as any;
+          }}
+          onClose={() => setPicker(null)}
+        />
+      )}
+      {picker === 'sources' && (
+        <TrackPicker
+          title="Playback Source"
+          includeOff={false}
+          tracks={[
+            { id: 'hls', label: 'Native HLS  (re-extract)' },
+            { id: 'web', label: 'Videasy Web Player' },
+          ]}
+          currentId={streamUrl ? 'hls' : 'web'}
+          onSelect={(track) => {
+            setPicker(null);
+            if (!track) return;
+            if (track.id === 'web') {
+              const numericId = Number(getId(item));
+              if (Number.isFinite(numericId) && numericId > 0) {
+                setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
+                setStreamUrl(null);
+              }
+            } else {
+              setIframeUrl(null);
+              setStreamUrl(null);
+              loadStream();
+            }
           }}
           onClose={() => setPicker(null)}
         />
@@ -652,7 +682,7 @@ const styles = StyleSheet.create({
   timeText: { color: '#ccc', fontSize: 13, minWidth: 48, textAlign: 'center' },
   bottomActionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   actionBtn: { paddingHorizontal: 18, paddingVertical: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 6 },
-  webPlayerBtn: { backgroundColor: 'rgba(30,90,180,0.5)' },
+  sourcesBtn: { backgroundColor: 'rgba(30,90,180,0.5)' },
   actionBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   backBtn: { backgroundColor: '#333', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 6 },
   backBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
