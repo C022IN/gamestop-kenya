@@ -78,9 +78,12 @@ const WEBVIEW_AFTER_LOAD_JS = `
         }, 15000);
         return;
       }
-      document.querySelectorAll('button, [role="button"]').forEach(function(b) {
+      // Videasy uses a div.cursor-pointer overlay as the play trigger — hit it first.
+      var overlay = document.querySelector('div.cursor-pointer');
+      if (overlay) { overlay.click(); }
+      document.querySelectorAll('button, [role="button"], .vjs-big-play-button, .plyr__control--overlaid').forEach(function(b) {
         var label = (b.getAttribute('aria-label') || b.textContent || '').toLowerCase();
-        if (label.indexOf('play') !== -1) b.click();
+        if (!label || label.indexOf('play') !== -1) b.click();
       });
       if (++tries >= 20) clearInterval(t);
     }, 600);
