@@ -50,6 +50,27 @@ jobs:
           APP_VARIANT: phone
         run: npx expo prebuild --platform android --clean --no-install
 
+      - name: Patch ExpoModulesPackageList to suppress experimental-API errors
+        run: |
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/opt-in.gradle << 'GRADLE'
+          gradle.projectsEvaluated {
+            allprojects { proj ->
+              if (proj.name == "expo") {
+                proj.tasks.matching { it.name == "compileReleaseKotlin" }.configureEach { t ->
+                  t.doFirst {
+                    def f = proj.file("build/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt")
+                    if (f.exists() && !f.text.contains("@file:Suppress")) {
+                      def suppress = '@file:Suppress("OPT_IN_USAGE_ERROR", "OPT_IN_USAGE", "EXPERIMENTAL_API_USAGE_ERROR", "EXPERIMENTAL_API_USAGE")' + System.lineSeparator()
+                      f.text = suppress + f.text
+                    }
+                  }
+                }
+              }
+            }
+          }
+          GRADLE
+
       - name: Build APK with Gradle
         working-directory: tv-app/android
         env:
