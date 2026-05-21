@@ -1,10 +1,8 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { Animated, View, Text, FlatList, StyleSheet, TVFocusGuideView } from 'react-native';
 import FocusableCard from './FocusableCard';
-import { tmdbPoster, tmdbBackdrop } from '@/api/client';
-import type { CatalogItem, TmdbItem } from '@/api/client';
-
-type AnyItem = CatalogItem | TmdbItem;
+import type { AnyItem } from '@/utils/mediaItem';
+import { getPosterUrl, getBackdropUrl, getTitle, getSubtitle } from '@/utils/mediaItem';
 
 interface MovieRowProps {
   title: string;
@@ -17,41 +15,16 @@ const CARD_WIDTH = 180;
 const CARD_MARGIN = 14;
 const ITEM_SIZE = CARD_WIDTH + CARD_MARGIN;
 
-// Row lift when focused — kept subtle so cards don't clip the heading above.
 const ROW_LIFT_PX = 12;
 const LIFT_SPRING = { damping: 16, stiffness: 180, mass: 0.7, useNativeDriver: true };
-// Time to wait after a blur before deciding the row has truly lost focus.
-// Card-to-card navigation fires blur(A) then focus(B) on the next tick — this
-// debounce prevents the row from dipping briefly between transitions.
+// Debounce to avoid the row dipping briefly during card-to-card D-pad navigation
+// (blur fires on A, then focus fires on B on the next tick).
 const BLUR_DEBOUNCE_MS = 80;
-
-function getImage(item: AnyItem): string {
-  if ('poster_url' in item && item.poster_url) return item.poster_url;
-  if ('poster_path' in item) return tmdbPoster((item as TmdbItem).poster_path);
-  return '';
-}
-
-function getBackdrop(item: AnyItem): string {
-  if ('backdrop_url' in item && (item as any).backdrop_url) return (item as any).backdrop_url;
-  if ('backdrop_path' in item) return tmdbBackdrop((item as TmdbItem).backdrop_path);
-  return '';
-}
-
-function getTitle(item: AnyItem): string {
-  if ('title' in item && item.title) return item.title;
-  if ('name' in item && (item as TmdbItem).name) return (item as TmdbItem).name!;
-  return 'Unknown';
-}
 
 function getKey(item: AnyItem, index: number): string {
   if ('slug' in item && item.slug) return item.slug;
   if (item.id !== undefined && item.id !== null) return String(item.id);
   return `idx-${index}`;
-}
-
-function getSubtitle(item: AnyItem): string | undefined {
-  const v = (item as any).vote_average;
-  return v ? `★ ${Number(v).toFixed(1)}` : undefined;
 }
 
 export default function MovieRow({ title, items, onSelect, isFirstRow = false }: MovieRowProps) {
@@ -115,11 +88,11 @@ export default function MovieRow({ title, items, onSelect, isFirstRow = false }:
           renderItem={({ item, index }) => (
             <FocusableCard
               title={getTitle(item)}
-              imageUri={getImage(item)}
+              imageUri={getPosterUrl(item)}
               subtitle={getSubtitle(item)}
               hasTVPreferredFocus={isFirstRow && index === 0}
               dimmed={focusedIndex !== null && focusedIndex !== index}
-              prefetchUrl={getBackdrop(item)}
+              prefetchUrl={getBackdropUrl(item)}
               onPress={() => onSelect(item)}
               onFocus={() => {
                 onCardFocus(index);
@@ -136,12 +109,6 @@ export default function MovieRow({ title, items, onSelect, isFirstRow = false }:
 
 const styles = StyleSheet.create({
   container: { marginBottom: 28 },
-  heading: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
-    marginLeft: 32,
-    marginBottom: 12,
-  },
+  heading: { color: '#fff', fontSize: 20, fontWeight: '700', marginLeft: 32, marginBottom: 12 },
   row: { paddingHorizontal: 26, paddingVertical: 16 },
 });

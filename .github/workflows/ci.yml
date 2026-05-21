@@ -14,16 +14,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: quality
+  # ── Web / Next.js ─────────────────────────────────────────────────────────
+  web-quality:
+    name: Web — lint & build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
@@ -36,3 +35,62 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # ── TV App ────────────────────────────────────────────────────────────────
+  tv-typecheck:
+    name: TV app — TypeScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tv-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tv-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+  tv-bundle:
+    name: TV app — Metro bundle (Android)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: tv-typecheck
+    defaults:
+      run:
+        working-directory: tv-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tv-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Expo export (bundle dry-run)
+        run: npx expo export --platform android --dev
+        env:
+          CI: 'true'
+
+      - name: Confirm bundle exists
+        run: |
+          BUNDLE=$(find dist -name "*.js" | head -1)
+          if [ -z "$BUNDLE" ]; then
+            echo "ERROR: No JS bundle produced" && exit 1
+          fi
+          SIZE=$(du -sh "$BUNDLE" | cut -f1)
+          echo "Bundle: $BUNDLE ($SIZE)" >> $GITHUB_STEP_SUMMARY

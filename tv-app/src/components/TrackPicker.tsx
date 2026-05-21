@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Animated, View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { SPRING_CFG } from '@/constants/animation';
 
 interface Track {
   id: string;
@@ -16,8 +17,6 @@ interface TrackPickerProps {
   onClose: () => void;
   includeOff?: boolean;
 }
-
-const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 
 export default function TrackPicker({
   title,
@@ -100,17 +99,13 @@ function trackLabel(t: Track): string {
   if (t.name) return t.name;
   if (t.language) {
     try {
-      const dn = new (Intl as any).DisplayNames([navigatorLang()], { type: 'language' });
+      const dn = new (Intl as any).DisplayNames(['en'], { type: 'language' });
       const friendly = dn.of(t.language);
       if (friendly) return friendly;
     } catch { /* fallback */ }
     return t.language.toUpperCase();
   }
   return 'Unknown';
-}
-
-function navigatorLang() {
-  return 'en';
 }
 
 const styles = StyleSheet.create({
@@ -140,9 +135,9 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     gap: 12,
   },
-  rowActive: { backgroundColor: 'rgba(229,9,20,0.15)' },
+  rowActive:  { backgroundColor: 'rgba(229,9,20,0.15)' },
   rowFocused: { borderColor: '#fff', backgroundColor: 'rgba(255,255,255,0.07)' },
-  checkmark: { color: '#e50914', fontSize: 16, width: 20, textAlign: 'center' },
-  rowText: { color: '#ccc', fontSize: 16, fontWeight: '500' },
+  checkmark:      { color: '#e50914', fontSize: 16, width: 20, textAlign: 'center' },
+  rowText:        { color: '#ccc', fontSize: 16, fontWeight: '500' },
   rowTextFocused: { color: '#fff' },
 });

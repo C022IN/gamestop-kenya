@@ -8,45 +8,29 @@ import {
   TouchableHighlight,
   View,
 } from 'react-native';
-import type { NavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '@/types/navigation';
+import type { AnyItem } from '@/utils/mediaItem';
+import { getPosterUrl, getTitle, getSubtitle } from '@/utils/mediaItem';
+import { searchMovies } from '@/api/client';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
-import type { CatalogItem, TmdbItem } from '@/api/client';
-import { searchMovies, tmdbPoster } from '@/api/client';
 import FocusableCard from '@/components/FocusableCard';
 
-type AnyItem = CatalogItem | TmdbItem;
-
 interface Props {
-  navigation: NavigationProp<any>;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Search'>;
 }
 
-function getImage(item: AnyItem): string {
-  if ('poster_url' in item && item.poster_url) return item.poster_url;
-  if ('poster_path' in item) return tmdbPoster((item as TmdbItem).poster_path);
-  return '';
-}
-
-function getTitle(item: AnyItem): string {
-  if ('title' in item && item.title) return item.title;
-  if ('name' in item && (item as TmdbItem).name) return (item as TmdbItem).name!;
-  return 'Unknown';
-}
-
-function getSubtitle(item: AnyItem): string | undefined {
-  if ('vote_average' in item && item.vote_average) {
-    return `★ ${Number(item.vote_average).toFixed(1)}`;
-  }
-  return undefined;
-}
+const CARD_WIDTH = 150;
+const NUM_COLUMNS = 5;
 
 export default function SearchScreen({ navigation }: Props) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<AnyItem[]>([]);
   const [loading, setLoading] = useState(false);
-
-  useHardwareBack(useCallback(() => { navigation.goBack(); return true; }, [navigation]));
   const [searched, setSearched] = useState(false);
   const inputRef = useRef<TextInput>(null);
+
+  useHardwareBack(useCallback(() => { navigation.goBack(); return true; }, [navigation]));
 
   async function doSearch() {
     if (!query.trim()) return;
@@ -62,17 +46,10 @@ export default function SearchScreen({ navigation }: Props) {
     setLoading(false);
   }
 
-  const CARD_WIDTH = 150;
-  const NUM_COLUMNS = 5;
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableHighlight
-          style={styles.backBtn}
-          underlayColor="#333"
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableHighlight style={styles.backBtn} underlayColor="#333" onPress={() => navigation.goBack()} isTVSelectable>
           <Text style={styles.backText}>← Back</Text>
         </TouchableHighlight>
         <Text style={styles.heading}>Search</Text>
@@ -92,7 +69,7 @@ export default function SearchScreen({ navigation }: Props) {
           hasTVPreferredFocus
           blurOnSubmit={false}
         />
-        <TouchableHighlight style={styles.searchBtn} underlayColor="#cc0000" onPress={doSearch}>
+        <TouchableHighlight style={styles.searchBtn} underlayColor="#cc0000" onPress={doSearch} isTVSelectable>
           <Text style={styles.searchBtnText}>Search</Text>
         </TouchableHighlight>
       </View>
@@ -123,7 +100,7 @@ export default function SearchScreen({ navigation }: Props) {
             renderItem={({ item, index }) => (
               <FocusableCard
                 title={getTitle(item)}
-                imageUri={getImage(item)}
+                imageUri={getPosterUrl(item)}
                 subtitle={getSubtitle(item)}
                 width={CARD_WIDTH}
                 height={225}
@@ -148,20 +125,10 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 16,
   },
-  backBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 6,
-  },
+  backBtn: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#1a1a1a', borderRadius: 6 },
   backText: { color: '#fff', fontSize: 16 },
   heading: { color: '#fff', fontSize: 24, fontWeight: '700' },
-  searchBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 32,
-    gap: 12,
-    marginBottom: 16,
-  },
+  searchBar: { flexDirection: 'row', paddingHorizontal: 32, gap: 12, marginBottom: 16 },
   input: {
     flex: 1,
     backgroundColor: '#1e1e1e',
@@ -181,17 +148,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   searchBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  resultCount: {
-    color: '#888',
-    fontSize: 14,
-    paddingHorizontal: 32,
-    marginBottom: 12,
-  },
+  resultCount: { color: '#888', fontSize: 14, paddingHorizontal: 32, marginBottom: 12 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { color: '#888', fontSize: 16 },
-  emptyText: { color: '#888', fontSize: 18 },
-  grid: {
-    paddingHorizontal: 26,
-    paddingBottom: 32,
-  },
+  emptyText:   { color: '#888', fontSize: 18 },
+  grid: { paddingHorizontal: 26, paddingBottom: 32 },
 });

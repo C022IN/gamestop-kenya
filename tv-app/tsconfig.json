@@ -13,10 +13,8 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
-    "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*", "index.js", "app.config.js"]

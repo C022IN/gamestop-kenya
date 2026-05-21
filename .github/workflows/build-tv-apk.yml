@@ -15,30 +15,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Android TV APK — Local Build
+  typecheck:
+    name: TypeScript check
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tv-app
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
           cache-dependency-path: tv-app/package-lock.json
 
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+  build:
+    name: Android TV APK — Local Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: typecheck
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tv-app/package-lock.json
+
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v3
 
       - name: Install tv-app dependencies
         working-directory: tv-app
@@ -50,31 +70,34 @@ jobs:
           APP_VARIANT: tv
         run: npx expo prebuild --platform android --clean --no-install
 
-      - name: Patch ExpoModulesPackageList to suppress experimental-API errors
+      - name: Patch ExpoModulesPackageList — suppress OPT_IN Kotlin errors
+        # Expo-generated ExpoModulesPackageList.kt uses experimental API markers
+        # that Kotlin strict mode rejects. This init script prepends @file:Suppress
+        # before the file is compiled so the build doesn't error.
         run: |
           mkdir -p ~/.gradle/init.d
-          printf '%s\n' \
-            'gradle.projectsEvaluated {' \
-            '  allprojects { proj ->' \
-            '    if (proj.name == "expo") {' \
-            '      proj.tasks.matching { it.name == "compileReleaseKotlin" }.configureEach { t ->' \
-            '        t.doFirst {' \
-            '          def f = proj.file("build/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt")' \
-            '          if (f.exists() && !f.text.contains("@file:Suppress")) {' \
-            '            def suppress = '"'"'@file:Suppress("OPT_IN_USAGE_ERROR", "OPT_IN_USAGE", "EXPERIMENTAL_API_USAGE_ERROR", "EXPERIMENTAL_API_USAGE")'"'"' + System.lineSeparator()' \
-            '            f.text = suppress + f.text' \
-            '          }' \
-            '        }' \
-            '      }' \
-            '    }' \
-            '  }' \
-            '}' \
-            > ~/.gradle/init.d/opt-in.gradle
+          cat > ~/.gradle/init.d/opt-in.gradle << 'GRADLE'
+          gradle.projectsEvaluated {
+            allprojects { proj ->
+              if (proj.name == "expo") {
+                proj.tasks.matching { it.name == "compileReleaseKotlin" }.configureEach { t ->
+                  t.doFirst {
+                    def f = proj.file("build/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt")
+                    if (f.exists() && !f.text.contains("@file:Suppress")) {
+                      def suppress = '@file:Suppress("OPT_IN_USAGE_ERROR", "OPT_IN_USAGE", "EXPERIMENTAL_API_USAGE_ERROR", "EXPERIMENTAL_API_USAGE")' + System.lineSeparator()
+                      f.text = suppress + f.text
+                    }
+                  }
+                }
+              }
+            }
+          }
+          GRADLE
           echo "---- generated init script ----"
           cat ~/.gradle/init.d/opt-in.gradle
           echo "---- end ----"
 
-      - name: Build APK with Gradle
+      - name: Build APK / AAB with Gradle
         working-directory: tv-app/android
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
@@ -107,8 +130,13 @@ jobs:
 
       - name: Build summary
         run: |
+          PROFILE="${{ github.event.inputs.profile || 'preview' }}"
           echo "## GameStop Movies TV — Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "**Profile:** ${{ github.event.inputs.profile || 'preview' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Profile:** $PROFILE" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Download the APK/AAB from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
+          if [ "$PROFILE" = "production" ]; then
+            echo "Download the **AAB** from the Artifacts section above." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Download the **APK** from the Artifacts section above." >> $GITHUB_STEP_SUMMARY
+          fi

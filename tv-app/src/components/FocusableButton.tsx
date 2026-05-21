@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, type ViewStyle, type TextStyle } from 'react-native';
+import { SPRING_CFG } from '@/constants/animation';
 
 interface FocusableButtonProps {
   label: string;
@@ -9,8 +10,6 @@ interface FocusableButtonProps {
   style?: ViewStyle;
   textStyle?: TextStyle;
 }
-
-const SPRING_CFG = { damping: 18, stiffness: 220, mass: 0.6, useNativeDriver: true };
 
 export default function FocusableButton({
   label,
@@ -64,13 +63,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  primary: { backgroundColor: '#e50914' },
+  primary:   { backgroundColor: '#e50914' },
   secondary: { backgroundColor: '#1a1a1a', borderColor: '#333' },
-  ghost: { backgroundColor: 'transparent' },
-  focused: { borderColor: '#fff', backgroundColor: '#2a2a2a' },
-  text: { fontSize: 14, fontWeight: '600' },
-  primaryText: { color: '#fff' },
+  ghost:     { backgroundColor: 'transparent' },
+  focused:   { borderColor: '#fff', backgroundColor: '#2a2a2a' },
+  text:        { fontSize: 14, fontWeight: '600' },
+  primaryText:   { color: '#fff' },
   secondaryText: { color: '#ddd' },
-  ghostText: { color: '#ccc' },
-  textFocused: { color: '#fff' },
+  ghostText:     { color: '#ccc' },
+  textFocused:   { color: '#fff' },
 });

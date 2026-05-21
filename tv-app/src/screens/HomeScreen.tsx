@@ -8,16 +8,16 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import type { NavigationProp } from '@react-navigation/native';
-import type { CatalogItem, TmdbItem } from '@/api/client';
-import { fetchCatalog, getStoredPhone, getContinueWatching, fetchDiscover, type ResumeEntry } from '@/api/client';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { CatalogItem, TmdbItem, ResumeEntry } from '@/api/client';
+import { fetchCatalog, getStoredPhone, getContinueWatching, fetchDiscover } from '@/api/client';
+import type { RootStackParamList } from '@/types/navigation';
+import type { AnyItem } from '@/utils/mediaItem';
 import HeroBanner from '@/components/HeroBanner';
 import MovieRow from '@/components/MovieRow';
 import ContinueWatchingRow from '@/components/ContinueWatchingRow';
 import { HeroSkeleton, PosterRowSkeleton } from '@/components/Skeleton';
 import FocusableButton from '@/components/FocusableButton';
-
-type AnyItem = CatalogItem | TmdbItem;
 
 type FeedRow =
   | { type: 'hero'; id: string; items: AnyItem[] }
@@ -26,16 +26,16 @@ type FeedRow =
 
 // Genre rails fetched in parallel after the main catalog. TMDB genre IDs.
 const GENRE_RAILS: { title: string; type: 'movie' | 'tv'; genreId: number }[] = [
-  { title: 'Action',          type: 'movie', genreId: 28 },
-  { title: 'Comedy',          type: 'movie', genreId: 35 },
-  { title: 'Drama',           type: 'movie', genreId: 18 },
-  { title: 'Sci-Fi',          type: 'movie', genreId: 878 },
-  { title: 'Action & Adventure (Series)', type: 'tv', genreId: 10759 },
-  { title: 'Crime',           type: 'movie', genreId: 80 },
+  { title: 'Action',                          type: 'movie', genreId: 28 },
+  { title: 'Comedy',                          type: 'movie', genreId: 35 },
+  { title: 'Drama',                           type: 'movie', genreId: 18 },
+  { title: 'Sci-Fi',                          type: 'movie', genreId: 878 },
+  { title: 'Action & Adventure (Series)',     type: 'tv',    genreId: 10759 },
+  { title: 'Crime',                           type: 'movie', genreId: 80 },
 ];
 
 interface Props {
-  navigation: NavigationProp<any>;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
   onLogout: () => void;
 }
 
@@ -47,7 +47,6 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
   const backPressedOnce = useRef(false);
   const backTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Top bar fades + translates up as the feed scrolls down (Netflix-style).
   const scrollY = useRef(new Animated.Value(0)).current;
   const topBarOpacity = scrollY.interpolate({
     inputRange: [0, 60, 140],
@@ -88,10 +87,18 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+
+    // Each call to load() gets its own cancellation token so that
+    // concurrent loads (e.g. rapid focus in/out) don't race.
+    let cancelled = false;
+
     const [data, resumeEntries] = await Promise.all([
       fetchCatalog(),
       getContinueWatching(),
     ]);
+
+    if (cancelled) return;
+
     if (!data) {
       setError('Failed to load content. Please check your connection.');
       setLoading(false);
@@ -99,19 +106,17 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
     }
 
     const rows: FeedRow[] = [];
-    const allItems = data.items ?? [];
+    const allItems = (data.items ?? []) as AnyItem[];
 
-    // Rotating hero: pick the top 5 most relevant items (richest backdrops)
     const heroPool = allItems
-      .filter(i => ('backdrop_url' in i && (i as any).backdrop_url) || ('backdrop_path' in i && (i as TmdbItem).backdrop_path))
+      .filter(i =>
+        ('backdrop_url' in i && (i as CatalogItem).backdrop_url) ||
+        ('backdrop_path' in i && (i as TmdbItem).backdrop_path)
+      )
       .slice(0, 5);
-    if (heroPool.length) {
-      rows.push({ type: 'hero', id: 'hero', items: heroPool });
-    }
+    if (heroPool.length) rows.push({ type: 'hero', id: 'hero', items: heroPool });
 
-    if (resumeEntries.length) {
-      rows.push({ type: 'continue', id: 'continue', entries: resumeEntries });
-    }
+    if (resumeEntries.length) rows.push({ type: 'continue', id: 'continue', entries: resumeEntries });
 
     const sections = data.sections ?? [];
     sections.forEach((s, i) => {
@@ -137,28 +142,38 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
     setFeed(rows);
     setLoading(false);
 
-    // Fetch genre rails in parallel, append as they arrive so the page doesn't
-    // wait for all six to come back before rendering anything.
-    GENRE_RAILS.forEach(async (g) => {
-      const items = await fetchDiscover(g.type, g.genreId);
-      if (!items.length) return;
-      setFeed(prev => [
-        ...prev,
-        { type: 'section', id: `genre_${g.type}_${g.genreId}`, title: g.title, items: items as AnyItem[], isFirst: false },
-      ]);
-    });
+    // Fetch genre rails in parallel. Each uses Promise.all internally so they
+    // overlap, and each checks `cancelled` before touching state so a navigation
+    // away (or a second load() call) doesn't leak setState onto a dead component.
+    await Promise.all(
+      GENRE_RAILS.map(async (g) => {
+        const items = await fetchDiscover(g.type, g.genreId);
+        if (cancelled || !items.length) return;
+        setFeed(prev => [
+          ...prev,
+          {
+            type: 'section',
+            id: `genre_${g.type}_${g.genreId}`,
+            title: g.title,
+            items: items as AnyItem[],
+            isFirst: false,
+          },
+        ]);
+      })
+    );
+
+    return () => { cancelled = true; };
   }, []);
 
-  // Reload Continue Watching every time Home regains focus (covers Player → Home)
+  // useFocusEffect already fires on mount AND on every focus-return (Player → Home).
+  // A separate useEffect would double-load on mount — omitted intentionally.
   useFocusEffect(useCallback(() => { load(); }, [load]));
-  useEffect(() => { load(); }, [load]);
 
   function goToDetail(item: AnyItem) {
     navigation.navigate('Detail', { item });
   }
 
   function resumeEntry(entry: ResumeEntry) {
-    // Jump straight to the player; PlayerScreen will auto-seek to the saved position.
     const stubItem = {
       id: Number(entry.id),
       media_type: entry.mediaType,
@@ -217,7 +232,6 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
         </View>
       </Animated.View>
 
-      {/* FlatList for vertical rows — Android TV D-pad navigates between sections correctly */}
       <Animated.FlatList
         data={feed}
         keyExtractor={row => row.id}
@@ -273,21 +287,5 @@ const styles = StyleSheet.create({
   brand: { color: '#e50914', fontSize: 20, fontWeight: '800', letterSpacing: 1 },
   topActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   phoneText: { color: '#888', fontSize: 13, marginRight: 4 },
-  topBtn: {
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 4,
-    backgroundColor: '#1a1a1a',
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  topBtnText: { color: '#fff', fontSize: 14 },
   errorText: { color: '#e50914', fontSize: 18, marginBottom: 24 },
-  retryBtn: {
-    backgroundColor: '#e50914',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 6,
-  },
-  retryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

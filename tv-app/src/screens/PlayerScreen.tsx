@@ -11,55 +11,39 @@ import {
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { NavigationProp, RouteProp } from '@react-navigation/native';
-import type { CatalogItem, TmdbItem } from '@/api/client';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
+import type { RootStackParamList } from '@/types/navigation';
+import { getId, getSlug, getMediaType, getTitle, getPosterUrl, getBackdropUrl } from '@/utils/mediaItem';
 import { fetchStream, buildDirectPlayerUrl, recordResume, clearResume } from '@/api/client';
+import { formatTime } from '@/utils/mediaItem';
 import { useHardwareBack } from '@/hooks/useHardwareBack';
 import TrackPicker from '@/components/TrackPicker';
 
 const { width, height } = Dimensions.get('window');
 
-type AnyItem = CatalogItem | TmdbItem;
 type MediaTrack = { id: string; language?: string; label?: string; name?: string };
 
 interface Props {
-  route: RouteProp<{ Player: { item: AnyItem; season?: number; episode?: number } }, 'Player'>;
-  navigation: NavigationProp<any>;
+  route: RouteProp<RootStackParamList, 'Player'>;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Player'>;
 }
 
-function getSlug(item: AnyItem): string {
-  return ('slug' in item && item.slug) ? item.slug : '';
-}
-function getId(item: AnyItem): string {
-  return String(item.id ?? '');
-}
-function getMediaType(item: AnyItem): 'movie' | 'tv' {
-  if ('media_type' in item && (item as TmdbItem).media_type === 'tv') return 'tv';
-  if ('kind' in item && (item as CatalogItem).kind === 'series') return 'tv';
-  return 'movie';
-}
-function getTitle(item: AnyItem): string {
-  if ('title' in item && item.title) return item.title;
-  if ('name' in item && (item as TmdbItem).name) return (item as TmdbItem).name!;
-  return 'Playing…';
-}
-function formatTime(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-  return `${m}:${String(sec).padStart(2, '0')}`;
-}
-function progressKey(item: AnyItem, season: number, episode: number): string {
-  return `lastPos_${getId(item)}_s${season}_e${episode}`;
+function progressKey(itemId: string, season: number, episode: number): string {
+  return `lastPos_${itemId}_s${season}_e${episode}`;
 }
 
+// Injected before page loads: hide the ReactNativeWebView bridge from the iframe
+// so player SDKs don't try to call postMessage on it unexpectedly.
 const WEBVIEW_BEFORE_LOAD_JS = `
   (function() {
     try { Object.defineProperty(window, 'ReactNativeWebView', { get: function() { return undefined; } }); } catch(e) {}
   })(); true;
 `;
+
+// Injected after load: unmute + play any <video> element and report progress to RN.
+// Also clicks the Videasy overlay trigger (div.cursor-pointer) that must be tapped
+// before the player will start. Retries for up to 12s (20 × 600ms).
 const WEBVIEW_AFTER_LOAD_JS = `
   (function() {
     var tries = 0;
@@ -68,7 +52,6 @@ const WEBVIEW_AFTER_LOAD_JS = `
       if (videos.length > 0) {
         videos.forEach(function(v) { v.muted = false; v.play().catch(function(){}); });
         clearInterval(t);
-        // Report progress back to RN every 15s
         setInterval(function() {
           var v = document.querySelector('video');
           if (!v || v.paused || v.currentTime <= 0) return;
@@ -78,7 +61,6 @@ const WEBVIEW_AFTER_LOAD_JS = `
         }, 15000);
         return;
       }
-      // Videasy uses a div.cursor-pointer overlay as the play trigger — hit it first.
       var overlay = document.querySelector('div.cursor-pointer');
       if (overlay) { overlay.click(); }
       document.querySelectorAll('button, [role="button"], .vjs-big-play-button, .plyr__control--overlaid').forEach(function(b) {
@@ -93,6 +75,7 @@ const WEBVIEW_AFTER_LOAD_JS = `
 export default function PlayerScreen({ route, navigation }: Props) {
   const { item, season = 1, episode = 1 } = route.params;
   const isTV = getMediaType(item) === 'tv';
+  const itemId = getId(item);
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [streamHeaders, setStreamHeaders] = useState<Record<string, string>>({});
@@ -135,16 +118,11 @@ export default function PlayerScreen({ route, navigation }: Props) {
     setCurrentSubId(null);
     setCurrentAudioId(null);
 
-    const result = await fetchStream(
-      getSlug(item),
-      getId(item),
-      getMediaType(item),
-      season,
-      episode,
-    );
+    const result = await fetchStream(getSlug(item), itemId, getMediaType(item), season, episode);
     setLoading(false);
+
     if (!result) {
-      const numericId = Number(getId(item));
+      const numericId = Number(itemId);
       if (Number.isFinite(numericId) && numericId > 0) {
         setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
         return;
@@ -152,15 +130,16 @@ export default function PlayerScreen({ route, navigation }: Props) {
       setError('Stream not available. Check your connection or subscription.');
       return;
     }
+
     if (result.stream_url) {
+      // Normalise header keys (referer → Referer, etc.) so fetch sends them correctly.
       const HEADER_CASE: Record<string, string> = {
         referer: 'Referer',
         origin: 'Origin',
         'user-agent': 'User-Agent',
       };
       const h: Record<string, string> = {};
-      const src = result.stream_headers ?? {};
-      for (const [k, v] of Object.entries(src)) {
+      for (const [k, v] of Object.entries(result.stream_headers ?? {})) {
         if (typeof v === 'string' && v.length > 0) {
           h[HEADER_CASE[k.toLowerCase()] ?? k] = v;
         }
@@ -169,24 +148,27 @@ export default function PlayerScreen({ route, navigation }: Props) {
       setStreamHeaders(h);
       return;
     }
+
     if (result.playback_mode === 'iframe' || result.source_type === 'iframe') {
       if (!result.iframe_url) { setError('Player URL missing.'); return; }
       setIframeUrl(result.iframe_url);
       return;
     }
+
     setError('No playable source found.');
-  }, [item, season, episode]);
+  }, [item, itemId, season, episode]);
 
   useEffect(() => { loadStream(); }, [loadStream]);
 
-  // When we have a stream URL, hand it to the player. replaceAsync (vs replace)
-  // resolves only once metadata is loaded, so we can safely auto-seek after.
+  // Hand the stream URL to the player. replaceAsync resolves once metadata loads,
+  // so seeking to the saved position after is safe.
+  // Note: expo-video auto-detects HLS from the .m3u8 URL — no contentType needed.
   useEffect(() => {
     if (!streamUrl) return;
     let cancelled = false;
     (async () => {
       try {
-        await player.replaceAsync({ uri: streamUrl, headers: streamHeaders, contentType: 'hls' });
+        await player.replaceAsync({ uri: streamUrl, headers: streamHeaders });
         if (cancelled) return;
         player.play();
       } catch (e: any) {
@@ -196,7 +178,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
     return () => { cancelled = true; };
   }, [streamUrl, streamHeaders, player]);
 
-  // Subscribe to player events. expo-video uses an EventEmitter on the shared object.
+  // Subscribe to player events.
   useEffect(() => {
     const subTime = player.addListener('timeUpdate', (e) => {
       setPositionSec(e.currentTime);
@@ -204,10 +186,10 @@ export default function PlayerScreen({ route, navigation }: Props) {
     const subStatus = player.addListener('statusChange', (e) => {
       if (e.status === 'error' && e.error) {
         const msg = e.error.message ?? '';
-        // 410 Gone / 403 Forbidden / 404 Not Found = stream URL expired or revoked.
-        // Fall back to the Videasy iframe silently rather than showing an error screen.
+        // 410 Gone / 403 Forbidden / 404 Not Found = stream URL expired.
+        // Fall back to the Videasy iframe silently.
         if (/\b(410|403|404)\b/.test(msg)) {
-          const numericId = Number(getId(item));
+          const numericId = Number(itemId);
           if (Number.isFinite(numericId) && numericId > 0) {
             setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
             setStreamUrl(null);
@@ -221,10 +203,12 @@ export default function PlayerScreen({ route, navigation }: Props) {
     const subSource = player.addListener('sourceLoad', (e) => {
       setDurationSec(e.duration);
       setAvailableSubs((e.availableSubtitleTracks ?? []).map(t => ({
-        id: (t as any).id, language: (t as any).language, label: (t as any).label, name: (t as any).name,
+        id: (t as any).id, language: (t as any).language,
+        label: (t as any).label, name: (t as any).name,
       })));
       setAvailableAudios((e.availableAudioTracks ?? []).map(t => ({
-        id: (t as any).id, language: (t as any).language, label: (t as any).label, name: (t as any).name,
+        id: (t as any).id, language: (t as any).language,
+        label: (t as any).label, name: (t as any).name,
       })));
     });
     const subPlaying = player.addListener('playingChange', (e) => {
@@ -237,28 +221,23 @@ export default function PlayerScreen({ route, navigation }: Props) {
       setCurrentAudioId((e.audioTrack as any)?.id ?? null);
     });
     const subEnd = player.addListener('playToEnd', () => {
-      // Clear resume so the title doesn't keep showing up as Continue Watching
-      clearResume(getId(item), getMediaType(item), season, episode).catch(() => {});
+      clearResume(itemId, getMediaType(item), season, episode).catch(() => {});
     });
 
     return () => {
-      subTime.remove();
-      subStatus.remove();
-      subSource.remove();
-      subPlaying.remove();
-      subSubTrack.remove();
-      subAudioTrack.remove();
+      subTime.remove(); subStatus.remove(); subSource.remove();
+      subPlaying.remove(); subSubTrack.remove(); subAudioTrack.remove();
       subEnd.remove();
     };
-  }, [player, item, season, episode]);
+  }, [player, item, itemId, season, episode]);
 
-  // Auto-resume saved position once duration becomes known
+  // Auto-resume saved position once duration is known.
   useEffect(() => {
     if (durationSec <= 0 || hasResumedRef.current) return;
     hasResumedRef.current = true;
     (async () => {
       try {
-        const saved = await AsyncStorage.getItem(progressKey(item, season, episode));
+        const saved = await AsyncStorage.getItem(progressKey(itemId, season, episode));
         if (saved) {
           const savedSec = Number(saved) / 1000;
           if (savedSec > 30 && savedSec < durationSec - 60) {
@@ -267,9 +246,9 @@ export default function PlayerScreen({ route, navigation }: Props) {
         }
       } catch { /* ignore */ }
     })();
-  }, [durationSec, item, season, episode, player]);
+  }, [durationSec, itemId, season, episode, player]);
 
-  // Auto-hide overlay once playback begins
+  // Auto-hide overlay 2.5s after playback starts.
   useEffect(() => {
     if (paused || hasAutoHiddenRef.current) return;
     if (!showControls) return;
@@ -278,7 +257,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
     controlsTimer.current = setTimeout(() => setShowControls(false), 2500);
   }, [paused, showControls]);
 
-  // Persist progress every ~10s. durationSec may be 0 for some HLS streams — still save.
+  // Persist progress every ~10s.
   useEffect(() => {
     const posMs = positionSec * 1000;
     if (paused || posMs <= 0) return;
@@ -287,26 +266,22 @@ export default function PlayerScreen({ route, navigation }: Props) {
 
     const nearEnd = durationSec > 0 && posMs > durationSec * 1000 - 90_000;
     if (nearEnd) {
-      clearResume(getId(item), getMediaType(item), season, episode).catch(() => {});
+      clearResume(itemId, getMediaType(item), season, episode).catch(() => {});
     } else {
-      const posterUrl = ('poster_url' in item ? (item as any).poster_url : '') ||
-                        ('poster_path' in item ? `https://image.tmdb.org/t/p/w342${(item as TmdbItem).poster_path}` : '');
-      const backdropUrl = ('backdrop_url' in item ? (item as any).backdrop_url : '') ||
-                          ('backdrop_path' in item ? `https://image.tmdb.org/t/p/w780${(item as TmdbItem).backdrop_path}` : '');
-      AsyncStorage.setItem(progressKey(item, season, episode), String(posMs)).catch(() => {});
+      AsyncStorage.setItem(progressKey(itemId, season, episode), String(posMs)).catch(() => {});
       recordResume({
-        id: getId(item),
+        id: itemId,
         mediaType: getMediaType(item),
         season: isTV ? season : undefined,
         episode: isTV ? episode : undefined,
         positionMs: posMs,
         updatedAt: Date.now(),
         title: getTitle(item),
-        posterUrl,
-        backdropUrl,
+        posterUrl: getPosterUrl(item),
+        backdropUrl: getBackdropUrl(item),
       }).catch(() => {});
     }
-  }, [positionSec, durationSec, paused, item, isTV, season, episode]);
+  }, [positionSec, durationSec, paused, item, itemId, isTV, season, episode]);
 
   const resetControlsTimer = useCallback(() => {
     setShowControls(true);
@@ -314,15 +289,19 @@ export default function PlayerScreen({ route, navigation }: Props) {
     controlsTimer.current = setTimeout(() => setShowControls(false), 4000);
   }, []);
 
+  // Use player.currentTime (real position) rather than positionSec state to avoid
+  // stale-closure drift during rapid D-pad seeking.
   const seek = useCallback((deltaSec: number) => {
-    if (durationSec <= 0) return;
-    const next = Math.max(0, Math.min(durationSec, positionSec + deltaSec));
+    const dur = player.duration ?? 0;
+    if (dur <= 0) return;
+    const current = player.currentTime ?? 0;
+    const next = Math.max(0, Math.min(dur, current + deltaSec));
     player.currentTime = next;
     setPositionSec(next);
     resetControlsTimer();
-  }, [durationSec, positionSec, player, resetControlsTimer]);
+  }, [player, resetControlsTimer]);
 
-  // Accelerating arrow seek: 10 → 20 → 40 → 60s when held
+  // Accelerating arrow seek: 10 → 20 → 40 → 60s when held.
   const acceleratingSeek = useCallback((dir: -1 | 1) => {
     const now = Date.now();
     let step = lastSeekStepRef.current;
@@ -349,15 +328,12 @@ export default function PlayerScreen({ route, navigation }: Props) {
 
   useTVEventHandler((evt) => {
     if (!evt?.eventType || evt.eventType === 'blur' || evt.eventType === 'focus') return;
-    if (picker) return; // picker handles its own focus
+    if (picker) return;
     if (!showControls) {
-      // Controls hidden: directional keys seek, any key shows controls.
-      if (evt.eventType === 'left') { acceleratingSeek(-1); return; }
-      if (evt.eventType === 'right') { acceleratingSeek(1); return; }
+      if (evt.eventType === 'left')  { acceleratingSeek(-1); return; }
+      if (evt.eventType === 'right') { acceleratingSeek(1);  return; }
     }
-    // playPause physical key always toggles, regardless of controls state.
     if (evt.eventType === 'playPause') { togglePlay(); return; }
-    // Any other key shows/refreshes controls timer.
     resetControlsTimer();
   });
 
@@ -374,19 +350,10 @@ export default function PlayerScreen({ route, navigation }: Props) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableHighlight
-          style={[styles.backBtn, { marginTop: 8 }]}
-          underlayColor="#333"
-          onPress={loadStream}
-          hasTVPreferredFocus
-        >
+        <TouchableHighlight style={[styles.backBtn, { marginTop: 8 }]} underlayColor="#333" onPress={loadStream} hasTVPreferredFocus>
           <Text style={styles.backBtnText}>↺ Retry</Text>
         </TouchableHighlight>
-        <TouchableHighlight
-          style={styles.backBtn}
-          underlayColor="#333"
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableHighlight style={styles.backBtn} underlayColor="#333" onPress={() => navigation.goBack()}>
           <Text style={styles.backBtnText}>← Go Back</Text>
         </TouchableHighlight>
       </View>
@@ -394,10 +361,6 @@ export default function PlayerScreen({ route, navigation }: Props) {
   }
 
   if (iframeUrl) {
-    const posterUrl = ('poster_url' in item ? (item as any).poster_url : '') ||
-                      ('poster_path' in item ? `https://image.tmdb.org/t/p/w342${(item as TmdbItem).poster_path}` : '');
-    const backdropUrl = ('backdrop_url' in item ? (item as any).backdrop_url : '') ||
-                        ('backdrop_path' in item ? `https://image.tmdb.org/t/p/w780${(item as TmdbItem).backdrop_path}` : '');
     return (
       <View style={styles.container}>
         <WebView
@@ -423,29 +386,29 @@ export default function PlayerScreen({ route, navigation }: Props) {
               const durMs = msg.duration > 0 ? msg.duration * 1000 : 0;
               const nearEnd = durMs > 0 && posMs > durMs - 90_000;
               if (nearEnd) {
-                clearResume(getId(item), getMediaType(item), season, episode).catch(() => {});
+                clearResume(itemId, getMediaType(item), season, episode).catch(() => {});
               } else {
-                AsyncStorage.setItem(progressKey(item, season, episode), String(posMs)).catch(() => {});
+                AsyncStorage.setItem(progressKey(itemId, season, episode), String(posMs)).catch(() => {});
                 recordResume({
-                  id: getId(item), mediaType: getMediaType(item),
+                  id: itemId, mediaType: getMediaType(item),
                   season: isTV ? season : undefined, episode: isTV ? episode : undefined,
                   positionMs: posMs, updatedAt: Date.now(),
-                  title: getTitle(item), posterUrl, backdropUrl,
+                  title: getTitle(item),
+                  posterUrl: getPosterUrl(item),
+                  backdropUrl: getBackdropUrl(item),
                 }).catch(() => {});
               }
             } catch { /* ignore non-JSON messages from iframe */ }
           }}
         />
-        {/* Back button always visible for iframe path — WebView captures all
-            D-pad events internally so useTVEventHandler won't fire. The user
-            navigates the iframe player with the remote directly; we only
-            surface a RN-controlled Back button via hasTVPreferredFocus so it
-            can be reached by pressing Up until focus escapes the WebView. */}
+        {/* Back button for the WebView path.
+            NOTE: WebView traps all D-pad focus on Android TV — this button is only
+            reachable via the hardware Back key (handled by useHardwareBack above).
+            It remains in the tree as a visual affordance for pointer/mouse users. */}
         <TouchableHighlight
           style={styles.webviewBackBtn}
           underlayColor="#333"
           onPress={() => navigation.goBack()}
-          hasTVPreferredFocus
           isTVSelectable
         >
           <Text style={styles.controlText}>← Back</Text>
@@ -465,11 +428,9 @@ export default function PlayerScreen({ route, navigation }: Props) {
         contentFit="contain"
         focusable={false}
       />
-      {/* Focus anchor: sits above VideoView in Z-order so Android routes key
-          events to React Native instead of ExoPlayer. When controls are hidden
-          this view holds TV focus; pressing OK shows controls, left/right seeks
-          via useTVEventHandler. When controls appear it unmounts and
-          hasTVPreferredFocus on the play/pause button takes over. */}
+      {/* Focus anchor: sits above VideoView so Android routes key events to RN
+          instead of ExoPlayer while controls are hidden. OK press shows controls;
+          left/right seek via useTVEventHandler. */}
       {!showControls && !picker && (
         <TouchableHighlight
           style={styles.focusAnchor}
@@ -489,12 +450,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
       {showControls && !picker && (
         <View style={styles.overlay}>
           <View style={styles.controlsTop}>
-            <TouchableHighlight
-              style={styles.controlBtn}
-              underlayColor="#333"
-              onPress={() => navigation.goBack()}
-              isTVSelectable
-            >
+            <TouchableHighlight style={styles.controlBtn} underlayColor="#333" onPress={() => navigation.goBack()} isTVSelectable>
               <Text style={styles.controlText}>← Back</Text>
             </TouchableHighlight>
             <Text style={styles.titleText}>
@@ -503,29 +459,13 @@ export default function PlayerScreen({ route, navigation }: Props) {
           </View>
 
           <View style={styles.controlsCenter}>
-            <TouchableHighlight
-              style={styles.seekBtn}
-              underlayColor="#333"
-              onPress={() => seek(-10)}
-              isTVSelectable
-            >
+            <TouchableHighlight style={styles.seekBtn} underlayColor="#333" onPress={() => seek(-10)} isTVSelectable>
               <Text style={styles.seekText}>⏪ 10s</Text>
             </TouchableHighlight>
-            <TouchableHighlight
-              style={styles.playPauseBtn}
-              underlayColor="#333"
-              onPress={togglePlay}
-              hasTVPreferredFocus
-              isTVSelectable
-            >
+            <TouchableHighlight style={styles.playPauseBtn} underlayColor="#333" onPress={togglePlay} hasTVPreferredFocus isTVSelectable>
               <Text style={styles.playPauseText}>{paused ? '▶' : '⏸'}</Text>
             </TouchableHighlight>
-            <TouchableHighlight
-              style={styles.seekBtn}
-              underlayColor="#333"
-              onPress={() => seek(10)}
-              isTVSelectable
-            >
+            <TouchableHighlight style={styles.seekBtn} underlayColor="#333" onPress={() => seek(10)} isTVSelectable>
               <Text style={styles.seekText}>10s ⏩</Text>
             </TouchableHighlight>
           </View>
@@ -541,51 +481,26 @@ export default function PlayerScreen({ route, navigation }: Props) {
 
             <View style={styles.bottomActionsRow}>
               {availableSubs.length > 0 && (
-                <TouchableHighlight
-                  style={styles.actionBtn}
-                  underlayColor="#333"
-                  onPress={() => setPicker('subs')}
-                  isTVSelectable
-                >
+                <TouchableHighlight style={styles.actionBtn} underlayColor="#333" onPress={() => setPicker('subs')} isTVSelectable>
                   <Text style={styles.actionBtnText}>CC  Subtitles</Text>
                 </TouchableHighlight>
               )}
               {availableAudios.length > 1 && (
-                <TouchableHighlight
-                  style={styles.actionBtn}
-                  underlayColor="#333"
-                  onPress={() => setPicker('audio')}
-                  isTVSelectable
-                >
+                <TouchableHighlight style={styles.actionBtn} underlayColor="#333" onPress={() => setPicker('audio')} isTVSelectable>
                   <Text style={styles.actionBtnText}>🎧  Audio</Text>
                 </TouchableHighlight>
               )}
               {isTV && episode > 1 && (
-                <TouchableHighlight
-                  style={styles.actionBtn}
-                  underlayColor="#333"
-                  onPress={() => goToEpisode(episode - 1)}
-                  isTVSelectable
-                >
+                <TouchableHighlight style={styles.actionBtn} underlayColor="#333" onPress={() => goToEpisode(episode - 1)} isTVSelectable>
                   <Text style={styles.actionBtnText}>← Prev Ep</Text>
                 </TouchableHighlight>
               )}
               {isTV && (
-                <TouchableHighlight
-                  style={styles.actionBtn}
-                  underlayColor="#333"
-                  onPress={() => goToEpisode(episode + 1)}
-                  isTVSelectable
-                >
+                <TouchableHighlight style={styles.actionBtn} underlayColor="#333" onPress={() => goToEpisode(episode + 1)} isTVSelectable>
                   <Text style={styles.actionBtnText}>Next Ep →</Text>
                 </TouchableHighlight>
               )}
-              <TouchableHighlight
-                style={[styles.actionBtn, styles.sourcesBtn]}
-                underlayColor="#1a4a8a"
-                onPress={() => setPicker('sources')}
-                isTVSelectable
-              >
+              <TouchableHighlight style={[styles.actionBtn, styles.sourcesBtn]} underlayColor="#1a4a8a" onPress={() => setPicker('sources')} isTVSelectable>
                 <Text style={styles.actionBtnText}>📡  Sources</Text>
               </TouchableHighlight>
             </View>
@@ -598,9 +513,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
           title="Subtitles"
           tracks={availableSubs}
           currentId={currentSubId}
-          onSelect={(track) => {
-            player.subtitleTrack = track ? (track as any) : null;
-          }}
+          onSelect={(track) => { player.subtitleTrack = track ? (track as any) : null; }}
           onClose={() => setPicker(null)}
         />
       )}
@@ -610,9 +523,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
           tracks={availableAudios}
           currentId={currentAudioId}
           includeOff={false}
-          onSelect={(track) => {
-            if (track) player.audioTrack = track as any;
-          }}
+          onSelect={(track) => { if (track) player.audioTrack = track as any; }}
           onClose={() => setPicker(null)}
         />
       )}
@@ -629,7 +540,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
             setPicker(null);
             if (!track) return;
             if (track.id === 'web') {
-              const numericId = Number(getId(item));
+              const numericId = Number(itemId);
               if (Number.isFinite(numericId) && numericId > 0) {
                 setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
                 setStreamUrl(null);
@@ -661,11 +572,7 @@ const styles = StyleSheet.create({
   loadingText: { color: '#fff', fontSize: 16, marginTop: 12 },
   errorText: { color: '#e50914', fontSize: 18, textAlign: 'center', maxWidth: 500 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'space-between' },
-  bufferingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
+  bufferingOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
   controlsTop: { flexDirection: 'row', alignItems: 'center', padding: 24, gap: 20 },
   controlsCenter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 32 },
   controlsBottom: { paddingHorizontal: 32, paddingBottom: 32, gap: 16 },

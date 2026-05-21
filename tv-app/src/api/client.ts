@@ -379,22 +379,24 @@ export async function recordResume(entry: ResumeEntry): Promise<void> {
     await AsyncStorage.setItem(RESUME_INDEX_KEY, JSON.stringify(next.slice(0, 30)));
   } catch { /* ignore */ }
 
-  // Server sync — best-effort, never blocks playback
-  fetch(`${BASE_URL}/movies/resume`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'User-Agent': 'GameStopMoviesTV/1.0' },
-    credentials: 'include',
-    body: JSON.stringify({
-      tmdbId:      entry.id,
-      mediaType:   entry.mediaType,
-      season:      entry.season  ?? 0,
-      episode:     entry.episode ?? 0,
-      positionMs:  entry.positionMs,
-      title:       entry.title       ?? null,
-      posterUrl:   entry.posterUrl   ?? null,
-      backdropUrl: entry.backdropUrl ?? null,
-    }),
-  }).catch(() => {});
+  // Server sync — best-effort, never blocks playback.
+  // Must attach the session cookie explicitly; credentials:'include' is a no-op in RN.
+  headers().then(h =>
+    fetch(`${BASE_URL}/movies/resume`, {
+      method: 'POST',
+      headers: { ...h, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tmdbId:      entry.id,
+        mediaType:   entry.mediaType,
+        season:      entry.season  ?? 0,
+        episode:     entry.episode ?? 0,
+        positionMs:  entry.positionMs,
+        title:       entry.title       ?? null,
+        posterUrl:   entry.posterUrl   ?? null,
+        backdropUrl: entry.backdropUrl ?? null,
+      }),
+    })
+  ).catch(() => {});
 }
 
 export async function clearResume(id: string, mediaType: 'movie' | 'tv', season?: number, episode?: number): Promise<void> {
@@ -410,11 +412,13 @@ export async function clearResume(id: string, mediaType: 'movie' | 'tv', season?
 
   const s = season ?? 0;
   const ep = episode ?? 0;
-  fetch(`${BASE_URL}/movies/resume?tmdbId=${id}&mediaType=${mediaType}&season=${s}&episode=${ep}`, {
-    method: 'DELETE',
-    headers: { 'User-Agent': 'GameStopMoviesTV/1.0' },
-    credentials: 'include',
-  }).catch(() => {});
+  // Must attach session cookie; credentials:'include' is a no-op in RN.
+  headers().then(h =>
+    fetch(`${BASE_URL}/movies/resume?tmdbId=${id}&mediaType=${mediaType}&season=${s}&episode=${ep}`, {
+      method: 'DELETE',
+      headers: h,
+    })
+  ).catch(() => {});
 }
 
 // Read from server first (cross-device sync), fall back to AsyncStorage.
@@ -435,9 +439,7 @@ export async function getContinueWatching(): Promise<ResumeEntry[]> {
         backdropUrl: r.backdropUrl ?? undefined,
       }));
       // Persist server results locally so the next cold start is instant
-      await AsyncStorage.setItem(RESUME_INDEX_KEY, JSON.stringify(
-        items.map(i => ({ ...i, updatedAt: new Date(i.updatedAt).getTime() })).slice(0, 30)
-      ));
+      await AsyncStorage.setItem(RESUME_INDEX_KEY, JSON.stringify(items.slice(0, 30)));
       return items;
     }
   } catch { /* fall through */ }
