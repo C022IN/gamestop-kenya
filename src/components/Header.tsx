@@ -190,13 +190,13 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
 
       <nav className={`bg-gray-900 text-white ${isMenuOpen ? 'block' : 'hidden md:block'}`}>
         <div className="container mx-auto px-4">
-          <div className="flex flex-col gap-0 py-0 md:flex-row md:items-center">
+          <div className="flex flex-col gap-0 py-0 md:flex-row md:items-center md:overflow-x-auto md:scrollbar-hide">
             {navigationItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
                 onClick={() => setIsMenuOpen(false)}
-                className="relative flex items-center gap-2 whitespace-nowrap px-3 py-3 text-sm transition-colors hover:bg-gray-800 hover:text-red-400 focus-visible:bg-gray-800 focus-visible:text-red-400"
+                className="relative flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3 text-sm transition-colors hover:bg-gray-800 hover:text-red-400 focus-visible:bg-gray-800 focus-visible:text-red-400"
               >
                 {item.label}
                 {showNavBadges && item.badge && (
