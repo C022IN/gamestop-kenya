@@ -1,4 +1,5 @@
 import type { StorefrontProduct, StorefrontShowcaseCard } from '@/lib/storefront-types';
+import { enrichedImage } from '@/lib/enriched-image';
 
 export interface GameCatalogProduct extends StorefrontProduct {
   genre: string;
@@ -11,7 +12,7 @@ export const gameCatalog: GameCatalogProduct[] = [
   {
     id: 'marvel-spiderman-2-ps5',
     title: "Marvel's Spider-Man 2 - PlayStation 5",
-    image: '/images/games/spiderman-2.svg',
+    image: enrichedImage('marvel-spiderman-2-ps5', '/images/games/spiderman-2.svg'),
     price: 12700,
     platform: 'PS5',
     rating: 4.8,
@@ -27,7 +28,7 @@ export const gameCatalog: GameCatalogProduct[] = [
   {
     id: 'super-mario-bros-wonder-switch',
     title: 'Super Mario Bros. Wonder - Nintendo Switch',
-    image: '/images/games/mario-wonder.svg',
+    image: enrichedImage('super-mario-bros-wonder-switch', '/images/games/mario-wonder.svg'),
     price: 11200,
     platform: 'Switch',
     rating: 4.9,
@@ -42,7 +43,7 @@ export const gameCatalog: GameCatalogProduct[] = [
   {
     id: 'forza-horizon-5-xbox',
     title: 'Forza Horizon 5 - Xbox Series X|S',
-    image: '/images/games/forza-horizon-5.svg',
+    image: enrichedImage('forza-horizon-5-xbox', '/images/games/forza-horizon-5.svg'),
     price: 11200,
     platform: 'Xbox',
     rating: 4.7,
@@ -72,7 +73,7 @@ export const gameCatalog: GameCatalogProduct[] = [
   {
     id: 'god-of-war-ragnarok-ps5',
     title: 'God of War Ragnarok - PS5',
-    image: '/images/games/god-of-war-ragnarok.svg',
+    image: enrichedImage('god-of-war-ragnarok-ps5', '/images/games/god-of-war-ragnarok.svg'),
     price: 6700,
     originalPrice: 12700,
     platform: 'PS5',
@@ -103,7 +104,7 @@ export const gameCatalog: GameCatalogProduct[] = [
   {
     id: 'zelda-tears-of-the-kingdom-switch',
     title: 'Zelda: Tears of the Kingdom - Nintendo Switch',
-    image: '/images/games/zelda-totk.svg',
+    image: enrichedImage('zelda-tears-of-the-kingdom-switch', '/images/games/zelda-totk.svg'),
     price: 12700,
     platform: 'Switch',
     rating: 4.9,
@@ -118,7 +119,7 @@ export const gameCatalog: GameCatalogProduct[] = [
   {
     id: 'ea-fc-25-ps5',
     title: 'EA FC 25 - PS5',
-    image: '/images/games/ea-fc-25.svg',
+    image: enrichedImage('ea-fc-25-ps5', '/images/games/ea-fc-25.svg'),
     price: 12700,
     platform: 'PS5',
     rating: 4.3,

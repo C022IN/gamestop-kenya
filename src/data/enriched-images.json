@@ -1,0 +1,102 @@
+{
+  "ps5-console-slim": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/PlayStation_5_and_DualSense.jpg/800px-PlayStation_5_and_DualSense.jpg",
+    "source": "manual-curation",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "xbox-series-x-console": {
+    "url": "https://cms-assets.xboxservices.com/assets/bc/40/bc40fdf3-85a6-4c36-af92-dca2d36fc7e5.png?n=642227_Hero-Gallery-0_A1_857x676.png",
+    "source": "https://www.xbox.com/en-US/consoles/xbox-series-x",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "nintendo-switch-oled-console": {
+    "url": "https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/ncom/en_US/products/hardware/nintendo-switch-oled-model-white-set/115461-switch-oled-white-boxart-1200x675",
+    "source": "https://www.nintendo.com/us/store/products/nintendo-switch-oled-model-white-set/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "dualsense-wireless-controller": {
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_Dualsense_controller.jpg/600px-Playstation_Dualsense_controller.jpg",
+    "source": "manual-curation",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "xbox-wireless-controller": {
+    "url": "https://cms-assets.xboxservices.com/assets/78/b4/78b44144-2ced-4451-824f-2c249ce0a969.jpg?n=Xbox-Wireless-Controller_Image-1084_8-Controllers_957848_1920x675.jpg",
+    "source": "https://www.xbox.com/en-US/accessories/controllers/xbox-wireless-controller",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "switch-pro-controller": {
+    "url": "https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/ncom/en_US/products/accessories/nintendo-switch/controllers/pro-controllers/nintendo-switch-pro-controller/104888-nintendo-switch-pro-controller-black-package-1200x675",
+    "source": "https://www.nintendo.com/us/store/products/pro-controller/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "razer-blackshark-v2-pro-2023": {
+    "url": "https://assets2.razerzone.com/images/pnx.assets/626b4be18a06e2fe8a64f3092ae11c5f/razer-blackshark-v2-pro-2023_hero-desktop-1920x700.webp",
+    "source": "https://www.razer.com/gaming-headsets/razer-blackshark-v2-pro",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "logitech-g923-racing-wheel": {
+    "url": "https://resource.logitechg.com/w_544,h_466,ar_7:6,c_pad,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/g923-and-trueforce/g923-gallery/g923-xbox-gallery-1.png",
+    "source": "https://www.logitechg.com/en-us/products/driving/g923-trueforce-sim-racing-wheel.941-000110.html",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "asus-dual-geforce-rtx-4060-oc-8gb": {
+    "url": "https://dlcdnwebimgs.asus.com/gain/ec0565b6-9765-4b27-9147-f58e6eef7a60/w692",
+    "source": "https://www.asus.com/us/motherboards-components/graphics-cards/dual/dual-rtx4060-o8g/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "asus-proart-geforce-rtx-5070-ti-16gb": {
+    "url": "https://dlcdnwebimgs.asus.com/gain/0e0675cb-a3ed-4acd-8d19-98cdd43db7bf/",
+    "source": "https://www.asus.com/us/motherboards-components/graphics-cards/proart/proart-rtx5070ti-16g/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "asus-prime-radeon-rx-7800-xt-16gb": {
+    "url": "https://dlcdnwebimgs.asus.com/gain/6fa67d2d-14af-43af-a6c4-be68df59c439/",
+    "source": "https://www.asus.com/us/motherboards-components/graphics-cards/prime/prime-rx7800xt-16g/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "asus-prime-radeon-rx-9070-xt-16gb": {
+    "url": "https://dlcdnwebimgs.asus.com/files/media/50d64d8d-95f8-4e38-95f1-5dd8ae53c8ad/v1/img/flow/pd.png",
+    "source": "manual-curation",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "marvel-spiderman-2-ps5": {
+    "url": "https://image.api.playstation.com/vulcan/ap/rnd/202306/1219/e66c4ae18c5d8e3986a24599b293162a6f5c9eba22968d2c.jpg",
+    "source": "https://www.playstation.com/en-us/games/marvels-spider-man-2/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "super-mario-bros-wonder-switch": {
+    "url": "https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000068688/87e8aa5f1fdc950b88eae7d7c62ed185c8a6373c845090bbdb2e2cf039b38da1",
+    "source": "https://www.nintendo.com/us/store/products/super-mario-bros-wonder-switch/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "forza-horizon-5-xbox": {
+    "url": "https://store-images.s-microsoft.com/image/apps.33953.13718773309227929.bebdcc0e-1ed5-4778-8732-f4ef65a2f445.9428b75f-2c08-4e70-9f95-281741b15341?q=90&w=480&h=270",
+    "source": "https://www.xbox.com/en-US/games/store/forza-horizon-5/9NKX70BBCDRN",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "god-of-war-ragnarok-ps5": {
+    "url": "https://gmedia.playstation.com/is/image/SIEPDC/god-of-war-ragnarok-watermark-screenshot-07-en-08sep21-thumbnail?qlt=87,1&resMode=bilin&fmt=jpg&scl=1",
+    "source": "https://www.playstation.com/en-us/games/god-of-war-ragnarok/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "zelda-tears-of-the-kingdom-switch": {
+    "url": "https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000063714/fb30eab428df3fc993b41c76e20f72e4d76d49734d17d31996b5ab61c414b117",
+    "source": "https://www.nintendo.com/us/store/products/the-legend-of-zelda-tears-of-the-kingdom-switch/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "ea-fc-25-ps5": {
+    "url": "https://www.ea.com/_next/static/media/FC25_Nested_BG.28f6a0ec.jpg",
+    "source": "https://www.ea.com/games/ea-sports-fc/fc-25",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "steam-wallet-card": {
+    "url": "https://store.akamai.steamstatic.com/public/images/gift/digital_cards_preview.png",
+    "source": "https://store.steampowered.com/digitalgiftcards/",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  },
+  "roblox-gift-card": {
+    "url": "https://images.rbxcdn.com/4bed93c91f909002b1f17f05c0ce13d1.gif",
+    "source": "https://www.roblox.com/giftcards",
+    "fetchedAt": "2026-05-25T11:35:52.968Z"
+  }
+}

@@ -1,4 +1,5 @@
 import type { StorefrontProduct, StorefrontShowcaseCard } from '@/lib/storefront-types';
+import { enrichedImage } from '@/lib/enriched-image';
 
 export type HardwareFamily = 'PlayStation' | 'Xbox' | 'Nintendo' | 'PC' | 'Universal';
 export type HardwareDepartment = 'console' | 'controller' | 'audio' | 'sim-racing' | 'pc-part';
@@ -40,7 +41,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'ps5-console-slim',
     title: 'Sony PlayStation 5 Slim Console',
-    image: productShot.ps5Slim,
+    image: enrichedImage('ps5-console-slim', productShot.ps5Slim),
     price: 92200,
     platform: 'PlayStation',
     rating: 4.9,
@@ -57,7 +58,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'xbox-series-x-console',
     title: 'Microsoft Xbox Series X',
-    image: productShot.xboxSeriesX,
+    image: enrichedImage('xbox-series-x-console', productShot.xboxSeriesX),
     price: 109200,
     platform: 'Xbox',
     rating: 4.8,
@@ -74,7 +75,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'nintendo-switch-oled-console',
     title: 'Nintendo Switch OLED',
-    image: productShot.switchOled,
+    image: enrichedImage('nintendo-switch-oled-console', productShot.switchOled),
     price: 67200,
     platform: 'Nintendo',
     rating: 4.9,
@@ -91,7 +92,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'dualsense-wireless-controller',
     title: 'Sony DualSense Wireless Controller',
-    image: productShot.dualSense,
+    image: enrichedImage('dualsense-wireless-controller', productShot.dualSense),
     price: 13500,
     platform: 'PlayStation',
     rating: 4.8,
@@ -108,7 +109,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'xbox-wireless-controller',
     title: 'Xbox Wireless Controller',
-    image: productShot.xboxController,
+    image: enrichedImage('xbox-wireless-controller', productShot.xboxController),
     price: 9700,
     platform: 'Xbox',
     rating: 4.7,
@@ -125,7 +126,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'switch-pro-controller',
     title: 'Nintendo Switch Pro Controller',
-    image: productShot.switchProController,
+    image: enrichedImage('switch-pro-controller', productShot.switchProController),
     price: 14200,
     platform: 'Nintendo',
     rating: 4.7,
@@ -142,7 +143,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'razer-blackshark-v2-pro-2023',
     title: 'Razer BlackShark V2 Pro Wireless Headset',
-    image: productShot.razerHeadset,
+    image: enrichedImage('razer-blackshark-v2-pro-2023', productShot.razerHeadset),
     price: 27700,
     platform: 'Universal',
     rating: 4.8,
@@ -159,7 +160,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'logitech-g923-racing-wheel',
     title: 'Logitech G923 Racing Wheel And Pedals',
-    image: productShot.logitechG923,
+    image: enrichedImage('logitech-g923-racing-wheel', productShot.logitechG923),
     price: 50400,
     platform: 'Universal',
     rating: 4.8,
@@ -176,7 +177,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'asus-dual-geforce-rtx-4060-oc-8gb',
     title: 'ASUS Dual GeForce RTX 4060 OC 8GB',
-    image: productShot.rtx4060,
+    image: enrichedImage('asus-dual-geforce-rtx-4060-oc-8gb', productShot.rtx4060),
     price: 52100,
     platform: 'PC',
     rating: 4.7,
@@ -193,7 +194,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'asus-proart-geforce-rtx-5070-ti-16gb',
     title: 'ASUS ProArt GeForce RTX 5070 Ti OC 16GB',
-    image: productShot.rtx5070Ti,
+    image: enrichedImage('asus-proart-geforce-rtx-5070-ti-16gb', productShot.rtx5070Ti),
     price: 179800,
     platform: 'PC',
     rating: 4.9,
@@ -210,7 +211,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'asus-tuf-radeon-rx-7800-xt-16gb',
     title: 'ASUS TUF Radeon RX 7800 XT 16GB',
-    image: productShot.rx7800Xt,
+    image: enrichedImage('asus-prime-radeon-rx-7800-xt-16gb', productShot.rx7800Xt),
     price: 114200,
     platform: 'PC',
     rating: 4.8,
@@ -227,7 +228,7 @@ export const hardwareCatalog: HardwareCatalogProduct[] = [
   {
     id: 'asus-prime-radeon-rx-9070-xt-16gb',
     title: 'ASUS Prime Radeon RX 9070 XT 16GB',
-    image: productShot.rx9070Xt,
+    image: enrichedImage('asus-prime-radeon-rx-9070-xt-16gb', productShot.rx9070Xt),
     price: 134400,
     platform: 'PC',
     rating: 4.8,
