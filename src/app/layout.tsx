@@ -82,7 +82,11 @@ export const metadata: Metadata = {
     ],
   },
   icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
     apple: '/icons/apple-icon-180.png',
+    shortcut: '/icon.svg',
   },
 };
 
