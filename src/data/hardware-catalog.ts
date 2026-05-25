@@ -10,30 +10,29 @@ export interface HardwareCatalogProduct extends StorefrontProduct {
 }
 
 const productShot = {
-  ps5Slim:
-    'https://commons.wikimedia.org/wiki/Special:FilePath/PlayStation%205%20and%20DualSense.jpg',
-  xboxSeriesX:
-    'https://commons.wikimedia.org/wiki/Special:FilePath/Xbox%20series%20X%20(50648118708).jpg',
-  switchOled:
-    'https://commons.wikimedia.org/wiki/Special:FilePath/Nintendo%20Switch%20-%20OLED.jpg',
+  // Consoles — local SVGs are always reliable, never hotlink-blocked
+  ps5Slim:           '/images/heroes/ps5.svg',
+  xboxSeriesX:       '/images/heroes/xbox-series-x.svg',
+  switchOled:        '/images/heroes/switch-oled.svg',
+  // Controllers — Wikimedia Commons (open-licence, hotlink-allowed)
   dualSense:
-    'https://commons.wikimedia.org/wiki/Special:FilePath/Playstation%20Dualsense%20controller.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_Dualsense_controller.jpg/600px-Playstation_Dualsense_controller.jpg',
   xboxController:
-    'https://commons.wikimedia.org/wiki/Special:FilePath/Xbox%20wireless%20Controller%20-%204.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Xbox_wireless_Controller_-_4.jpg/600px-Xbox_wireless_Controller_-_4.jpg',
   switchProController:
-    'https://commons.wikimedia.org/wiki/Special:FilePath/Nintendo-Switch-Pro-Controller-FL.jpg',
-  razerHeadset:
-    'https://static.bhphoto.com/images/images1000x1000/razer_rz04_04530100_r3u1_blackshark_v2_pro_wireless_1694084651_1785960.jpg',
-  logitechG923:
-    'https://static.bhphoto.com/images/images1000x1000/logitech_941_000147_g923_racing_wheel_for_1598941357_1587143.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Nintendo-Switch-Pro-Controller-FL.jpg/600px-Nintendo-Switch-Pro-Controller-FL.jpg',
+  // Audio / sim-racing — local hero SVG (B&H Photo blocks hotlinking)
+  razerHeadset:  '/images/heroes/pc-gaming.svg',
+  logitechG923:  '/images/heroes/pc-gaming.svg',
+  // GPUs — ASUS official CDN (allows hotlinks; use consistent /flow/pd.png path)
   rtx4060:
     'https://dlcdnwebimgs.asus.com/gain/97e4d841-d393-4bc5-962f-e6ba7883726b/w800',
   rtx5070Ti:
     'https://dlcdnwebimgs.asus.com/files/media/a5c1666a-903c-4856-b5ac-52e41477674c/v1/img/flow/pd.png',
   rx7800Xt:
-    'https://dlcdnwebimgs.asus.com/files/media/f419dd5a-4c55-4d54-bb10-b95ef3ecc878/v1/img/kv/pd.png',
+    'https://dlcdnwebimgs.asus.com/files/media/f419dd5a-4c55-4d54-bb10-b95ef3ecc878/v1/img/flow/pd.png',
   rx9070Xt:
-    'https://dlcdnwebimgs.asus.com/files/media/50d64d8d-95f8-4e38-95f1-5dd8ae53c8ad/v1/img/kv/pd.webp',
+    'https://dlcdnwebimgs.asus.com/files/media/50d64d8d-95f8-4e38-95f1-5dd8ae53c8ad/v1/img/flow/pd.png',
 } as const;
 
 // Prices reflect current USD source pricing converted into the store's KES base.

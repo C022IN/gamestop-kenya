@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { ShoppingCart, Heart, Star, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/domains/storefront/cart/CartContext';
@@ -54,6 +55,13 @@ function getPlatformColor(platform?: string) {
 
 export default function ProductCard({ product, currency }: ProductCardProps) {
   const { addItem } = useCart();
+  const imgRef = useRef<HTMLImageElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
+
+  function handleImgError() {
+    if (imgRef.current) imgRef.current.style.display = 'none';
+    if (fallbackRef.current) fallbackRef.current.style.display = 'flex';
+  }
   const rating = product.rating ?? 0;
   const isInStock = product.inStock ?? true;
   const deliveryLabel = product.isDigital
@@ -142,9 +150,11 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
               }`}
             >
               <img
+                ref={imgRef}
                 src={product.image}
                 alt={product.title}
                 loading="lazy"
+                onError={handleImgError}
                 style={{ objectPosition: product.imagePosition ?? 'center' }}
                 className={`h-full w-full transition-transform duration-700 ${
                   mediaFit === 'contain'
@@ -152,6 +162,17 @@ export default function ProductCard({ product, currency }: ProductCardProps) {
                     : 'object-cover group-hover:scale-110'
                 }`}
               />
+              {/* Shown only when the image URL fails to load */}
+              <div
+                ref={fallbackRef}
+                style={{ display: 'none' }}
+                className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-100 to-slate-200 p-4 text-center"
+              >
+                <span className="text-3xl">🎮</span>
+                <span className="text-xs font-semibold text-slate-600 leading-snug line-clamp-3">
+                  {product.title}
+                </span>
+              </div>
             </div>
           </div>
         </div>
