@@ -5,33 +5,54 @@ import {
   StyleSheet,
   Text,
   ToastAndroid,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { CatalogItem, TmdbItem, ResumeEntry } from '@/api/client';
 import { fetchCatalog, getStoredPhone, getContinueWatching, fetchDiscover } from '@/api/client';
 import type { RootStackParamList } from '@/types/navigation';
 import type { AnyItem } from '@/utils/mediaItem';
+import { getMediaType } from '@/utils/mediaItem';
 import HeroBanner from '@/components/HeroBanner';
 import MovieRow from '@/components/MovieRow';
 import ContinueWatchingRow from '@/components/ContinueWatchingRow';
 import { HeroSkeleton, PosterRowSkeleton } from '@/components/Skeleton';
 import FocusableButton from '@/components/FocusableButton';
 
+const MY_LIST_KEY = '@myList';
+
+export type NavTab = 'home' | 'movies' | 'series' | 'new' | 'mylist';
+
+const NAV_TABS: { id: NavTab; label: string }[] = [
+  { id: 'home',   label: 'Home' },
+  { id: 'movies', label: 'Movies' },
+  { id: 'series', label: 'TV Shows' },
+  { id: 'new',    label: 'New & Popular' },
+  { id: 'mylist', label: 'My List' },
+];
+
 type FeedRow =
   | { type: 'hero'; id: string; items: AnyItem[] }
   | { type: 'continue'; id: string; entries: ResumeEntry[] }
   | { type: 'section'; id: string; title: string; items: AnyItem[]; isFirst: boolean };
 
-// Genre rails fetched in parallel after the main catalog. TMDB genre IDs.
 const GENRE_RAILS: { title: string; type: 'movie' | 'tv'; genreId: number }[] = [
-  { title: 'Action',                          type: 'movie', genreId: 28 },
-  { title: 'Comedy',                          type: 'movie', genreId: 35 },
-  { title: 'Drama',                           type: 'movie', genreId: 18 },
-  { title: 'Sci-Fi',                          type: 'movie', genreId: 878 },
-  { title: 'Action & Adventure (Series)',     type: 'tv',    genreId: 10759 },
-  { title: 'Crime',                           type: 'movie', genreId: 80 },
+  { title: 'Action',                       type: 'movie', genreId: 28 },
+  { title: 'Comedy',                       type: 'movie', genreId: 35 },
+  { title: 'Drama',                        type: 'movie', genreId: 18 },
+  { title: 'Sci-Fi',                       type: 'movie', genreId: 878 },
+  { title: 'Action & Adventure (Series)',  type: 'tv',    genreId: 10759 },
+  { title: 'Crime',                        type: 'movie', genreId: 80 },
+];
+
+// Rows used for "New & Popular" tab — pulled from genre rails with newest content
+const NEW_RAILS: { title: string; type: 'movie' | 'tv'; genreId: number }[] = [
+  { title: 'Trending Movies',   type: 'movie', genreId: 28 },
+  { title: 'Trending TV Shows', type: 'tv',    genreId: 10759 },
+  { title: 'Popular Dramas',    type: 'movie', genreId: 18 },
 ];
 
 interface Props {
@@ -44,22 +65,20 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [phone, setPhone] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<NavTab>('home');
+  const [myList, setMyList] = useState<AnyItem[]>([]);
   const backPressedOnce = useRef(false);
   const backTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scrollY = useRef(new Animated.Value(0)).current;
-  const topBarOpacity = scrollY.interpolate({
-    inputRange: [0, 60, 140],
-    outputRange: [1, 0.85, 0.4],
-    extrapolate: 'clamp',
-  });
-  const topBarTranslateY = scrollY.interpolate({
-    inputRange: [0, 140],
-    outputRange: [0, -8],
+  // Keep top bar fully visible when near top; only slightly dim at scroll so content
+  // hierarchy stays clear — never below 0.85 so nav remains readable.
+  const topBarBg = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: ['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.97)'],
     extrapolate: 'clamp',
   });
 
-  // Require two back presses within 2s to exit — prevents accidental OS kick-out.
   useFocusEffect(
     useCallback(() => {
       const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -82,14 +101,19 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
 
   useEffect(() => {
     getStoredPhone().then(setPhone);
+    loadMyList();
   }, []);
+
+  async function loadMyList() {
+    try {
+      const raw = await AsyncStorage.getItem(MY_LIST_KEY);
+      if (raw) setMyList(JSON.parse(raw));
+    } catch {}
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-
-    // Each call to load() gets its own cancellation token so that
-    // concurrent loads (e.g. rapid focus in/out) don't race.
     let cancelled = false;
 
     const [data, resumeEntries] = await Promise.all([
@@ -142,9 +166,6 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
     setFeed(rows);
     setLoading(false);
 
-    // Fetch genre rails in parallel. Each uses Promise.all internally so they
-    // overlap, and each checks `cancelled` before touching state so a navigation
-    // away (or a second load() call) doesn't leak setState onto a dead component.
     await Promise.all(
       GENRE_RAILS.map(async (g) => {
         const items = await fetchDiscover(g.type, g.genreId);
@@ -165,9 +186,10 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
     return () => { cancelled = true; };
   }, []);
 
-  // useFocusEffect already fires on mount AND on every focus-return (Player → Home).
-  // A separate useEffect would double-load on mount — omitted intentionally.
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => {
+    load();
+    loadMyList();
+  }, [load]));
 
   function goToDetail(item: AnyItem) {
     navigation.navigate('Detail', { item });
@@ -191,14 +213,66 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
     });
   }
 
+  // Filter the full feed by the active navigation tab
+  function getTabFeed(): FeedRow[] {
+    if (activeTab === 'home') return feed;
+
+    if (activeTab === 'mylist') {
+      if (!myList.length) return [];
+      return [{
+        type: 'section',
+        id: 'mylist',
+        title: 'My List',
+        items: myList,
+        isFirst: true,
+      }];
+    }
+
+    if (activeTab === 'movies') {
+      return feed.map(row => {
+        if (row.type === 'hero') {
+          const filtered = row.items.filter(i => getMediaType(i) === 'movie');
+          return filtered.length ? { ...row, items: filtered } : null;
+        }
+        if (row.type === 'continue') return row;
+        const filtered = row.items.filter(i => getMediaType(i) === 'movie');
+        return filtered.length ? { ...row, items: filtered } : null;
+      }).filter(Boolean) as FeedRow[];
+    }
+
+    if (activeTab === 'series') {
+      return feed.map(row => {
+        if (row.type === 'hero') {
+          const filtered = row.items.filter(i => getMediaType(i) === 'tv');
+          return filtered.length ? { ...row, items: filtered } : null;
+        }
+        if (row.type === 'continue') return row;
+        const filtered = row.items.filter(i => getMediaType(i) === 'tv');
+        return filtered.length ? { ...row, items: filtered } : null;
+      }).filter(Boolean) as FeedRow[];
+    }
+
+    if (activeTab === 'new') {
+      // Show genre rails that were fetched for NEW_RAILS categories
+      return feed.filter(row =>
+        row.type === 'section' &&
+        NEW_RAILS.some(r => row.id === `genre_${r.type}_${r.genreId}`)
+      );
+    }
+
+    return feed;
+  }
+
+  const tabFeed = getTabFeed();
+
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.topBar}>
+        <View style={styles.topBarFixed}>
           <Text style={styles.brand}>GameStop Movies</Text>
         </View>
-        <HeroSkeleton />
-        <View style={{ paddingTop: 24 }}>
+        <View style={{ paddingTop: 80 }}>
+          <HeroSkeleton />
           <PosterRowSkeleton />
           <PosterRowSkeleton />
           <PosterRowSkeleton />
@@ -218,74 +292,141 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
 
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.topBar,
-          { opacity: topBarOpacity, transform: [{ translateY: topBarTranslateY }] },
-        ]}
-      >
-        <Text style={styles.brand}>GameStop Movies</Text>
-        <View style={styles.topActions}>
-          {phone ? <Text style={styles.phoneText}>{phone}</Text> : null}
-          <FocusableButton label="Search" onPress={() => navigation.navigate('Search')} />
-          <FocusableButton label="Sign Out" onPress={onLogout} />
-        </View>
-      </Animated.View>
+      {/* Fixed top navigation — always visible, background fades in on scroll */}
+      <View style={styles.topBarFixed} pointerEvents="box-none">
+        <Animated.View style={[styles.topBarBg, { backgroundColor: topBarBg }]} />
+        <View style={styles.topBarContent}>
+          {/* Left: brand + genre nav */}
+          <View style={styles.topLeft}>
+            <Text style={styles.brand}>GameStop</Text>
+            <View style={styles.navTabs}>
+              {NAV_TABS.map(tab => (
+                <TouchableOpacity
+                  key={tab.id}
+                  style={styles.navTabHit}
+                  onPress={() => setActiveTab(tab.id)}
+                  isTVSelectable
+                >
+                  <Text style={[
+                    styles.navTabText,
+                    activeTab === tab.id && styles.navTabTextActive,
+                  ]}>
+                    {tab.label}
+                  </Text>
+                  {activeTab === tab.id && <View style={styles.navTabUnderline} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
-      <Animated.FlatList
-        data={feed}
-        keyExtractor={row => row.id}
-        showsVerticalScrollIndicator={false}
-        removeClippedSubviews={false}
-        initialNumToRender={3}
-        maxToRenderPerBatch={2}
-        windowSize={5}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
-        scrollEventThrottle={16}
-        renderItem={({ item: row }) => {
-          if (row.type === 'hero') {
+          {/* Right: search + account */}
+          <View style={styles.topRight}>
+            {phone ? <Text style={styles.phoneText}>{phone}</Text> : null}
+            <FocusableButton label="Search" onPress={() => navigation.navigate('Search')} />
+            <FocusableButton label="Sign Out" onPress={onLogout} />
+          </View>
+        </View>
+      </View>
+
+      {/* Content feed */}
+      {activeTab === 'mylist' && myList.length === 0 ? (
+        <View style={styles.centered}>
+          <Text style={styles.emptyMyList}>Your list is empty</Text>
+          <Text style={styles.emptyMyListSub}>
+            Add titles by pressing the + button on any detail page.
+          </Text>
+        </View>
+      ) : (
+        <Animated.FlatList
+          data={tabFeed}
+          keyExtractor={row => row.id}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={false}
+          initialNumToRender={3}
+          maxToRenderPerBatch={2}
+          windowSize={5}
+          contentContainerStyle={styles.feedContainer}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false },
+          )}
+          scrollEventThrottle={16}
+          renderItem={({ item: row }) => {
+            if (row.type === 'hero') {
+              return (
+                <HeroBanner
+                  items={row.items}
+                  onPlay={(it) => navigation.navigate('Player', { item: it })}
+                  onMore={(it) => goToDetail(it)}
+                />
+              );
+            }
+            if (row.type === 'continue') {
+              return <ContinueWatchingRow entries={row.entries} onSelect={resumeEntry} />;
+            }
             return (
-              <HeroBanner
+              <MovieRow
+                title={row.title}
                 items={row.items}
-                onPlay={(it) => navigation.navigate('Player', { item: it })}
-                onMore={(it) => goToDetail(it)}
+                onSelect={goToDetail}
+                isFirstRow={row.isFirst}
               />
             );
-          }
-          if (row.type === 'continue') {
-            return <ContinueWatchingRow entries={row.entries} onSelect={resumeEntry} />;
-          }
-          return (
-            <MovieRow
-              title={row.title}
-              items={row.items}
-              onSelect={goToDetail}
-              isFirstRow={row.isFirst}
-            />
-          );
-        }}
-      />
+          }}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  centered: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center' },
-  topBar: {
+  centered: { flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center', padding: 24 },
+
+  // The top bar sits in absolute position so the hero bleeds under it (Netflix-style)
+  topBarFixed: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+  },
+  topBarBg: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+  },
+  topBarContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 32,
-    paddingVertical: 14,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    zIndex: 10,
+    paddingVertical: 12,
+  },
+  topLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 32,
   },
   brand: { color: '#e50914', fontSize: 20, fontWeight: '800', letterSpacing: 1 },
-  topActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  navTabs: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  navTabHit: { paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center' },
+  navTabText: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: '500' },
+  navTabTextActive: { color: '#fff', fontWeight: '700' },
+  navTabUnderline: {
+    position: 'absolute',
+    bottom: 2,
+    left: 12,
+    right: 12,
+    height: 2,
+    backgroundColor: '#e50914',
+    borderRadius: 1,
+  },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   phoneText: { color: '#888', fontSize: 13, marginRight: 4 },
+
+  feedContainer: { paddingBottom: 32 },
+
   errorText: { color: '#e50914', fontSize: 18, marginBottom: 24 },
+  emptyMyList: { color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 8 },
+  emptyMyListSub: { color: '#888', fontSize: 14, textAlign: 'center' },
 });

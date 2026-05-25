@@ -8,6 +8,7 @@ import {
   TouchableHighlight,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,6 +23,8 @@ import {
   getContinueWatching,
 } from '@/api/client';
 import { getId, getNumericId, getTitle, getOverview, getBackdropUrl, getPosterUrl, getMediaType } from '@/utils/mediaItem';
+
+const MY_LIST_KEY = '@myList';
 import type { AnyItem } from '@/utils/mediaItem';
 import EpisodeTile, { EpisodeListLoading } from '@/components/EpisodeTile';
 import SeasonTabs from '@/components/SeasonTabs';
@@ -49,11 +52,32 @@ export default function DetailScreen({ route, navigation }: Props) {
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [seasonData, setSeasonData] = useState<SeasonEpisodes | null>(null);
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+  const [inMyList, setInMyList] = useState(false);
   const [resumeEpisode, setResumeEpisode] = useState<{
     season: number;
     episode: number;
     positionMs: number;
   } | null>(null);
+
+  // Check + toggle My List
+  useEffect(() => {
+    AsyncStorage.getItem(MY_LIST_KEY).then(raw => {
+      const list: AnyItem[] = raw ? JSON.parse(raw) : [];
+      setInMyList(list.some(i => getId(i) === getId(item)));
+    });
+  }, [item]);
+
+  async function toggleMyList() {
+    const raw = await AsyncStorage.getItem(MY_LIST_KEY);
+    let list: AnyItem[] = raw ? JSON.parse(raw) : [];
+    if (inMyList) {
+      list = list.filter(i => getId(i) !== getId(item));
+    } else {
+      list = [item, ...list];
+    }
+    await AsyncStorage.setItem(MY_LIST_KEY, JSON.stringify(list));
+    setInMyList(!inMyList);
+  }
 
   // Fetch details + cast + similar in parallel.
   useEffect(() => {
@@ -191,6 +215,16 @@ export default function DetailScreen({ route, navigation }: Props) {
                 <Text style={styles.secondaryText}>↺ Start Over</Text>
               </TouchableHighlight>
             ) : null}
+            <TouchableHighlight
+              style={[styles.btn, styles.secondaryBtn]}
+              underlayColor="#333"
+              onPress={toggleMyList}
+              isTVSelectable
+            >
+              <Text style={styles.secondaryText}>
+                {inMyList ? '✓ In My List' : '+ My List'}
+              </Text>
+            </TouchableHighlight>
           </View>
         </View>
 
