@@ -1,7 +1,11 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { useStoreCurrency } from '@/domains/storefront/hooks/useStoreCurrency';
 import {
   Download,
   Tv2,
@@ -11,6 +15,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Github,
+  Loader2,
 } from 'lucide-react';
 
 const REPO = 'C022IN/gamestop-kenya';
@@ -35,10 +40,7 @@ async function fetchRelease(tag: string): Promise<Release | null> {
   try {
     const res = await fetch(
       `https://api.github.com/repos/${REPO}/releases/tags/${tag}`,
-      {
-        next: { revalidate: 300 },
-        headers: { Accept: 'application/vnd.github+json' },
-      }
+      { headers: { Accept: 'application/vnd.github+json' } }
     );
     if (!res.ok) return null;
     return res.json();
@@ -66,10 +68,10 @@ interface AppCardProps {
   subtitle: string;
   description: string;
   features: string[];
-  release: Release | null;
+  release: Release | null | undefined;
   apkFileName?: string;
-  fallbackUrl?: string;
   badge?: string;
+  loading?: boolean;
 }
 
 function AppCard({
@@ -80,13 +82,13 @@ function AppCard({
   features,
   release,
   apkFileName,
-  fallbackUrl,
   badge,
+  loading,
 }: AppCardProps) {
   const asset = release?.assets.find((a) =>
     apkFileName ? a.name === apkFileName : a.name.endsWith('.apk')
   );
-  const downloadUrl = asset?.browser_download_url ?? fallbackUrl ?? null;
+  const downloadUrl = asset?.browser_download_url ?? null;
   const hasRelease = Boolean(release && asset);
 
   return (
@@ -122,7 +124,12 @@ function AppCard({
           ))}
         </ul>
 
-        {hasRelease && release && asset ? (
+        {loading ? (
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-400">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Checking for latest build...
+          </div>
+        ) : hasRelease && release && asset ? (
           <div className="mb-4 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm">
             <div className="mb-1 font-semibold text-gray-900">{release.name}</div>
             <div className="flex flex-wrap gap-3 text-xs text-gray-500">
@@ -163,15 +170,25 @@ function AppCard({
   );
 }
 
-export default async function DownloadsPage() {
-  const [tvRelease, phoneRelease] = await Promise.all([
-    fetchRelease('tv-app-latest'),
-    fetchRelease('phone-app-latest'),
-  ]);
+export default function DownloadsPage() {
+  const { currency, toggleCurrency } = useStoreCurrency();
+  const [tvRelease, setTvRelease] = useState<Release | null>(null);
+  const [phoneRelease, setPhoneRelease] = useState<Release | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([fetchRelease('tv-app-latest'), fetchRelease('phone-app-latest')]).then(
+      ([tv, phone]) => {
+        setTvRelease(tv);
+        setPhoneRelease(phone);
+        setLoading(false);
+      }
+    );
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header currency={{ code: 'KES', symbol: 'KSh' }} onCurrencyToggle={() => {}} />
+      <Header currency={currency} onCurrencyToggle={toggleCurrency} />
 
       <section className="bg-gradient-to-br from-gray-900 via-violet-950 to-gray-900 py-16 text-white">
         <div className="container mx-auto px-4 text-center">
@@ -203,6 +220,7 @@ export default async function DownloadsPage() {
             release={tvRelease}
             apkFileName="gamestop-tv.apk"
             badge="TV"
+            loading={loading}
           />
 
           <AppCard
@@ -218,6 +236,7 @@ export default async function DownloadsPage() {
             ]}
             release={phoneRelease}
             apkFileName="gamestop-phone.apk"
+            loading={loading}
           />
 
           <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
