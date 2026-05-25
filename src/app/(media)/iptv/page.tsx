@@ -141,6 +141,14 @@ export default function IPTVPage() {
                       Member Sign In
                     </Button>
                   </Link>
+                  <Link href="/iptv/downloads">
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl border-white/15 bg-transparent px-8 py-6 text-base font-bold text-white hover:bg-white/10"
+                    >
+                      Get the Apps
+                    </Button>
+                  </Link>
                 </div>
 
                 <div className="mt-10 grid gap-3 sm:grid-cols-3">

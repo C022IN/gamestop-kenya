@@ -28,6 +28,7 @@ const socialLinks = [
 
 const quickLinks = [
   { label: 'About', href: '/about' },
+  { label: 'Downloads', href: '/iptv/downloads' },
   { label: 'Track Order', href: '/orders' },
   { label: 'Returns', href: '/return-policy' },
   { label: 'Warranty', href: '/warranty' },

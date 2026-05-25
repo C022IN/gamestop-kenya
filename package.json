@@ -1,5 +1,5 @@
 {
-  "name": "nextjs-shadcn",
+  "name": "gamestop-kenya",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -20,32 +20,31 @@
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
-    "@radix-ui/react-slot": "^1.2.3",
-    "@supabase/supabase-js": "^2.98.0",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/supabase-js": "^2.106.1",
     "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "hls.js": "^1.6.15",
-    "lucide-react": "^0.475.0",
-    "next": "15.5.12",
+    "hls.js": "^1.6.16",
+    "lucide-react": "^0.577.0",
+    "next": "15.5.18",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "same-runtime": "^0.0.1",
     "stripe": "^20.4.1",
-    "tailwind-merge": "^3.3.0",
+    "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@eslint/eslintrc": "^3.3.1",
-    "@types/node": "^20.17.50",
-    "@types/react": "^18.3.22",
+    "@eslint/eslintrc": "^3.3.5",
+    "@types/node": "^22.15.21",
+    "@types/react": "^18.3.29",
     "@types/react-dom": "^18.3.7",
-    "eslint": "^9.27.0",
-    "eslint-config-next": "15.5.12",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17",
-    "typescript": "^5.8.3"
+    "eslint": "^9.39.4",
+    "eslint-config-next": "15.5.18",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3"
   }
 }

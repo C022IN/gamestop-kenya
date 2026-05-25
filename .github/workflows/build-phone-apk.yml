@@ -1,6 +1,11 @@
 name: Build Phone App (Local APK)
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'tv-app/**'
+      - '.github/workflows/build-phone-apk.yml'
   workflow_dispatch:
     inputs:
       profile:
@@ -24,10 +29,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: tv-app/package-lock.json
 
@@ -102,6 +107,23 @@ jobs:
           path: tv-app/gamestop-phone.aab
           retention-days: 30
 
+      - name: Publish GitHub Release (preview APK)
+        if: github.event.inputs.profile != 'production'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: phone-app-latest
+          name: "GameStop Movies Phone — Latest Build"
+          body: |
+            **Android Phone APK** — sideloadable on Android smartphones.
+            Package: `ke.co.gamestop.movies.phone`
+            Commit: `${{ github.sha }}`
+            Built: ${{ github.run_id }}
+          artifacts: "tv-app/gamestop-phone.apk"
+          artifactContentType: application/vnd.android.package-archive
+          allowUpdates: true
+          removeArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build summary
         run: |
           echo "## GameStop Movies Phone — Build Complete" >> $GITHUB_STEP_SUMMARY
@@ -109,4 +131,4 @@ jobs:
           echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Package:** ke.co.gamestop.movies.phone" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Download the APK/AAB from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
+          echo "Download the APK/AAB from the **Artifacts** section above and from the **phone-app-latest** GitHub Release." >> $GITHUB_STEP_SUMMARY

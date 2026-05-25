@@ -1,6 +1,11 @@
 name: Build TV App (Local APK)
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'tv-app/**'
+      - '.github/workflows/build-tv-apk.yml'
   workflow_dispatch:
     inputs:
       profile:
@@ -128,6 +133,23 @@ jobs:
           path: tv-app/gamestop-tv.aab
           retention-days: 30
 
+      - name: Publish GitHub Release (preview APK)
+        if: github.event.inputs.profile != 'production'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: tv-app-latest
+          name: "GameStop Movies TV — Latest Build"
+          body: |
+            **Android TV APK** — sideloadable on Android TV, Fire TV, and Hisense TVs.
+            Package: `ke.co.gamestop.movies`
+            Commit: `${{ github.sha }}`
+            Built: ${{ github.run_id }}
+          artifacts: "tv-app/gamestop-tv.apk"
+          artifactContentType: application/vnd.android.package-archive
+          allowUpdates: true
+          removeArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build summary
         run: |
           PROFILE="${{ github.event.inputs.profile || 'preview' }}"
@@ -138,5 +160,5 @@ jobs:
           if [ "$PROFILE" = "production" ]; then
             echo "Download the **AAB** from the Artifacts section above." >> $GITHUB_STEP_SUMMARY
           else
-            echo "Download the **APK** from the Artifacts section above." >> $GITHUB_STEP_SUMMARY
+            echo "Download the **APK** from the Artifacts section above and from the **tv-app-latest** GitHub Release." >> $GITHUB_STEP_SUMMARY
           fi

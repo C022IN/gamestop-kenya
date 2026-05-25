@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, User, ShoppingCart, Menu, Globe, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BrandLogo from '@/components/BrandLogo';
@@ -32,6 +33,13 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNavBadges, setShowNavBadges] = useState(false);
   const cart = useOptionalCart();
+  const router = useRouter();
+
+  function handleSearch(q: string) {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    router.push(`/games?q=${encodeURIComponent(trimmed)}`);
+  }
   const itemCount = cart?.itemCount ?? 0;
 
   useEffect(() => {
@@ -79,6 +87,7 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
     { label: 'Gift Cards', href: '/gift-cards', badge: 'NEW' },
     { label: 'Movies', href: '/movies/login', badge: 'NEW' },
     { label: 'IPTV', href: '/iptv', badge: 'NEW' },
+    { label: 'Downloads', href: '/iptv/downloads' },
   ];
 
   return (
@@ -107,7 +116,10 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
           </div>
 
           <div className="hidden max-w-lg flex-1 md:flex">
-            <div className="relative w-full">
+            <form
+              className="relative w-full"
+              onSubmit={(e) => { e.preventDefault(); handleSearch(searchQuery); }}
+            >
               <input
                 type="text"
                 value={searchQuery}
@@ -116,12 +128,12 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
                 className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 pr-12 text-sm transition-colors focus:border-red-500 focus:outline-none"
               />
               <button
-                type="button"
+                type="submit"
                 className="absolute right-0 top-0 h-full rounded-r-xl bg-red-600 px-4 text-white transition-colors hover:bg-red-700"
               >
                 <Search className="h-4 w-4" />
               </button>
-            </div>
+            </form>
           </div>
 
           <div className="flex items-center gap-2">
@@ -155,19 +167,24 @@ export default function Header({ currency, onCurrencyToggle }: HeaderProps) {
         </div>
 
         <div className="mt-3 md:hidden">
-          <div className="relative">
+          <form
+            className="relative"
+            onSubmit={(e) => { e.preventDefault(); handleSearch(searchQuery); }}
+          >
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search games, gift cards and more..."
               className="w-full rounded-xl border-2 border-gray-200 px-4 py-2.5 pr-12 text-sm transition-colors focus:border-red-500 focus:outline-none"
             />
             <button
-              type="button"
+              type="submit"
               className="absolute right-0 top-0 h-full rounded-r-xl bg-red-600 px-4 text-white"
             >
               <Search className="h-4 w-4" />
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
