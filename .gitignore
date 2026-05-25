@@ -56,3 +56,9 @@ next-env.d.ts
 gamestop-movies.keystore
 *.keystore
 !tv-app/android/gamestop-movies.keystore
+
+# Supabase CLI temp files
+supabase/.temp/
+
+# TV app build output
+tv-app/dist/

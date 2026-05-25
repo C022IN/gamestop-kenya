@@ -62,4 +62,5 @@ const nextConfig = (phase) => ({
   },
 });
 
-export default (phase) => withPWA(nextConfig(phase));
+const config = (phase) => withPWA(nextConfig(phase));
+export default config;
