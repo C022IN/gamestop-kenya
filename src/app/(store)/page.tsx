@@ -436,20 +436,15 @@ export default function Home() {
               </div>
             </div>
             <div className="md:w-1/2">
-              <div className="lux-card rounded-3xl border border-violet-700/80 bg-violet-900/40 p-8 text-center">
-                <Tv className="mx-auto mb-4 h-20 w-20 text-violet-400" />
-                <div className="mb-1 text-5xl font-extrabold text-white">1</div>
-                <div className="mb-4 text-lg text-violet-300">Unified IPTV Member Hub</div>
-                <div className="grid grid-cols-3 gap-3 text-center text-xs text-gray-300">
-                  {['Live TV', 'Movies', 'Series', 'Sports', 'M-Pesa', 'Support'].map((c) => (
-                    <div key={c} className="rounded-lg bg-gray-800 p-2">
-                      {c}
-                    </div>
-                  ))}
-                </div>
+              <div className="mx-auto max-w-sm overflow-hidden rounded-3xl border border-violet-700/60 bg-violet-900/30 shadow-2xl">
+                <img
+                  src="/images/heroes/iptv.svg"
+                  alt="GameStop IPTV streaming dashboard"
+                  className="h-[320px] w-full object-contain p-4"
+                />
               </div>
               <p className="mt-4 text-center text-sm font-medium text-amber-300">
-                Start today.
+                Activate with M-Pesa · Stream instantly on any device.
               </p>
             </div>
           </div>

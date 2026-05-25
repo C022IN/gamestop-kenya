@@ -171,46 +171,58 @@ export default function IPTVPage() {
                 </div>
               </div>
 
-              <div className="rounded-[32px] border border-white/10 bg-white/[0.06] p-6 backdrop-blur-2xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-100/80">How it works</p>
-                <div className="mt-5 space-y-4">
-                  {[
-                    {
-                      icon: CreditCard,
-                      title: '1. Choose a plan',
-                      text: 'Pick a plan.',
-                    },
-                    {
-                      icon: Smartphone,
-                      title: '2. Approve M-Pesa',
-                      text: 'Confirm on your phone.',
-                    },
-                    {
-                      icon: LockKeyhole,
-                      title: '3. Save TV setup details',
-                      text: 'Copy the playlist, portal host, username, and password.',
-                    },
-                    {
-                      icon: CheckCircle2,
-                      title: '4. Start watching anywhere',
-                      text: 'Use TiviMate, IPTV Smarters, Kodi, VLC, or open the browser hub.',
-                    },
-                  ].map(({ icon: Icon, title, text }) => (
-                    <div
-                      key={title}
-                      className="rounded-[24px] border border-white/10 bg-black/20 p-4"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/[0.08] text-white/80">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white">{title}</p>
-                          <p className="mt-1 text-sm text-white/[0.62]">{text}</p>
+              <div className="flex flex-col gap-5">
+                {/* Hero device image */}
+                <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.04]">
+                  <img
+                    src="/images/heroes/iptv.svg"
+                    alt="GameStop IPTV streaming interface"
+                    className="h-56 w-full object-contain p-2"
+                  />
+                </div>
+
+                {/* How it works */}
+                <div className="rounded-[32px] border border-white/10 bg-white/[0.06] p-6 backdrop-blur-2xl">
+                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-100/80">How it works</p>
+                  <div className="mt-5 space-y-4">
+                    {[
+                      {
+                        icon: CreditCard,
+                        title: '1. Choose a plan',
+                        text: 'Pick a plan.',
+                      },
+                      {
+                        icon: Smartphone,
+                        title: '2. Approve M-Pesa',
+                        text: 'Confirm on your phone.',
+                      },
+                      {
+                        icon: LockKeyhole,
+                        title: '3. Save TV setup details',
+                        text: 'Copy the playlist, portal host, username, and password.',
+                      },
+                      {
+                        icon: CheckCircle2,
+                        title: '4. Start watching anywhere',
+                        text: 'Use TiviMate, IPTV Smarters, Kodi, VLC, or open the browser hub.',
+                      },
+                    ].map(({ icon: Icon, title, text }) => (
+                      <div
+                        key={title}
+                        className="rounded-[24px] border border-white/10 bg-black/20 p-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/[0.08] text-white/80">
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-white">{title}</p>
+                            <p className="mt-1 text-sm text-white/[0.62]">{text}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -245,6 +257,38 @@ export default function IPTVPage() {
                 <h2 className="text-lg font-bold text-slate-950">{title}</h2>
                 <p className="mt-2 text-sm text-slate-600">{text}</p>
               </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Compatible devices visual strip */}
+      <section className="bg-[#08111f] py-10">
+        <div className="container mx-auto px-4">
+          <p className="mb-8 text-center text-sm font-semibold uppercase tracking-[0.22em] text-white/50">
+            Works on every screen
+          </p>
+          <div className="mx-auto grid max-w-4xl grid-cols-3 gap-4 sm:grid-cols-6">
+            {[
+              { label: 'Smart TV', img: '/images/heroes/iptv.svg', desc: 'Samsung · LG · Hisense' },
+              { label: 'Fire TV', img: '/images/heroes/iptv.svg', desc: 'Firestick · Fire Cube' },
+              { label: 'Android TV', img: '/images/heroes/iptv.svg', desc: 'Box · Stick' },
+              { label: 'Kodi', img: '/images/heroes/iptv.svg', desc: 'Windows · Android · iOS' },
+              { label: 'Phone', img: '/images/heroes/iptv.svg', desc: 'Android · iOS' },
+              { label: 'Browser', img: '/images/heroes/iptv.svg', desc: 'Chrome · Safari · Edge' },
+            ].map(({ label, desc }) => (
+              <div key={label} className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.08] text-white/70">
+                  {label === 'Smart TV'    && <Tv2 className="h-6 w-6" />}
+                  {label === 'Fire TV'     && <Tv2 className="h-6 w-6" />}
+                  {label === 'Android TV'  && <Tv2 className="h-6 w-6" />}
+                  {label === 'Kodi'        && <PlayCircle className="h-6 w-6" />}
+                  {label === 'Phone'       && <Smartphone className="h-6 w-6" />}
+                  {label === 'Browser'     && <Radio className="h-6 w-6" />}
+                </div>
+                <span className="text-sm font-bold text-white">{label}</span>
+                <span className="text-[11px] text-white/40 leading-snug">{desc}</span>
+              </div>
             ))}
           </div>
         </div>

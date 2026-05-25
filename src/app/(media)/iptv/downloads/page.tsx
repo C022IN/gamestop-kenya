@@ -93,8 +93,15 @@ function AppCard({
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <div className="bg-gradient-to-br from-violet-600 to-violet-800 p-6 text-white">
-        <div className="mb-3 flex items-center gap-3">
+      <div className="relative bg-gradient-to-br from-violet-600 to-violet-800 p-6 text-white overflow-hidden">
+        {/* Background device illustration */}
+        <img
+          src="/images/heroes/iptv.svg"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute right-0 top-0 h-full w-1/2 object-cover opacity-10"
+        />
+        <div className="relative mb-3 flex items-center gap-3">
           <div className="rounded-xl bg-white/15 p-2.5">
             <Icon className="h-6 w-6" />
           </div>
