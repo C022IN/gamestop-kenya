@@ -1,4 +1,5 @@
 import type { StorefrontProduct } from '@/lib/storefront-types';
+import { enrichedImage } from '@/lib/enriched-image';
 
 export interface GiftCardProduct extends StorefrontProduct {
   brand: string;
@@ -12,7 +13,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-gamestop-1000-digital',
     title: 'GameStop Kenya Gift Card - KSh 1,000',
-    image: '/images/digital/gamestop-card.svg',
+    image: enrichedImage('gift-gamestop-1000-digital', '/images/digital/gamestop-card.svg'),
     price: 3800,
     platform: 'Universal',
     isDigital: true,
@@ -28,7 +29,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-gamestop-2500-physical',
     title: 'GameStop Kenya Gift Card - KSh 2,500',
-    image: '/images/digital/gamestop-card.svg',
+    image: enrichedImage('gift-gamestop-2500-physical', '/images/digital/gamestop-card.svg'),
     price: 6000,
     platform: 'Universal',
     rating: 4.7,
@@ -43,7 +44,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-psn-1500',
     title: 'PlayStation Store Gift Card - KSh 1,500',
-    image: '/images/digital/psn-card.svg',
+    image: enrichedImage('gift-psn-1500', '/images/digital/psn-card.svg'),
     price: 3800,
     platform: 'PlayStation',
     isDigital: true,
@@ -59,7 +60,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-psn-3000',
     title: 'PlayStation Store Gift Card - KSh 3,000',
-    image: '/images/digital/psn-card.svg',
+    image: enrichedImage('gift-psn-3000', '/images/digital/psn-card.svg'),
     price: 5300,
     platform: 'PlayStation',
     isDigital: true,
@@ -75,7 +76,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-xbox-2500',
     title: 'Xbox Gift Card - KSh 2,500',
-    image: '/images/digital/xbox-card.svg',
+    image: enrichedImage('gift-xbox-2500', '/images/digital/xbox-card.svg'),
     price: 6000,
     platform: 'Xbox',
     isDigital: true,
@@ -91,7 +92,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-gamepass-3m',
     title: 'Xbox Game Pass Ultimate - 3 Months',
-    image: '/images/digital/game-pass.svg',
+    image: enrichedImage('gift-gamepass-3m', '/images/digital/game-pass.svg'),
     price: 15700,
     platform: 'Xbox',
     isDigital: true,
@@ -107,7 +108,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-eshop-1500',
     title: 'Nintendo eShop Card - KSh 1,500',
-    image: '/images/digital/eshop-card.svg',
+    image: enrichedImage('gift-eshop-1500', '/images/digital/eshop-card.svg'),
     price: 3800,
     platform: 'Nintendo',
     isDigital: true,
@@ -123,7 +124,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-eshop-3000',
     title: 'Nintendo eShop Card - KSh 3,000',
-    image: '/images/digital/eshop-card.svg',
+    image: enrichedImage('gift-eshop-3000', '/images/digital/eshop-card.svg'),
     price: 5300,
     platform: 'Nintendo',
     isDigital: true,
@@ -139,7 +140,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-steam-3000',
     title: 'Steam Wallet Gift Card - KSh 3,000',
-    image: '/images/digital/steam-wallet.svg',
+    image: enrichedImage('gift-steam-3000', '/images/digital/steam-wallet.svg'),
     price: 5300,
     platform: 'PC',
     isDigital: true,
@@ -155,7 +156,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-steam-5000',
     title: 'Steam Wallet Gift Card - KSh 5,000',
-    image: '/images/digital/steam-wallet.svg',
+    image: enrichedImage('gift-steam-5000', '/images/digital/steam-wallet.svg'),
     price: 9800,
     platform: 'PC',
     isDigital: true,
@@ -171,7 +172,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-roblox-1500',
     title: 'Roblox Digital Gift Card - KSh 1,500',
-    image: '/images/digital/roblox-card.svg',
+    image: enrichedImage('gift-roblox-1500', '/images/digital/roblox-card.svg'),
     price: 3800,
     platform: 'Universal',
     isDigital: true,
@@ -187,7 +188,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-riot-2500',
     title: 'Riot Points Gift Card - KSh 2,500',
-    image: '/images/digital/riot-card.svg',
+    image: enrichedImage('gift-riot-2500', '/images/digital/riot-card.svg'),
     price: 6000,
     platform: 'PC',
     isDigital: true,
@@ -203,7 +204,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-ea-play-12m',
     title: 'EA Play Membership - 12 Months',
-    image: '/images/digital/ea-card.svg',
+    image: enrichedImage('gift-ea-play-12m', '/images/digital/ea-card.svg'),
     price: 8200,
     platform: 'PlayStation',
     isDigital: true,
@@ -219,7 +220,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-meta-5000',
     title: 'Meta Quest Store Credit - KSh 5,000',
-    image: '/images/digital/meta-card.svg',
+    image: enrichedImage('gift-meta-5000', '/images/digital/meta-card.svg'),
     price: 9800,
     platform: 'Universal',
     isDigital: true,
@@ -235,7 +236,7 @@ export const giftCardProducts: GiftCardProduct[] = [
   {
     id: 'gift-twitch-1500',
     title: 'Twitch Gift Card - KSh 1,500',
-    image: '/images/digital/twitch-card.svg',
+    image: enrichedImage('gift-twitch-1500', '/images/digital/twitch-card.svg'),
     price: 4500,
     platform: 'Universal',
     isDigital: true,

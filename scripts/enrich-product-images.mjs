@@ -122,56 +122,111 @@ const PRODUCTS = [
     url: 'https://www.xbox.com/en-US/games/store/forza-horizon-5/9NKX70BBCDRN',
   },
   {
-    id: 'cyberpunk-2077-ultimate-pc',
-    name: 'Cyberpunk 2077 Ultimate Edition',
-    url: 'https://www.cyberpunk.net/en/news/49982/cyberpunk-2077-ultimate-edition',
-  },
-  {
     id: 'god-of-war-ragnarok-ps5',
     name: 'God of War Ragnarök',
     url: 'https://www.playstation.com/en-us/games/god-of-war-ragnarok/',
   },
   {
-    id: 'hogwarts-legacy-ps5',
+    id: 'hogwarts-legacy-xbox',
     name: 'Hogwarts Legacy',
-    url: 'https://www.hogwartslegacy.com/en-us',
+    url: 'https://store.steampowered.com/app/990080/Hogwarts_Legacy/',
   },
   {
-    id: 'mortal-kombat-1-ps5',
+    id: 'mortal-kombat-1-xbox',
     name: 'Mortal Kombat 1',
-    url: 'https://www.mortalkombat.com/en-us',
+    url: 'https://store.steampowered.com/app/1971870/Mortal_Kombat_1/',
   },
   {
-    id: 'ea-sports-fc-25-ps5',
+    id: 'ea-fc-25-ps5',
     name: 'EA Sports FC 25',
     url: 'https://www.ea.com/games/ea-sports-fc/fc-25',
   },
   {
-    id: 'resident-evil-4-remake-ps5',
+    id: 'resident-evil-4-ps5',
     name: 'Resident Evil 4 Remake',
-    url: 'https://www.residentevil.com/re4/en-us/',
+    url: 'https://store.steampowered.com/app/2050650/Resident_Evil_4/',
   },
   {
-    id: 'zelda-totk-switch',
+    id: 'cyberpunk-2077-ultimate-pc',
+    name: 'Cyberpunk 2077 Ultimate Edition',
+    url: 'https://store.steampowered.com/app/1091500/Cyberpunk_2077/',
+  },
+  {
+    id: 'cyberpunk-2077-pre-owned-ps5',
+    name: 'Cyberpunk 2077 Pre-Owned',
+    url: 'https://store.steampowered.com/app/1091500/Cyberpunk_2077/',
+  },
+  {
+    id: 'zelda-tears-of-the-kingdom-switch',
     name: 'The Legend of Zelda: Tears of the Kingdom',
     url: 'https://www.nintendo.com/us/store/products/the-legend-of-zelda-tears-of-the-kingdom-switch/',
   },
 
   // ─── Gift Cards / Digital ────────────────────────────────────────────────
   {
-    id: 'psn-gift-card',
+    id: 'gift-psn-1500',
     name: 'PlayStation Store Gift Card',
     url: 'https://www.playstation.com/en-us/accessories/playstation-store-gift-card/',
   },
   {
-    id: 'xbox-gift-card',
+    id: 'gift-psn-3000',
+    name: 'PlayStation Store Gift Card KSh 3000',
+    url: 'https://www.playstation.com/en-us/accessories/playstation-store-gift-card/',
+  },
+  {
+    id: 'gift-xbox-2500',
     name: 'Xbox Gift Card',
+    url: 'https://www.xbox.com/en-US/gifts/gift-cards',
+  },
+  {
+    id: 'gift-gamepass-3m',
+    name: 'Xbox Game Pass Ultimate 3 Months',
     url: 'https://www.xbox.com/en-US/games/subscriptions/game-pass',
   },
   {
-    id: 'nintendo-eshop-card',
+    id: 'gift-eshop-1500',
     name: 'Nintendo eShop Card',
     url: 'https://www.nintendo.com/us/catalog/eshop/gift-cards/',
+  },
+  {
+    id: 'gift-eshop-3000',
+    name: 'Nintendo eShop Card KSh 3000',
+    url: 'https://www.nintendo.com/us/catalog/eshop/gift-cards/',
+  },
+  {
+    id: 'gift-steam-3000',
+    name: 'Steam Wallet Gift Card',
+    url: 'https://store.steampowered.com/digitalgiftcards/',
+  },
+  {
+    id: 'gift-steam-5000',
+    name: 'Steam Wallet Gift Card KSh 5000',
+    url: 'https://store.steampowered.com/digitalgiftcards/',
+  },
+  {
+    id: 'gift-roblox-1500',
+    name: 'Roblox Gift Card',
+    url: 'https://www.roblox.com/giftcards',
+  },
+  {
+    id: 'gift-riot-2500',
+    name: 'Riot Points Gift Card',
+    url: 'https://www.riotgames.com/en/riotpoints',
+  },
+  {
+    id: 'gift-ea-play-12m',
+    name: 'EA Play Membership 12 Months',
+    url: 'https://www.ea.com/ea-play',
+  },
+  {
+    id: 'gift-meta-5000',
+    name: 'Meta Quest Store Credit',
+    url: 'https://www.meta.com/en-gb/quest/gift-cards/',
+  },
+  {
+    id: 'gift-twitch-1500',
+    name: 'Twitch Gift Card',
+    url: 'https://www.twitch.tv/products/gift-cards',
   },
   {
     id: 'steam-wallet-card',
@@ -182,11 +237,6 @@ const PRODUCTS = [
     id: 'roblox-gift-card',
     name: 'Roblox Gift Card',
     url: 'https://www.roblox.com/giftcards',
-  },
-  {
-    id: 'xbox-game-pass',
-    name: 'Xbox Game Pass Ultimate',
-    url: 'https://www.xbox.com/en-US/games/subscriptions/game-pass',
   },
 ];
 

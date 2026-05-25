@@ -89,6 +89,31 @@
     "source": "https://www.ea.com/games/ea-sports-fc/fc-25",
     "fetchedAt": "2026-05-25T11:35:52.968Z"
   },
+  "hogwarts-legacy-xbox": {
+    "url": "https://cdn.cloudflare.steamstatic.com/steam/apps/990080/library_600x900.jpg",
+    "source": "https://store.steampowered.com/app/990080/Hogwarts_Legacy/",
+    "fetchedAt": "2026-05-25T12:00:00.000Z"
+  },
+  "mortal-kombat-1-xbox": {
+    "url": "https://cdn.cloudflare.steamstatic.com/steam/apps/1971870/library_600x900.jpg",
+    "source": "https://store.steampowered.com/app/1971870/Mortal_Kombat_1/",
+    "fetchedAt": "2026-05-25T12:00:00.000Z"
+  },
+  "resident-evil-4-ps5": {
+    "url": "https://cdn.cloudflare.steamstatic.com/steam/apps/2050650/library_600x900.jpg",
+    "source": "https://store.steampowered.com/app/2050650/Resident_Evil_4/",
+    "fetchedAt": "2026-05-25T12:00:00.000Z"
+  },
+  "cyberpunk-2077-ultimate-pc": {
+    "url": "https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/library_600x900.jpg",
+    "source": "https://store.steampowered.com/app/1091500/Cyberpunk_2077/",
+    "fetchedAt": "2026-05-25T12:00:00.000Z"
+  },
+  "cyberpunk-2077-pre-owned-ps5": {
+    "url": "https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/library_600x900.jpg",
+    "source": "https://store.steampowered.com/app/1091500/Cyberpunk_2077/",
+    "fetchedAt": "2026-05-25T12:00:00.000Z"
+  },
   "steam-wallet-card": {
     "url": "https://store.akamai.steamstatic.com/public/images/gift/digital_cards_preview.png",
     "source": "https://store.steampowered.com/digitalgiftcards/",
