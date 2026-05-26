@@ -41,7 +41,9 @@ export default function AdminLoginForm({ configured, nextPath }: AdminLoginFormP
 
       const adminType: string | null = data.admin?.adminType ?? null;
       const role: string = data.admin?.role ?? '';
-      if (role === 'super_admin' || adminType === 'iptv') {
+      if (role === 'super_admin') {
+        window.location.href = '/admin/super';
+      } else if (adminType === 'iptv') {
         window.location.href = '/admin/iptv';
       } else if (adminType === 'catalog') {
         window.location.href = '/admin/catalog/listings';

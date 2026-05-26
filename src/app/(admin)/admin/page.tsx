@@ -13,7 +13,7 @@ export default async function AdminRootPage() {
   const { admin } = current;
 
   if (admin.role === 'super_admin') {
-    redirect('/admin/iptv');
+    redirect('/admin/super');
   }
 
   if (admin.adminType === 'catalog') {

@@ -1022,7 +1022,7 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
               <ShieldCheck className="h-5 w-5 text-violet-300" />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => fetchDashboard(query.trim())}
@@ -1030,6 +1030,16 @@ export default function AdminIptvDashboard({ admin }: AdminIptvDashboardProps) {
               >
                 <RefreshCw className="h-4 w-4" /> Refresh
               </button>
+              {isSuper && (
+                <Button
+                  asChild
+                  type="button"
+                  variant="outline"
+                  className="rounded-xl border-amber-500/40 bg-transparent text-amber-200 hover:bg-amber-950"
+                >
+                  <Link href="/admin/super">← Overview</Link>
+                </Button>
+              )}
               <Button
                 asChild
                 type="button"

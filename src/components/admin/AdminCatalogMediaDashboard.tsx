@@ -584,6 +584,15 @@ export default function AdminCatalogMediaDashboard({ admin }: AdminCatalogMediaD
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            {admin.role === 'super_admin' && (
+              <Button
+                asChild
+                variant="outline"
+                className="border-amber-500/40 bg-transparent text-amber-200 hover:bg-amber-950"
+              >
+                <Link href="/admin/super">← Overview</Link>
+              </Button>
+            )}
             <Button
               asChild
               variant="outline"

@@ -325,6 +325,16 @@ export default function AdminMoviesDashboard({ admin }: AdminMoviesDashboardProp
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="border-amber-500/40 bg-transparent text-amber-300 hover:bg-amber-950"
+              >
+                <a href="/admin/super">← Overview</a>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
