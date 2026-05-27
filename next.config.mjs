@@ -31,12 +31,6 @@ const nextConfig = (phase) => ({
   },
   images: {
     unoptimized: true,
-    domains: [
-      'source.unsplash.com',
-      'images.unsplash.com',
-      'via.placeholder.com',
-      'image.tmdb.org',
-    ],
     remotePatterns: [
       {
         protocol: 'https',

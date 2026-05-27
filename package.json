@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "22.x"
+    "node": ">=22.x"
   },
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
@@ -21,30 +21,30 @@
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@radix-ui/react-slot": "^1.2.4",
-    "@supabase/supabase-js": "^2.106.1",
+    "@supabase/supabase-js": "^2.106.2",
     "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "hls.js": "^1.6.16",
-    "lucide-react": "^0.577.0",
-    "next": "15.5.18",
+    "lucide-react": "^1.16.0",
+    "next": "16.2.6",
     "qrcode": "^1.5.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "stripe": "^20.4.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "stripe": "^22.2.0",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.4.16",
     "@eslint/eslintrc": "^3.3.5",
-    "@types/node": "^22.15.21",
-    "@types/react": "^18.3.29",
-    "@types/react-dom": "^18.3.7",
-    "eslint": "^9.39.4",
-    "eslint-config-next": "15.5.18",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^10.4.0",
+    "eslint-config-next": "16.2.6",
     "postcss": "^8.5.15",
     "tailwindcss": "^3.4.19",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
