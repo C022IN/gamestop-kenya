@@ -1,3 +1,4 @@
+import 'server-only';
 import { blogAuthors, blogCategories, blogPosts } from '@/data/blog';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 import type { BlogAuthor, BlogCategory, BlogPost } from '@/types/blog';

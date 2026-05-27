@@ -1,3 +1,5 @@
+import 'server-only';
+
 function trimEnv(value: string | undefined): string | null {
   const next = value?.trim();
   return next ? next : null;

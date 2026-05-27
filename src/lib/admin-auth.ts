@@ -1,3 +1,4 @@
+import 'server-only';
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { normaliseMpesaPhone } from '@/lib/mpesa';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';

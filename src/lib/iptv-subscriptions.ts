@@ -1,8 +1,4 @@
-/**
- * IPTV Subscription store
- *
- * Falls back to in-memory storage when Supabase is not configured.
- */
+import 'server-only';
 import { provisionCredentials } from '@/lib/iptv-provisioning';
 import { SUPER_ADMIN_ID } from '@/lib/admin-auth';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';

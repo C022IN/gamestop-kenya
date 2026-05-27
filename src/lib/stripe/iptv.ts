@@ -1,3 +1,4 @@
+import 'server-only';
 import type Stripe from 'stripe';
 import type { IptvPlan } from '@/lib/iptv-subscriptions';
 

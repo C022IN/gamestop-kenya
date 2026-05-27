@@ -1,3 +1,4 @@
+import 'server-only';
 import type { IptvCredentials, IptvSubscription } from '@/lib/iptv-subscriptions';
 import {
   assertIptvCredentials,

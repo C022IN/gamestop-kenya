@@ -1,3 +1,4 @@
+import 'server-only';
 import { cookies } from 'next/headers';
 import { getProfileById, getSessionByToken, MOVIE_SESSION_COOKIE } from '@/lib/movie-platform';
 

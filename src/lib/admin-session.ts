@@ -1,3 +1,4 @@
+import 'server-only';
 import { cookies } from 'next/headers';
 import { ADMIN_SESSION_COOKIE, getAdminContextByToken } from '@/lib/admin-auth';
 

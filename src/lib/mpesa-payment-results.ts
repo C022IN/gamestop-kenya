@@ -1,3 +1,4 @@
+import 'server-only';
 import { getSupabaseAdminClient } from '@/lib/supabase/server';
 
 export interface PaymentResult {
