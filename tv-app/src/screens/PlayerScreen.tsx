@@ -382,8 +382,10 @@ export default function PlayerScreen({ route, navigation }: Props) {
   }, [navigation, item, season]);
 
   useHardwareBack(useCallback(() => {
+    // Native track picker open → close it
     if (picker) { setPicker(null); return true; }
-    // If the Videasy settings panel is open, close it instead of exiting
+
+    // WebView path: Videasy settings panel open → close panel, stay in player
     if (iframeUrl && webPanelOpen) {
       webviewRef.current?.injectJavaScript(`
         (function() {
@@ -403,17 +405,23 @@ export default function PlayerScreen({ route, navigation }: Props) {
       `);
       return true;
     }
+
+    // Native player: controls hidden → resurface them (back once = show controls)
+    if (!iframeUrl && !showControls) {
+      resetControlsTimer();
+      return true;
+    }
+
+    // Controls visible (or WebView with no panel) → exit player
     navigation.goBack();
     return true;
-  }, [navigation, picker, iframeUrl, webPanelOpen]));
+  }, [navigation, picker, iframeUrl, webPanelOpen, showControls, resetControlsTimer]));
 
   useTVEventHandler((evt) => {
     if (!evt?.eventType || evt.eventType === 'blur' || evt.eventType === 'focus') return;
     if (picker) return;
-    if (!showControls) {
-      if (evt.eventType === 'left')  { acceleratingSeek(-1); return; }
-      if (evt.eventType === 'right') { acceleratingSeek(1);  return; }
-    }
+    if (evt.eventType === 'left')  { acceleratingSeek(-1); return; }
+    if (evt.eventType === 'right') { acceleratingSeek(1);  return; }
     if (evt.eventType === 'playPause') { togglePlay(); return; }
     resetControlsTimer();
   });
