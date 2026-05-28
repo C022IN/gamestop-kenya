@@ -44,8 +44,41 @@ const WEBVIEW_BEFORE_LOAD_JS = `
 // Injected after load: unmute + play any <video> element and report progress to RN.
 // Also clicks the Videasy overlay trigger (div.cursor-pointer) that must be tapped
 // before the player will start. Retries for up to 12s (20 × 600ms).
+// D-pad fix: keyCode 23 (Android TV OK/center) is not handled by web players as a
+// click — we intercept it and fire click() on the focused element. Also makes
+// dynamic panel items focusable so arrow keys can reach them.
 const WEBVIEW_AFTER_LOAD_JS = `
   (function() {
+    // ── D-pad OK fix ─────────────────────────────────────────────────────────
+    // Videasy handles arrow keys for tab/item focus but ignores keyCode 23
+    // (DPAD_CENTER). Map it to a click so "Select" actually activates the item.
+    document.addEventListener('keydown', function(e) {
+      var code = e.keyCode || e.which;
+      if (code === 23) {
+        var el = document.activeElement;
+        if (el && el !== document.body && el !== document.documentElement) {
+          e.preventDefault();
+          e.stopPropagation();
+          el.click();
+        }
+      }
+    }, true);
+
+    // ── Focusable items ───────────────────────────────────────────────────────
+    // Videasy renders panel rows as divs without tabindex, so arrow keys skip
+    // them. Add tabindex="0" whenever new elements appear (panels open lazily).
+    var ITEM_SEL = 'div[class*="item"],div[class*="option"],div[class*="row"],div[class*="server"],div[class*="track"],div[class*="speed"],div[class*="quality"],div[class*="sub"],div[class*="label"]';
+    function makeFocusable() {
+      document.querySelectorAll(ITEM_SEL).forEach(function(el) {
+        if (el.getAttribute('tabindex') === null && el.children.length <= 4) {
+          el.setAttribute('tabindex', '0');
+        }
+      });
+    }
+    makeFocusable();
+    new MutationObserver(makeFocusable).observe(document.documentElement, { childList: true, subtree: true });
+
+    // ── Video autoplay + progress ─────────────────────────────────────────────
     var tries = 0;
     var t = setInterval(function() {
       var videos = document.querySelectorAll('video');
