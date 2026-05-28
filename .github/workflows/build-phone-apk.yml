@@ -79,11 +79,19 @@ jobs:
           }
           GRADLE
 
+      - name: Decode release keystore
+        run: |
+          echo "${{ secrets.TV_KEYSTORE_BASE64 }}" | base64 --decode > tv-app/android/app/release.keystore
+
       - name: Build APK with Gradle
         working-directory: tv-app/android
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+          CM_KEYSTORE_PATH: ${{ github.workspace }}/tv-app/android/app/release.keystore
+          CM_KEYSTORE_PASSWORD: ${{ secrets.TV_KEYSTORE_PASSWORD }}
+          CM_KEY_ALIAS: ${{ secrets.TV_KEY_ALIAS }}
+          CM_KEY_PASSWORD: ${{ secrets.TV_KEY_PASSWORD }}
         run: |
           PROFILE="${{ github.event.inputs.profile || 'preview' }}"
           if [ "$PROFILE" = "production" ]; then
