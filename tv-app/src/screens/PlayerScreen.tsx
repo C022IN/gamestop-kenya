@@ -64,6 +64,32 @@ const WEBVIEW_AFTER_LOAD_JS = `
       }
     }, true);
 
+    // ── Panel open/close detection ────────────────────────────────────────────
+    // Detect when the Videasy settings panel (Quality/Subs/Servers/Speed) opens
+    // or closes, and notify RN so the hardware back button can close it first
+    // instead of exiting the player entirely.
+    var panelOpen = false;
+    function checkPanelState() {
+      var isOpen = false;
+      var btns = document.querySelectorAll('button,[role="button"],[role="tab"]');
+      for (var i = 0; i < btns.length; i++) {
+        var t = (btns[i].textContent || '').trim().toLowerCase();
+        if (t === 'quality' || t === 'subs' || t === 'servers' || t === 'speed') {
+          var r = btns[i].getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) { isOpen = true; break; }
+        }
+      }
+      if (isOpen !== panelOpen) {
+        panelOpen = isOpen;
+        window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
+          JSON.stringify({ type: 'panelState', open: isOpen })
+        );
+      }
+    }
+    new MutationObserver(checkPanelState).observe(document.documentElement, {
+      childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class']
+    });
+
     // ── Focusable items ───────────────────────────────────────────────────────
     // Videasy renders panel rows as divs without tabindex, so arrow keys skip
     // them. Add tabindex="0" whenever new elements appear (panels open lazily).
@@ -125,6 +151,8 @@ export default function PlayerScreen({ route, navigation }: Props) {
   const [currentSubId, setCurrentSubId] = useState<string | null>(null);
   const [currentAudioId, setCurrentAudioId] = useState<string | null>(null);
   const [picker, setPicker] = useState<null | 'subs' | 'audio' | 'sources'>(null);
+  const [webPanelOpen, setWebPanelOpen] = useState(false);
+  const webviewRef = useRef<WebView>(null);
 
   const player = useVideoPlayer(null, (p) => {
     p.timeUpdateEventInterval = 0.5;
@@ -355,9 +383,29 @@ export default function PlayerScreen({ route, navigation }: Props) {
 
   useHardwareBack(useCallback(() => {
     if (picker) { setPicker(null); return true; }
+    // If the Videasy settings panel is open, close it instead of exiting
+    if (iframeUrl && webPanelOpen) {
+      webviewRef.current?.injectJavaScript(`
+        (function() {
+          var closed = false;
+          document.querySelectorAll('button,[role="button"]').forEach(function(b) {
+            if (closed) return;
+            var text = (b.textContent || '').trim();
+            var label = (b.getAttribute('aria-label') || '').toLowerCase();
+            if (text === '×' || text === 'X' || text === '✕' || text === '✖' || label === 'close') {
+              b.click(); closed = true;
+            }
+          });
+          if (!closed) {
+            document.dispatchEvent(new KeyboardEvent('keydown', { keyCode: 27, key: 'Escape', bubbles: true }));
+          }
+        })(); true;
+      `);
+      return true;
+    }
     navigation.goBack();
     return true;
-  }, [navigation, picker]));
+  }, [navigation, picker, iframeUrl, webPanelOpen]));
 
   useTVEventHandler((evt) => {
     if (!evt?.eventType || evt.eventType === 'blur' || evt.eventType === 'focus') return;
@@ -397,6 +445,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
     return (
       <View style={styles.container}>
         <WebView
+          ref={webviewRef}
           source={{ uri: iframeUrl }}
           style={styles.webview}
           allowsFullscreenVideo
@@ -414,6 +463,7 @@ export default function PlayerScreen({ route, navigation }: Props) {
           onMessage={(e) => {
             try {
               const msg = JSON.parse(e.nativeEvent.data);
+              if (msg.type === 'panelState') { setWebPanelOpen(msg.open); return; }
               if (msg.type !== 'progress' || !(msg.currentTime > 30)) return;
               const posMs = Math.round(msg.currentTime * 1000);
               const durMs = msg.duration > 0 ? msg.duration * 1000 : 0;
