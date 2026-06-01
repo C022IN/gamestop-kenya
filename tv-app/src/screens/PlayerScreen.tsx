@@ -64,6 +64,27 @@ const WEBVIEW_AFTER_LOAD_JS = `
       }
     }, true);
 
+    // ── Throttle helper ───────────────────────────────────────────────────────
+    // The observers below run on DOM mutations, which Videasy fires hundreds of
+    // times per second during playback. Running querySelectorAll / forcing
+    // reflow (getBoundingClientRect) on every one starves the WebView's video
+    // pipeline on low-power TV hardware → poster shows, then black. Cap each
+    // observer to one run per 500ms (trailing edge catches the final state).
+    function throttle(fn, ms) {
+      var last = 0, timer = null;
+      return function() {
+        var now = Date.now();
+        var wait = ms - (now - last);
+        if (wait <= 0) {
+          if (timer) { clearTimeout(timer); timer = null; }
+          last = now;
+          fn();
+        } else if (!timer) {
+          timer = setTimeout(function() { last = Date.now(); timer = null; fn(); }, wait);
+        }
+      };
+    }
+
     // ── Panel open/close detection ────────────────────────────────────────────
     // Detect when the Videasy settings panel (Quality/Subs/Servers/Speed) opens
     // or closes, and notify RN so the hardware back button can close it first
@@ -86,8 +107,11 @@ const WEBVIEW_AFTER_LOAD_JS = `
         );
       }
     }
-    new MutationObserver(checkPanelState).observe(document.documentElement, {
-      childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class']
+    // childList+subtree only — Videasy renders/removes the panel buttons, so we
+    // catch open/close without watching style/class (whose constant churn during
+    // playback was forcing getBoundingClientRect reflows on every frame).
+    new MutationObserver(throttle(checkPanelState, 500)).observe(document.documentElement, {
+      childList: true, subtree: true
     });
 
     // ── Focusable items ───────────────────────────────────────────────────────
@@ -102,7 +126,7 @@ const WEBVIEW_AFTER_LOAD_JS = `
       });
     }
     makeFocusable();
-    new MutationObserver(makeFocusable).observe(document.documentElement, { childList: true, subtree: true });
+    new MutationObserver(throttle(makeFocusable, 500)).observe(document.documentElement, { childList: true, subtree: true });
 
     // ── Video autoplay + progress ─────────────────────────────────────────────
     var tries = 0;
