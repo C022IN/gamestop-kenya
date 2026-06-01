@@ -3,6 +3,7 @@ import {
   getSessionByToken,
   getContentItemBySlug,
   buildPlaybackSource,
+  hasActiveSubscriptionForProfile,
   MOVIE_SESSION_COOKIE,
 } from '@/lib/movie-platform';
 import {
@@ -22,6 +23,17 @@ export async function GET(req: NextRequest) {
 
   const session = await getSessionByToken(token);
   if (!session) return NextResponse.json({ error: 'Session expired' }, { status: 401 });
+
+  // Enforce the subscription gate on the stream itself — not just the page.
+  // Without this, an expired/depleted member (or any client calling the API
+  // directly) still receives a playable stream URL. Playback must stop the
+  // moment the subscription lapses.
+  if (!(await hasActiveSubscriptionForProfile(session.profileId))) {
+    return NextResponse.json(
+      { error: 'Subscription expired', code: 'subscription_inactive' },
+      { status: 403 }
+    );
+  }
 
   const slug = req.nextUrl.searchParams.get('slug') ?? '';
   const id = req.nextUrl.searchParams.get('id') ?? '';

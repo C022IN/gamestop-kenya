@@ -62,3 +62,5 @@ supabase/.temp/
 
 # TV app build output
 tv-app/dist/
+
+.vercel
