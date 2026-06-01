@@ -167,6 +167,15 @@ function checkAuth(req, res) {
 
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
 
+// Lightweight authenticated ping. Lets the Next.js app verify the shared token
+// without paying for a full headless-Chrome extraction. 200 when the bearer
+// token matches, 401 otherwise — this is what /api/health/extractor uses to
+// catch token drift between Vercel and this service before it black-screens TV.
+app.get('/authcheck', (req, res) => {
+  if (!checkAuth(req, res)) return;
+  res.json({ ok: true, auth: true });
+});
+
 app.get('/extract', async (req, res) => {
   if (!checkAuth(req, res)) return;
 

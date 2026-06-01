@@ -1,0 +1,81 @@
+name: Extractor Health
+
+# Synthetic monitor for the HLS extractor on the Hetzner VPS. When extraction
+# fails (token drift, outage, or Videasy markup breakage) the TV app silently
+# black-screens, so this turns that silent failure into a GitHub issue + the
+# standard scheduled-workflow-failure email.
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+    inputs:
+      deep:
+        description: 'Run a full extraction (needs EXTRACTOR_AUTH_TOKEN secret)'
+        type: boolean
+        default: false
+
+permissions:
+  issues: write
+
+concurrency:
+  group: extractor-health
+  cancel-in-progress: false
+
+env:
+  HEALTH_URL: https://gamestop.co.ke/api/health/extractor
+  ALERT_TITLE: '🔴 Extractor health check failing'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe extractor health
+        id: probe
+        run: |
+          URL="$HEALTH_URL"
+          if [ "${{ github.event.inputs.deep }}" = "true" ] && [ -n "${{ secrets.EXTRACTOR_AUTH_TOKEN }}" ]; then
+            URL="$HEALTH_URL?deep=1&token=${{ secrets.EXTRACTOR_AUTH_TOKEN }}"
+          fi
+          RESP=$(curl -sS -m 58 -w $'\n%{http_code}' "$URL" || printf '\n000')
+          CODE=$(printf '%s' "$RESP" | tail -1)
+          BODY=$(printf '%s' "$RESP" | sed '$d')
+          echo "HTTP $CODE"
+          echo "$BODY"
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          [ "$CODE" = "200" ]
+
+      - name: Open or refresh alert issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CODE: ${{ steps.probe.outputs.code }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          NUM=$(gh issue list --state open --search "$ALERT_TITLE in:title" --json number --jq '.[0].number // empty')
+          printf '%s\n' \
+            "Health probe returned **HTTP ${CODE:-unknown}**." \
+            "" \
+            "TV movie playback is black-screening while this is red (the app falls back to the unplayable Videasy iframe when extraction fails)." \
+            "" \
+            "**Likely causes:** extractor container down on the Hetzner VPS, or \`EXTRACTOR_AUTH_TOKEN\` drift between Vercel and \`/opt/stack/.env\`." \
+            "" \
+            "Run log: $RUN_URL" \
+            "Deep check: \`gh workflow run extractor-health.yml -f deep=true\`" > note.md
+          if [ -n "$NUM" ]; then
+            gh issue comment "$NUM" --body-file note.md
+          else
+            gh issue create --title "$ALERT_TITLE" --body-file note.md
+          fi
+
+      - name: Close alert issue on recovery
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NUM=$(gh issue list --state open --search "$ALERT_TITLE in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$NUM" ]; then
+            gh issue comment "$NUM" --body "✅ Recovered — health check returned 200. Closing."
+            gh issue close "$NUM"
+          fi
