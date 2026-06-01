@@ -26,6 +26,98 @@ export function isStreamExtractorConfigured(): boolean {
   return getExtractorUrl() !== null;
 }
 
+export interface ExtractorHealth {
+  ok: boolean;
+  configured: boolean;
+  reachable: boolean;
+  authorized: boolean;
+  baseUrl: string | null;
+  detail?: string;
+  deep?: { extracted: boolean; error?: string };
+}
+
+// Health probe that mirrors the exact env resolution extractStream() uses, so a
+// token drift or outage shows up here before it silently black-screens the TV
+// app (which falls back to the unplayable Videasy iframe on extractor failure).
+// Shallow by default (healthz + authcheck — cheap). Pass deep to run a real
+// extraction of a stable title.
+export async function checkExtractorHealth(opts?: {
+  deep?: boolean;
+  signal?: AbortSignal;
+}): Promise<ExtractorHealth> {
+  const base = getExtractorUrl();
+  if (!base) {
+    return {
+      ok: false,
+      configured: false,
+      reachable: false,
+      authorized: false,
+      baseUrl: null,
+      detail: 'EXTRACTOR_BASE_URL / STREAM_EXTRACTOR_URL not set',
+    };
+  }
+
+  const token = getExtractorToken();
+  const authedHeaders: Record<string, string> = { Accept: 'application/json' };
+  if (token) authedHeaders.Authorization = `Bearer ${token}`;
+
+  // 1. Liveness.
+  try {
+    const r = await fetch(new URL('/healthz', base).toString(), {
+      headers: { Accept: 'application/json' },
+      signal: opts?.signal,
+      cache: 'no-store',
+    });
+    if (!r.ok) {
+      return { ok: false, configured: true, reachable: false, authorized: false, baseUrl: base, detail: `healthz ${r.status}` };
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      configured: true,
+      reachable: false,
+      authorized: false,
+      baseUrl: base,
+      detail: `healthz unreachable: ${String((err as Error)?.message ?? err)}`,
+    };
+  }
+
+  // 2. Auth — the token-drift detector that just bit us.
+  try {
+    const r = await fetch(new URL('/authcheck', base).toString(), {
+      headers: authedHeaders,
+      signal: opts?.signal,
+      cache: 'no-store',
+    });
+    if (!r.ok) {
+      const detail =
+        r.status === 401
+          ? 'authcheck 401 — EXTRACTOR_AUTH_TOKEN mismatch between Vercel and the extractor service'
+          : `authcheck ${r.status}`;
+      return { ok: false, configured: true, reachable: true, authorized: false, baseUrl: base, detail };
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      configured: true,
+      reachable: true,
+      authorized: false,
+      baseUrl: base,
+      detail: `authcheck failed: ${String((err as Error)?.message ?? err)}`,
+    };
+  }
+
+  // 3. Optional deep check — full extraction of a stable title (Fight Club, 550).
+  let deep: ExtractorHealth['deep'];
+  if (opts?.deep) {
+    const extracted = await extractStream({ tmdbId: 550, mediaType: 'movie', signal: opts?.signal });
+    deep = extracted ? { extracted: true } : { extracted: false, error: 'no m3u8 returned for tmdb 550' };
+  }
+
+  const ok = !opts?.deep || Boolean(deep?.extracted);
+  return { ok, configured: true, reachable: true, authorized: true, baseUrl: base, deep };
+}
+
 export async function extractStream(params: {
   tmdbId: number;
   mediaType: 'movie' | 'tv';
