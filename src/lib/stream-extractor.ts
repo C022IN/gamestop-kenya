@@ -17,9 +17,25 @@ function getExtractorUrl(): string | null {
   return raw ? raw.replace(/\/+$/, '') : null;
 }
 
+// Strip surrounding single/double quotes and whitespace. Env values get quoted
+// by accident (e.g. EXTRACTOR_AUTH_TOKEN="abc" stored with the quotes as part of
+// the value), which then ship in the Bearer header and 401 against a bare token.
+function unquote(value: string): string {
+  const t = value.trim();
+  if (
+    t.length >= 2 &&
+    ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'")))
+  ) {
+    return t.slice(1, -1).trim();
+  }
+  return t;
+}
+
 function getExtractorToken(): string | null {
-  const raw = (process.env.STREAM_EXTRACTOR_TOKEN ?? process.env.EXTRACTOR_AUTH_TOKEN)?.trim();
-  return raw || null;
+  const raw = process.env.STREAM_EXTRACTOR_TOKEN ?? process.env.EXTRACTOR_AUTH_TOKEN;
+  if (!raw) return null;
+  const cleaned = unquote(raw);
+  return cleaned || null;
 }
 
 export function isStreamExtractorConfigured(): boolean {
