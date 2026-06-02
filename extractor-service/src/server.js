@@ -14,7 +14,17 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 
 const PORT = Number(process.env.PORT) || 3000;
-const AUTH_TOKEN = process.env.EXTRACTOR_AUTH_TOKEN || '';
+// Strip surrounding quotes/whitespace — env values are sometimes stored with the
+// quotes as part of the value (EXTRACTOR_AUTH_TOKEN="abc"), which then never
+// matches the bare token the caller sends.
+function unquote(value) {
+  const t = (value || '').trim();
+  if (t.length >= 2 && ((t[0] === '"' && t[t.length - 1] === '"') || (t[0] === "'" && t[t.length - 1] === "'"))) {
+    return t.slice(1, -1).trim();
+  }
+  return t;
+}
+const AUTH_TOKEN = unquote(process.env.EXTRACTOR_AUTH_TOKEN || '');
 const PLAYER_BASE = (process.env.PLAYER_BASE_URL || 'https://player.videasy.net').replace(/\/+$/, '');
 const PAGE_TIMEOUT_MS = Number(process.env.PAGE_TIMEOUT_MS) || 30_000;
 const M3U8_WAIT_MS = Number(process.env.M3U8_WAIT_MS) || 35_000;
@@ -159,7 +169,7 @@ async function extractM3u8(embedUrl) {
 
 function checkAuth(req, res) {
   if (!AUTH_TOKEN) return true;
-  const got = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  const got = unquote((req.headers.authorization || '').replace(/^Bearer\s+/i, ''));
   if (got === AUTH_TOKEN) return true;
   res.status(401).json({ error: 'Unauthorized' });
   return false;
