@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  HEALTH_URL: https://gamestop.co.ke/api/health/extractor
+  HEALTH_URL: https://www.gamestop.co.ke/api/health/extractor
   ALERT_TITLE: '🔴 Extractor health check failing'
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
           if [ "${{ github.event.inputs.deep }}" = "true" ] && [ -n "${{ secrets.EXTRACTOR_AUTH_TOKEN }}" ]; then
             URL="$HEALTH_URL?deep=1&token=${{ secrets.EXTRACTOR_AUTH_TOKEN }}"
           fi
-          RESP=$(curl -sS -m 58 -w $'\n%{http_code}' "$URL" || printf '\n000')
+          RESP=$(curl -sSL -m 58 -w $'\n%{http_code}' "$URL" || printf '\n000')
           CODE=$(printf '%s' "$RESP" | tail -1)
           BODY=$(printf '%s' "$RESP" | sed '$d')
           echo "HTTP $CODE"
