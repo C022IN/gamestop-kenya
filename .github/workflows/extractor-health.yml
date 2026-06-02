@@ -48,12 +48,13 @@ jobs:
 
       - name: Open or refresh alert issue
         if: failure()
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODE: ${{ steps.probe.outputs.code }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          NUM=$(gh issue list --state open --search "$ALERT_TITLE in:title" --json number --jq '.[0].number // empty')
+          NUM=$(gh issue list --state open --search "$ALERT_TITLE in:title" --json number --jq '.[0].number // empty' || true)
           printf '%s\n' \
             "Health probe returned **HTTP ${CODE:-unknown}**." \
             "" \
@@ -71,10 +72,11 @@ jobs:
 
       - name: Close alert issue on recovery
         if: success()
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          NUM=$(gh issue list --state open --search "$ALERT_TITLE in:title" --json number --jq '.[0].number // empty')
+          NUM=$(gh issue list --state open --search "$ALERT_TITLE in:title" --json number --jq '.[0].number // empty' || true)
           if [ -n "$NUM" ]; then
             gh issue comment "$NUM" --body "✅ Recovered — health check returned 200. Closing."
             gh issue close "$NUM"
