@@ -40,6 +40,35 @@ export async function getStoredPhone(): Promise<string | null> {
   return AsyncStorage.getItem(PHONE_KEY);
 }
 
+export interface ExtractorHealth {
+  ok: boolean;
+  reachable: boolean;
+  authorized: boolean;
+  detail?: string;
+}
+
+// Reads the backend's /api/health/extractor probe so the app can surface a
+// streaming-backend outage (extractor down or token drift) instead of leaving
+// the user staring at a black player and guessing.
+export async function fetchExtractorHealth(): Promise<ExtractorHealth> {
+  try {
+    const res = await fetch(`${BASE_URL}/health/extractor`, {
+      headers: { Accept: 'application/json', 'User-Agent': 'GameStopMoviesTV/1.0' },
+    });
+    const data = await res.json().catch(() => ({} as Record<string, unknown>));
+    return {
+      ok: Boolean((data as { ok?: unknown }).ok),
+      reachable: Boolean((data as { reachable?: unknown }).reachable),
+      authorized: Boolean((data as { authorized?: unknown }).authorized),
+      detail: typeof (data as { detail?: unknown }).detail === 'string'
+        ? (data as { detail: string }).detail
+        : undefined,
+    };
+  } catch {
+    return { ok: false, reachable: false, authorized: false, detail: 'unreachable' };
+  }
+}
+
 export interface LoginResult {
   ok: boolean;
   error?: string;
