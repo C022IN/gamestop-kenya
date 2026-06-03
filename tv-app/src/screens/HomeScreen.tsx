@@ -21,6 +21,7 @@ import MovieRow from '@/components/MovieRow';
 import ContinueWatchingRow from '@/components/ContinueWatchingRow';
 import { HeroSkeleton, PosterRowSkeleton } from '@/components/Skeleton';
 import FocusableButton from '@/components/FocusableButton';
+import { useProjector } from '@/context/ProjectorContext';
 
 const MY_LIST_KEY = '@myList';
 
@@ -67,6 +68,7 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
   const [phone, setPhone] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [myList, setMyList] = useState<AnyItem[]>([]);
+  const { on: projectorOn, toggle: toggleProjector } = useProjector();
   const backPressedOnce = useRef(false);
   const backTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -213,6 +215,16 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
     });
   }
 
+  const onToggleProjector = useCallback(() => {
+    toggleProjector();
+    ToastAndroid.show(
+      projectorOn
+        ? 'Projector Mode off'
+        : 'Projector Mode on — edges pulled in for projectors',
+      ToastAndroid.SHORT,
+    );
+  }, [toggleProjector, projectorOn]);
+
   // Filter the full feed by the active navigation tab
   function getTabFeed(): FeedRow[] {
     if (activeTab === 'home') return feed;
@@ -323,6 +335,11 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
           <View style={styles.topRight}>
             {phone ? <Text style={styles.phoneText}>{phone}</Text> : null}
             <FocusableButton label="Search" onPress={() => navigation.navigate('Search')} />
+            <FocusableButton
+              label={projectorOn ? 'Projector: On' : 'Projector: Off'}
+              variant={projectorOn ? 'primary' : 'secondary'}
+              onPress={onToggleProjector}
+            />
             <FocusableButton label="Sign Out" onPress={onLogout} />
           </View>
         </View>
