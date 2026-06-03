@@ -21,6 +21,7 @@ import MovieRow from '@/components/MovieRow';
 import ContinueWatchingRow from '@/components/ContinueWatchingRow';
 import { HeroSkeleton, PosterRowSkeleton } from '@/components/Skeleton';
 import FocusableButton from '@/components/FocusableButton';
+import ExtractorStatus from '@/components/ExtractorStatus';
 import { useProjector } from '@/context/ProjectorContext';
 
 const MY_LIST_KEY = '@myList';
@@ -333,6 +334,7 @@ export default function HomeScreen({ navigation, onLogout }: Props) {
 
           {/* Right: search + account */}
           <View style={styles.topRight}>
+            <ExtractorStatus />
             {phone ? <Text style={styles.phoneText}>{phone}</Text> : null}
             <FocusableButton label="Search" onPress={() => navigation.navigate('Search')} />
             <FocusableButton
