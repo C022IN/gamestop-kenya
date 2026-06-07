@@ -271,15 +271,15 @@ export default function PlayerScreen({ route, navigation }: Props) {
     const subStatus = player.addListener('statusChange', (e) => {
       if (e.status === 'error' && e.error) {
         const msg = e.error.message ?? '';
-        // 410 Gone / 403 Forbidden / 404 Not Found = stream URL expired.
-        // Fall back to the Videasy iframe silently.
-        if (/\b(410|403|404)\b/.test(msg)) {
-          const numericId = Number(itemId);
-          if (Number.isFinite(numericId) && numericId > 0) {
-            setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
-            setStreamUrl(null);
-            return;
-          }
+        // Any error on a numeric TMDB ID → silently fall back to the Videasy
+        // iframe rather than showing a raw Java exception. Covers 410/403/404
+        // (expired URL), UnknownHostException (CDN DNS failure), IOException,
+        // and any other ExoPlayer error where the direct stream is unreachable.
+        const numericId = Number(itemId);
+        if (Number.isFinite(numericId) && numericId > 0) {
+          setIframeUrl(buildDirectPlayerUrl(numericId, getMediaType(item), season, episode));
+          setStreamUrl(null);
+          return;
         }
         setError(`Playback error: ${msg}`);
       }
