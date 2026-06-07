@@ -9,6 +9,7 @@ import {
 import {
   buildCompatibleMoviePlayerUrl,
   buildCompatibleTvPlayerUrl,
+  getDefaultCompatiblePlayerOptions,
 } from '@/lib/compatible-player';
 import { extractStream, isStreamExtractorConfigured } from '@/lib/stream-extractor';
 
@@ -72,9 +73,10 @@ export async function GET(req: NextRequest) {
       // fall through to iframe fallback
     }
 
+    const playerOpts = getDefaultCompatiblePlayerOptions();
     const iframeUrl = mediaType === 'tv'
-      ? buildCompatibleTvPlayerUrl(numericId, season, episode)
-      : buildCompatibleMoviePlayerUrl(numericId);
+      ? buildCompatibleTvPlayerUrl(numericId, season, episode, playerOpts)
+      : buildCompatibleMoviePlayerUrl(numericId, playerOpts);
 
     if (!iframeUrl) {
       return NextResponse.json({ error: 'Player not configured' }, { status: 503 });
