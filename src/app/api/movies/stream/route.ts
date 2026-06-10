@@ -11,12 +11,6 @@ import {
   buildCompatibleTvPlayerUrl,
   getDefaultCompatiblePlayerOptions,
 } from '@/lib/compatible-player';
-import { extractStream, isStreamExtractorConfigured } from '@/lib/stream-extractor';
-
-// Allow up to 60 s on Vercel so the extractor (which waits up to 35 s for an
-// m3u8) has room to finish. Without this the default 10 s hobby/25 s pro limit
-// can fire before extraction completes, causing a silent iframe fallback.
-export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get(MOVIE_SESSION_COOKIE)?.value;
@@ -49,30 +43,6 @@ export async function GET(req: NextRequest) {
 
   const numericId = Number(id || slug);
   if (Number.isFinite(numericId) && numericId > 0) {
-    // Preferred path: ask the extractor service for a direct HLS URL.
-    // Android TV's ExoPlayer (via expo-av) plays HLS reliably; iframe playback
-    // doesn't work in the TV WebView. If extractor isn't configured or fails,
-    // we fall back to the iframe URL which still works on the web client.
-    if (isStreamExtractorConfigured()) {
-      const extracted = await extractStream({
-        tmdbId: numericId,
-        mediaType,
-        season,
-        episode,
-        signal: AbortSignal.timeout(45_000),
-      });
-      if (extracted) {
-        return NextResponse.json({
-          stream_url: extracted.m3u8,
-          source_type: 'hls',
-          playback_mode: 'video',
-          provider: 'Videasy (extracted)',
-          stream_headers: extracted.headers,
-        });
-      }
-      // fall through to iframe fallback
-    }
-
     const playerOpts = getDefaultCompatiblePlayerOptions();
     const iframeUrl = mediaType === 'tv'
       ? buildCompatibleTvPlayerUrl(numericId, season, episode, playerOpts)
